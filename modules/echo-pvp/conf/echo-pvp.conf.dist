@@ -1,0 +1,38 @@
+-- ============================================================
+-- echo-pvp — конфигурационный файл (dist)
+-- C++-модуль PvP-механик Пустоты реалма «Эхо Пустоты».
+-- Значения по умолчанию синхронизированы с
+-- lua_scripts/00_CampaignRegistry.lua (pvp/balance).
+-- ============================================================
+
+[echo-pvp]
+
+# Включение модуля.
+EchoPvp.Enable = 1
+
+# Entry PvP-зоны (zoneId): Драконий Погост — арена Культа.
+EchoPvp.ZoneId = 4080
+
+# Жетонов Эха (item 70005) за зачётный килл в PvP-зоне.
+EchoPvp.ZoneTokenKill = 1
+
+# Макс. разница уровней киллер/жертва для зачёта (анти-абюз).
+EchoPvp.MinLevelDiff = 10
+
+# Кулдаун зачёта киллов одной пары киллер/жертва (сек, анти-фарм).
+EchoPvp.FarmCooldownSecs = 300
+
+# Killstreak-объявления в мир (в ядре — дублирующая подсистема;
+# Lua 20_PvpSystem.lua пишет статистику в realm_pvp_stats).
+EchoPvp.EnableStreakAnnounce = 1
+EchoPvp.StreakThreshold1 = 3
+EchoPvp.StreakThreshold2 = 5
+EchoPvp.StreakThreshold3 = 10
+
+# «Месть Эха»: жертва с серией >= N получает бафф ярости Пустоты
+# (увеличение урона, %) на RevengeDurationSecs секунд.
+# Лор: Пустота мстит за своих — падение серийного бойца
+# пробуждает эхо его ярости.
+EchoPvp.RevengeStreakMin = 5
+EchoPvp.RevengeDamageBonusPct = 15
+EchoPvp.RevengeDurationSecs = 120

@@ -1,0 +1,36 @@
+{
+  "realm": "Эхо Пустоты",
+  "version": 2,
+  "realmlist": "127.0.0.1",
+  "files": [
+    {
+      "path": "patch-x.mpq",
+      "destination": "Data/patch-x.mpq",
+      "sha256": "509b12c179735c3660a4a1b24f87b008e425c84c0d70e5b1d8925c13ba204420",
+      "size": 4105898,
+      "required": true,
+      "description": "DBC-патч: титул «Хранитель Эха» (ID 48), маунт «Бездна-Пегас» (спелл 70010). Собрать по docs/client-patch.md ч. 1–4 (база: waloriaold Patch-T.MPQ.rar). НЕ включать Map.dbc — его полностью перекрывает patch-Z"
+    },
+    {
+      "path": "patch-Z.mpq",
+      "destination": "Data/patch-Z.mpq",
+      "sha256": "PLACEHOLDER_REPLACE_AFTER_BUILD",
+      "size": 0,
+      "required": true,
+      "description": "Кастомные карты (карта 5000): Остров Морза, Долина Предательства (референс RStijn/custom-maps, 2015). Берётся готовым из репозитория custom-maps, пересборка не требуется. Требуется для телепортов Портального Стража и работы карты 5000"
+    },
+    {
+      "path": "addons/AzerothEcho.zip",
+      "destination": "Interface/AddOns/AzerothEcho.zip",
+      "sha256": "0e0630725312014bea244c2578d652ba6503b96a1ba49710e3b6c1f548e83884",
+      "size": 9217,
+      "required": true,
+      "description": "Клиентский аддон реалма (addons/AzerothEcho из репозитория, zip без вложенного каталога)"
+    }
+  ],
+  "cacheDirs": [
+    "Cache",
+    "Cache/WDB"
+  ],
+  "notes": "После сборки патчей заполнить sha256 (PowerShell: Get-FileHash -Algorithm SHA256 <файл>) и size (байты). Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 → ... → patch-x → patch-Z (Z последняя — её Map.dbc перекрывает всё)."
+}

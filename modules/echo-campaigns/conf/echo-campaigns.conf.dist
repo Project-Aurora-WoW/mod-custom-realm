@@ -1,0 +1,27 @@
+# ============================================================
+# echo-campaigns — конфигурационный файл (dist)
+# Служебный C++-модуль управления кампаниями реалма «Эхо Пустоты».
+# ============================================================
+
+[echo-campaigns]
+
+# Источник команд управления кампаниями:
+#   both  — команды работают и из C++-модуля (ядро), и из Lua
+#           (CampaignManager.lua). Дублирование отключено: whoever
+#           первый обработал — тот и отвечает.
+#   core  — только C++-модуль (Lua-обработчик пропускает .ae/.aecampaign)
+#   lua   — только Lua (C++-модуль пропускает команды)
+EchoCampaigns.CommandSource = both
+
+# Журналирование всех действий кампаний в realm_campaign_log
+# (acore_characters, миграция 0013).
+EchoCampaigns.EnableLogging = 1
+
+# Порядок запуска подсистем реалма (информационно, проверяется
+# при загрузке и пишется в лог):
+#   1. echo-balance     (C++ UnitScript — баланс урона/лечения)
+#   2. echo-campaigns   (C++ команды + контроль порядка)
+#   3. mod-ale          (Lua-движок ALE)
+#   4. 00_CampaignRegistry.ext -> CampaignManager.lua -> Campaign1-4.lua
+#      -> LoreArchive.lua -> EventSystem -> PvpSystem -> PvpShop -> AddonBridge
+EchoCampaigns.CheckLoadOrder = 1

@@ -1,0 +1,12 @@
+## Interface: 30300
+## Title: AzerothEcho |cff9b59b6Эхо Пустоты|r
+## Notes: Полноценный интерфейс реалма: кампании, ивенты, PvP, карта разломов.
+## Author: Azeroth Custom Realm
+## Version: 2.1.0
+## X-Website: https://sourcecraft.dev/m-orlovrus59/azeroth-custom-realm
+## DefaultState: enabled
+
+Core.lua
+Panel.lua
+RiftMap.lua
+AzerothEcho.lua
