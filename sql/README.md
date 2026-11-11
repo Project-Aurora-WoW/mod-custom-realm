@@ -38,6 +38,7 @@
 | `world/0029_parangon.sql` | Parangon (Фаза 3, Lua-only): таблицы `account_parangon` (уровень/опыт на аккаунт) + `characters_parangon` (потраченные очки) (**acore_characters**); потребляет `29_Parangon.lua` | — |
 | `world/0030_classless_full.sql` | Classless «полная версия» (Фаза 3): расширяет `character_classless` (**acore_characters**) колонкой `talents` (CSV «talentSpellID\|talentID\|rank;») — таланты обучаются из БД ядра (`talent_dbc`+`talenttab_dbc`); потребляет `27_Classless.lua` | 0025 |
 | `world/0031_gpt_npc.sql` | GPT-НПС (Фаза 4): очередь `realm_gpt_queue` (**acore_characters**) для обмена ALE-скрипта `gpt_npc.lua` с внешним Python-сервисом (`service/gpt_npc.py`), который вызывает OpenAI | — |
+| `world/0032_pvp_full_loot.sql` | Full-Loot PvP: сундук «Добыча войны» (gameobject 700020, type 3 GO_CHEST, displayId 259) — выпадение предметов/золота жертвы при PvP-килле; потребляет `31_PvpFullLoot.lua` | — |
 | `world/0025_classless.sql` | Classless-арка К5 (порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; таланты — в 0030; скрипт `27_Classless.lua` | — |
 
 ---
@@ -99,6 +100,8 @@ mysql -u <user> -p acore_characters < sql/world/0029_parangon.sql
 mysql -u <user> -p acore_characters < sql/world/0030_classless_full.sql
 # 0031: GPT-НПС (очередь realm_gpt_queue → acore_characters):
 mysql -u <user> -p acore_characters < sql/world/0031_gpt_npc.sql
+# 0032: Full-Loot PvP (сундук «Добыча войны» → acore_world):
+mysql -u <user> -p acore_world < sql/world/0032_pvp_full_loot.sql
 ```
 
 После применения выполните в консоли `worldserver`:
