@@ -41,7 +41,8 @@
 | `24_Lottery.lua` | **Лотерея** (адаптация eluna-scripts/lotteryDB): НПС 70176 «Хранитель Тиражей» (Даларан, 0024), билет 10 зол. — 6 чисел 1–32; недельный розыгрыш с джекпотом, приз письмом поровну между победителями; таблицы `realm_lottery{,_tickets}` (0024, acore_characters) | gossip НПС 70176, `WORLD_EVENT_ON_UPDATE` |
 | `25_SkipDkStarter.lua` | **Пропуск DK-стартера** (адаптация eluna-scripts/npc_mission_dk v2): НПС 70177 «Вестник Забвения» (0024) за 5 Жетонов Эха выполняет стартовую цепочку РК, экипирует сет 58 ур. и телепортирует в столицу | gossip НПС 70177 |
 | `26_PrayerAltar.lua` | **Алтарь молитвы** (адаптация eluna-scripts/Npc/prayToNpc + prayObilisk): НПС 70178 «Алтарь Ордена» (0024), у алтаря (<=2 ярда) `/kneel` даёт баффы Sayge's Dark Fortune; кулдаун 60 сек | `PLAYER_EVENT_ON_TEXT_EMOTE` |
-| `27_Classless.lua` | **Classless-арка К5** (минимальный порт Shikifuyin/AzerothCore-ClassLess-Solo): обучение «чужих» классовых спеллов и глифов за очки/слоты; таланты исключены (см. раздел ниже); таблица `character_classless` (0025, acore_characters); команда `.aeclassless help/status/list/learn/unlearn/reset` | `PLAYER_EVENT_ON_CHAT`, `ON_LOGIN/LOGOUT/SAVE` |
+| `27_Classless.lua` | **Classless-арка К5** (порт Shikifuyin/AzerothCore-ClassLess-Solo): обучение «чужих» классовых спеллов, глифов и талантов за очки/слоты; таланты из БД ядра (`talent_dbc`+`talenttab_dbc`); таблица `character_classless` (0025+0030, acore_characters); команда `.aeclassless help/status/list/learn/unlearn/reset` + серверная часть AIO | `PLAYER_EVENT_ON_CHAT`, `ON_LOGIN/LOGOUT/SAVE`, AIO-хендлеры `CLASSLESS` |
+| `27_ClasslessClient.lua` | **Classless-арка К5 — клиентский AIO-UI** (полная версия, дерево талантов): фрейм с вкладками ЧУЖИХ классов → спек-табы → сетка талантов; ЛКМ учит ранг, ПКМ снимает, ховер — тултип спелла; вызывается `/classless` или `/acl`; данные (реестр талантов + статус) — от серверного AIO `27_Classless.lua` | AIO-хендлеры `CLASSLESS_UI` (доставляется клиенту через `AIO.AddAddon`) |
 | `21_FactionChanger.lua` | **Смена фракции** (адаптация public-scripts/FactionChange, JadaDev): НПС 70174 «Страж Перемен» (Даларан, 0021) — AtLogin-флаг 8 за 25 Жетонов Эха; гейт 80+ (прогресс фракционных кампаний); локализация ru/en | gossip НПС 70174 |
 | `23_WeaponMaster.lua` | **Мастер оружия** (адаптация eluna-scripts/Weapon Master): НПС 70175 «Рунный Оружейник» (Даларан, 0024) за 10 зол. учит все виды оружия класса; наборы по 10 классам, оплата до обучения | gossip НПС 70175 |
 | `24_Lottery.lua` | **Лотерея** (адаптация eluna-scripts/lotteryDB): НПС 70176 «Хранитель Тиражей» (Даларан, 0024), билет 10 зол. — 6 чисел 1–32; недельный розыгрыш с джекпотом, приз письмом поровну между победителями; таблицы `realm_lottery{,_tickets}` (0024, acore_characters) | gossip НПС 70176, `WORLD_EVENT_ON_UPDATE` |
@@ -123,7 +124,8 @@ AIO.lua + queue.lua + Dep_*/lualzw-zeros (deps)  → AIO-стек (Rochet2/AIO v
 Store_DataStruct.lua → Store_Server.lua → Store_Client.lua → AIO-магазин
 21_FactionChanger.lua / 22_SanctuaryPvP.lua     → перемена фракции / убежища-FFA (public-scripts)
 23_WeaponMaster.lua / 24_Lottery.lua / 25_SkipDkStarter.lua / 26_PrayerAltar.lua → Tier B (0024)
-27_Classless.lua                                → Classless-арка К5 (0025)
+27_Classless.lua                                → Classless-арка К5 (0025 + 0030)
+27_ClasslessClient.lua                          → Classless AIO-UI (клиент, дерево талантов)
 28_RandomEnchant.lua                            → random-энчанты оружия (0028)
 29_Parangon.lua                                 → Parangon-уровни и стаки аур (0029)
 AddonBridge.lua → Campaign1–4.lua → CampaignManager.lua
@@ -537,31 +539,43 @@ kebabstorm / Cloticc).
 | `25_SkipDkStarter.lua` | 70177 «Вестник Забвения» | за 5 Жетонов Эха выполняет DK-цепочку, экипирует сет 58 ур., телепорт в столицу | вешался на 25462 без спавна → отдельный НПС; бесплатно → платно; безопасный forceEquip (без уничтожения предмета) |
 | `26_PrayerAltar.lua` | 70178 «Алтарь Ордена» | `/kneel` у алтаря даёт баффы Sayge's Dark Fortune | слиты два конфликтующих pray-скрипта; добавлена проверка дальности и кулдаун |
 
-## 27_Classless.lua — Classless-арка К5
+## 27_Classless.lua / 27_ClasslessClient.lua — Classless-арка К5
 
-Минимальный порт [Shikifuyin/AzerothCore-ClassLess-Solo](https://github.com/Shikifuyin/AzerothCore-ClassLess-Solo)
-на ALE **без AIO-клиентского UI** (конвенция «минимальной версии», см. задачу 6).
+Порт [Shikifuyin/AzerothCore-ClassLess-Solo](https://github.com/Shikifuyin/AzerothCore-ClassLess-Solo)
+на ALE. Два интерфейса:
+- **чат-команда** `.aeclassless ...` — базовый контроль (без UI);
+- **клиентский AIO-UI** `27_ClasslessClient.lua` — дерево талантов (полная
+  версия, `/classless` или `/acl`), данные от серверного AIO `27_Classless.lua`.
+Управление работой — через AIO-хендлеры (`CLASSLESS` сервер ↔ `CLASSLESS_UI`
+клиент); чат-команда остаётся как fallback.
 
 Лор-подача: «Классы — это узор, наложенный на хаос. Усмешка стирает узор» —
 в финальных главах арки К5 рассеянная Усмешка Бездны «переписывает» классовые
 клятвы, и персонажи могут учить умения чужих классов.
 
-- **Механика**: у каждого персонажа очки спеллов (= уровень) и слоты глифов;
-  `learn/unlearn` изучает «чужой» классовый спелл или глиф. Ранги чужих спеллов
+- **Механика**: у каждого персонажа очки спеллов (= уровень), слоты глифов и
+  очки талантов Classless (отдельный пул = уровень); `learn/unlearn` изучает
+  «чужой» классовый спелл, глиф или талант. Ранги чужих спеллов
   автоподстраиваются под уровень (логика референса `UpdateAllSpellsRanks`).
-- **Управление** — чат-команда `.aeclassless help|status|list|learn <id>|unlearn <id>|reset`
+- **Управление** — AIO-UI (`/classless`) либо чат-команда
+  `.aeclassless help|status|list|learn <spell|glyph|talent> <id> [rank]|unlearn <...> <id>|reset`
   (замена AIO-хендлеров `CommitAbilities`/`ResetAbilities` референса).
-- **Таблица**: `character_classless` (0025, **acore_characters**); DDL в скрипте
-  не создаётся (конвенция реалма — таблицы только миграциями); `pcall`-guard
-  отключает систему, если таблица не применена.
-- **Объём (минимальная версия)**: портируются **спеллы + глифы** чужих классов.
-  **Таланты НЕ включены**: данные талантов референса (`CLDataTalents.lua`, ~2400
-  строк) завязаны на C++-класс талант-дескрипторов, требование-дерево и
-  пет-таланты, которые в Eluna/ALE ненадёжно снимаются через `RemoveSpell` —
-  полный перенос не гарантирует корректного unlearn (риск «залипших» талантов).
-  Запасные/faction-спеллы референса исключены.
-- **Служебное**: для глифов/спеллов родного класса возвращается подсказка
-  «изучай через тренера» (аналог AIO-валидации референса в минимальной версии).
+- **Таблица**: `character_classless` (**acore_characters**): колонки `spells`,
+  `glyphs` (0025) и `talents` (0030); DDL в скрипте не создаётся (конвенция
+  реалма — таблицы только миграциями); `pcall`-guard отключает систему, если
+  таблица не применена.
+- **Типы обучаемого**:
+  - **спеллы + глифы** чужих классов (0025) — данные из референса
+    (`CLDataSpells.lua`, `CLDataGlyphs.lua`); запасные/faction-спеллы исключены;
+  - **таланты** (0030, «полная версия»): индекс строится из БД ядра
+    (`talent_dbc` + `talenttab_dbc`, acore_world) — это честные таланты 3.3.5a
+    всех классов; обучаются через `player:LearnSpell(спелл текущего ранга)`,
+    снимаются через `player:RemoveSpell` (корректный unlearn, залипающих
+    талантов нет). «Свои» таланты игрок вкачивает в стандартном окне —
+    Classless учит только чужие.
+- **Служебное**: для глифов/спеллов/талантов родного класса возвращается
+  подсказка «вкачивается в стандартном окне талантов» (аналог AIO-валидации
+  референса).
 
 ---
 

@@ -3,13 +3,15 @@
 -- классовых спеллов и глифов
 --
 -- Референс: Shikifuyin/AzerothCore-ClassLess-Solo
--- (ClassLess/ELUNA/*). Минимальный порт на ALE (mod-ale)
--- БЕЗ AIO-клиентского UI (конвенция «минимальной версии»):
+-- (ClassLess/ELUNA/*). Сначала был минимальный порт на ALE (mod-ale)
+-- БЕЗ AIO-клиентского UI (конвенция «минимальной версии»); затем
+-- добавлена «полная версия» талантов (Фаза 3):
 --   • серверная логика очков/обучения — как в референсе;
 --   • управление — чат-командой .aeclassless (не AIO);
---   • таланты НЕ включены (данные референса завязаны на
---     C++-класс талант-дескрипторов и пет-талантов, которые
---     в Eluna/ALE ненадёжно снимаются через RemoveSpell).
+--   • таланты включены (0030): данные из БД ядра (talent_dbc +
+--     talenttab_dbc), отдельный пул очков талантов Classless;
+--     обучаются через player:LearnSpell(спелл ранга) — корректно
+--     снимается через player:RemoveSpell.
 --
 -- Механика (лор-подача: «Усмешка стирает узор классов»):
 --   • у каждого персонажа есть очки спеллов (= уровень) и слоты
@@ -40,6 +42,7 @@ local CFG = {
     spell_points_rate = 1.0,          -- очков спеллов за уровень (1.0 = как в референсе)
     glyph_major_rate = 1.0,           -- множитель слотов больших глифов
     glyph_minor_rate = 1.0,           -- множитель слотов малых глифов
+    talent_points_rate = 1.0,         -- очков талантов Classless за уровень (полная версия)
     reset_costs = { 10000, 50000, 100000, 150000, 200000, 350000 }, -- медь; стоимость сброса, растёт
     max_reset_cost_index = 6,         -- число градаций цены сброса
 }
@@ -270,11 +273,12 @@ end
 -- БД (character_classless, acore_characters; DDL — миграция 0025)
 -- ============================================================
 local function DBLoad(guid)
-    local data = { spells = {}, glyphs = {} }
-    local ok, q = pcall(CharDBQuery, "SELECT spells, glyphs FROM character_classless WHERE guid = " .. guid)
+    local data = { spells = {}, glyphs = {}, talents = {} }
+    local ok, q = pcall(CharDBQuery, "SELECT spells, glyphs, talents FROM character_classless WHERE guid = " .. guid)
     if ok and q then
         local spellsCSV = q:GetString(0)
         local glyphsCSV = q:GetString(1)
+        local talentsCSV = q:GetString(2)
         for sid in string.gmatch(spellsCSV or "", "([^,]+)") do
             local id = tonumber(sid)
             if id then data.spells[id] = true end
@@ -283,6 +287,12 @@ local function DBLoad(guid)
             local id = tonumber(gid)
             if id then data.glyphs[id] = true end
         end
+        for talentRec in string.gmatch(talentsCSV or "", "([^;]+)") do
+            local sid, tid, rk = talentRec:match("^(%d+)|(%d+)|(%d+)$")
+            if sid and tid and rk then
+                data.talents[tonumber(sid)] = { talentID = tonumber(tid), rank = tonumber(rk) }
+            end
+        end
     else
         return nil   -- таблицы нет (миграция не применена) — система выключена
     end
@@ -290,7 +300,7 @@ local function DBLoad(guid)
 end
 
 local function DBSave(guid, data)
-    local spellsCSV, glyphsCSV = "", ""
+    local spellsCSV, glyphsCSV, talentsCSV = "", "", ""
     local first = true
     for sid in pairs(data.spells or {}) do
         if not first then spellsCSV = spellsCSV .. "," end
@@ -304,9 +314,15 @@ local function DBSave(guid, data)
         glyphsCSV = glyphsCSV .. gid
         first = false
     end
+    first = true
+    for sid, t in pairs(data.talents or {}) do
+        if not first then talentsCSV = talentsCSV .. ";" end
+        talentsCSV = talentsCSV .. sid .. "|" .. t.talentID .. "|" .. t.rank
+        first = false
+    end
     pcall(CharDBExecute,
-        "REPLACE INTO character_classless (guid, spells, glyphs) VALUES (" .. guid ..
-        ", '" .. spellsCSV .. "', '" .. glyphsCSV .. "')")
+        "REPLACE INTO character_classless (guid, spells, glyphs, talents) VALUES (" .. guid ..
+        ", '" .. spellsCSV .. "', '" .. glyphsCSV .. "', '" .. talentsCSV .. "')")
 end
 
 -- ============================================================
@@ -435,6 +451,163 @@ local function UnlearnGlyph(player, glyphID)
 end
 
 -- ============================================================
+-- ТАЛАНТЫ (Classless «полная версия», Фаза 3; миграция 0030)
+-- Очки талантов Classless — отдельный пул (свой, не спеллов):
+-- дают возможность учить ЧУЖИЕ таланты как собственные.
+-- data.talents = { [talentSpellID] = { talentID = int, rank = int } }
+-- Формат хранения в БД (колонка talents): 'talentSpellID|talentID|rank;'
+--
+-- talentIndex строится из БД ядра (tabel talent_dbc + talenttab_dbc,
+-- acore_world): [talentID] = { spellIDs = {ранк=спелл}, tabID, classIdx }
+-- это «честные» таланты 3.3.5a всех классов.
+-- ============================================================
+local talentIndex = {}   -- [talentID] = { spellIDs={}, tabID, classIdx, maxRank }
+
+-- convert ChrClasses index (1=Воин..6=DK..11=Друид) в индекс CLASS_NAMES
+-- (как использует IsOwnClassSpell): [chrClass] = classNamesIdx
+local CHR_TO_CLASSNAMES = {
+    [1] = 10,  -- Воин   -> CLASS_NAMES[10]
+    [2] = 5,   -- Паладин -> CLASS_NAMES[5]
+    [3] = 3,   -- Охотник -> CLASS_NAMES[3]
+    [4] = 7,   -- Разбойник -> CLASS_NAMES[7]
+    [5] = 6,   -- Жрец   -> CLASS_NAMES[6]
+    [6] = 1,   -- DK     -> CLASS_NAMES[1]
+    [7] = 8,   -- Шаман  -> CLASS_NAMES[8]
+    [8] = 4,   -- Маг    -> CLASS_NAMES[4]
+    [9] = 9,   -- Чернокнижник -> CLASS_NAMES[9]
+    [11] = 2,  -- Друид  -> CLASS_NAMES[2]
+}
+
+local function LoadTalentIndex()
+    talentIndex = {}
+    -- talent_dbc: ID, TabID, TierID, ColumnIndex, SpellRank_0..4
+    local tq = WorldDBQuery("SELECT ID, TabID, TierID, ColumnIndex, SpellRank_0, SpellRank_1, SpellRank_2, SpellRank_3, SpellRank_4 FROM talent_dbc")
+    -- talenttab_dbc: ID, ..., RaceMask, ClassMask (индекс колонок зависит от схемы)
+    local classes = {}   -- [tabID] = classNamesIdx
+    local cq = WorldDBQuery("SELECT ID, ClassMask FROM talenttab_dbc")
+    if cq then
+        repeat
+            -- ClassMask — битовая маска ChrClasses; класс = позиция первого
+            -- установленного бита (1=Воин..11=Друид). Без битовых операторов
+            -- (Lua 5.1 / ALE): ищем по целочисленному делению на 2.
+            local cm = cq:GetUInt32(1)
+            local chrClass = 1
+            local rest = math.floor(cm)
+            while rest > 0 and (rest % 2) == 0 do
+                rest = math.floor(rest / 2)
+                chrClass = chrClass + 1
+            end
+            if (rest % 2) == 1 and chrClass <= 11 then
+                classes[cq:GetUInt32(0)] = CHR_TO_CLASSNAMES[chrClass] or 0
+            end
+        until not cq:NextRow()
+    end
+    -- MapTab (порядок табов внутри класса) → specIdx: talenttab_dbc не хранит
+    -- порядка; используем TabID как specIdx (1..3 для стандартных классов).
+    if tq then
+        repeat
+            local id = tq:GetUInt32(0)
+            local tab = tq:GetUInt32(1)
+            local tier = tq:GetUInt32(2)
+            local col = tq:GetUInt32(3)
+            local spellIDs = {}
+            local maxRank = 0
+            for r = 0, 4 do
+                local sid = tq:GetUInt32(4 + r)
+                if sid ~= 0 then
+                    spellIDs[r + 1] = sid
+                    maxRank = r + 1
+                end
+            end
+            if maxRank > 0 then
+                talentIndex[id] = {
+                    spellIDs = spellIDs,
+                    tabID = tab,
+                    tier = tier,
+                    col = col,
+                    classIdx = classes[tab] or 0,
+                    maxRank = maxRank,
+                }
+            end
+        until not tq:NextRow()
+    end
+end
+LoadTalentIndex()
+
+local function TotalTalentPoints(player)
+    -- 1 очко таланта Classless за каждый уровень, начиная с мин. уровня
+    -- (настраивается в CFG). По умолчанию как у спеллов: уровень.
+    return math.floor(player:GetLevel() * (CFG.talent_points_rate or 0))
+end
+
+local function AllocTalentPoints(data)
+    local sum = 0
+    for _, t in pairs(data.talents or {}) do sum = sum + (t.rank or 0) end
+    return sum
+end
+
+-- Найти изученный талант в data по talentID
+local function FindLearnedTalent(data, talentID)
+    for id, t in pairs(data.talents or {}) do
+        if t.talentID == talentID then return id, t end
+    end
+    return nil
+end
+
+local function LearnTalent(player, talentID, rank)
+    local guid = player:GetGUIDLow()
+    local data = playerData[guid]
+    if not data then return "система недоступна (миграция 0030 не применена)" end
+    local ti = talentIndex[talentID]
+    if not ti then return "талант " .. talentID .. " не найден в БД ядра" end
+
+    local tMax = ti.maxRank or 1
+    if rank < 1 or rank > tMax then
+        return "ранг должен быть 1.." .. tMax
+    end
+
+    -- Чужой класс? Талант считается «чужим», если его спелл не из класса игрока.
+    -- (Свои таланты игрок вкачивает через стандартное окно талантов.)
+    if ti.classIdx ~= 0 and IsOwnClassSpell(player, ti.classIdx) then
+        return "это талант твоего класса — вкачивается в стандартном окне талантов"
+    end
+
+    -- Очки: уже потрачено на этот талант (старый ранг) + требуемый дифф
+    local _, learned = FindLearnedTalent(data, talentID)
+    local oldRank = learned and learned.rank or 0
+    local spentNow = AllocTalentPoints(data)
+    local freeBefore = TotalTalentPoints(player) - spentNow
+    if (rank - oldRank) > freeBefore then
+        return "не хватает очков талантов (доступно: " .. freeBefore .. ")"
+    end
+
+    -- Применяем талант: учим спелл текущего ранга (ранг закодирован в спелле)
+    local spellID = ti.spellIDs[rank]
+    if not spellID then return "нет спелла для этого ранга" end
+    if learned then
+        player:RemoveSpell(learned, 255, false)
+    end
+    player:LearnSpell(spellID)
+    data.talents[spellID] = { talentID = talentID, rank = rank }
+    DBSave(guid, data)
+    player:SendBroadcastMessage(TAG .. " " .. VOID .. "Вкачан чужой талант " .. talentID .. " (ранг " .. rank .. ")|r")
+    return nil
+end
+
+local function UnlearnTalent(player, talentID)
+    local guid = player:GetGUIDLow()
+    local data = playerData[guid]
+    if not data then return "система недоступна" end
+    local learned, t = FindLearnedTalent(data, talentID)
+    if not learned then return "талант не изучен" end
+    player:RemoveSpell(learned, 255, false)
+    data.talents[learned] = nil
+    DBSave(guid, data)
+    player:SendBroadcastMessage(TAG .. " " .. VOID .. "Снят чужой талант " .. talentID .. "|r")
+    return nil
+end
+
+-- ============================================================
 -- СБРОС ВСЕГО (за золото, растущая цена — как в референсе)
 -- ============================================================
 local function DoReset(player, data)
@@ -445,12 +618,17 @@ local function DoReset(player, data)
     for gid in pairs(data.glyphs or {}) do
         player:RemoveSpell(gid, 255, false)
     end
+    for sid in pairs(data.talents or {}) do
+        player:RemoveSpell(sid, 255, false)
+    end
     data.spells = {}
     data.glyphs = {}
+    data.talents = {}
 end
 
 local function CanReset(data)
     return (next(data.spells or {}) ~= nil) or (next(data.glyphs or {}) ~= nil)
+        or (next(data.talents or {}) ~= nil)
 end
 
 -- ============================================================
@@ -466,9 +644,11 @@ end
 local function SendHelp(player)
     player:SendBroadcastMessage(TAG .. " " .. VOID .. ".aeclassless|r — Classless (арка К5)")
     player:SendBroadcastMessage("  " .. VOID .. "status|r — очки и занятые слоты")
-    player:SendBroadcastMessage("  " .. VOID .. "list|r — обученные чужие спеллы/глифы")
-    player:SendBroadcastMessage("  " .. VOID .. "learn <id>|r — изучить чужой спелл/глиф")
-    player:SendBroadcastMessage("  " .. VOID .. "unlearn <id>|r — забыть")
+    player:SendBroadcastMessage("  " .. VOID .. "list|r — обученные чужие спеллы/глифы/таланты")
+    player:SendBroadcastMessage("  " .. VOID .. "learn spell <id>|r — изучить чужой спелл")
+    player:SendBroadcastMessage("  " .. VOID .. "learn glyph <id>|r — установить чужой глиф")
+    player:SendBroadcastMessage("  " .. VOID .. "learn talent <id> [ранг]|r — вкачать чужой талант")
+    player:SendBroadcastMessage("  " .. VOID .. "unlearn <spell|glyph|talent> <id>|r — забыть")
     player:SendBroadcastMessage("  " .. VOID .. "reset|r — сбросить всё за золото")
 end
 
@@ -480,6 +660,7 @@ local function SendStatus(player)
     end
     player:SendBroadcastMessage(TAG .. " " .. VOID .. "Очки спеллов:|r " .. AllocSpellPoints(data) .. " / " .. TotalSpellPoints(player))
     player:SendBroadcastMessage("  " .. VOID .. "Глифы:|r Больш. " .. AllocGlyphMajor(data) .. " / " .. TotalGlyphMajor(player) .. ", Мал. " .. AllocGlyphMinor(data) .. " / " .. TotalGlyphMinor(player))
+    player:SendBroadcastMessage("  " .. VOID .. "Очки талантов:|r " .. AllocTalentPoints(data) .. " / " .. TotalTalentPoints(player))
     player:SendBroadcastMessage("  " .. VOID .. "Сброс:|r " .. Currency(CFG.reset_costs[1]))
 end
 
@@ -516,27 +697,47 @@ local function OnChat(event, player, msg, lang, typ)
             player:SendBroadcastMessage("  глиф " .. gid)
             n = n + 1
         end
+        for sid, t in pairs(data.talents or {}) do
+            player:SendBroadcastMessage("  талант " .. t.talentID .. " (ранг " .. t.rank .. ")")
+            n = n + 1
+        end
         if n == 0 then player:SendBroadcastMessage(TAG .. " ничего не изучено.") end
     elseif cmd == "learn" or cmd == "unlearn" then
-        local id = tonumber(args[2])
+        local kind = args[2] and args[2]:lower() or ""
+        local rawID = args[3] or args[2]
+        -- Синтаксис: learn/unlearn <spell|glyph|talent> <id> [rank]
+        local id = tonumber(rawID)
         if not id then
-            player:SendBroadcastMessage(TAG .. " укажи ID спелла/глифа.")
+            player:SendBroadcastMessage(TAG .. " укажи тип (spell/glyph/talent) и ID.")
             return
         end
+        local rank = tonumber(args[4] or "1")
         local err
-        if cmd == "learn" then
-            -- ID известен как спелл — сохраняем содержательную ошибку LearnSpell;
-            -- иначе пробуем глиф (вернёт свою ошибку, если ID не в реестре).
-            if spellIndex[id] then
-                err = LearnSpell(player, id)
+        if kind == "talent" then
+            if cmd == "learn" then
+                err = LearnTalent(player, id, rank)
             else
-                err = LearnGlyph(player, id)
+                err = UnlearnTalent(player, id)
             end
-        else
-            if spellIndex[id] then
-                err = UnlearnSpell(player, id)
+        elseif kind == "glyph" then
+            if cmd == "learn" then
+                err = LearnGlyph(player, id)
             else
                 err = UnlearnGlyph(player, id)
+            end
+        else -- по умолчанию (как раньше): spell (или glyph, если это глиф)
+            if cmd == "learn" then
+                if spellIndex[id] then
+                    err = LearnSpell(player, id)
+                else
+                    err = LearnGlyph(player, id)
+                end
+            else
+                if spellIndex[id] then
+                    err = UnlearnSpell(player, id)
+                else
+                    err = UnlearnGlyph(player, id)
+                end
             end
         end
         if err then player:SendBroadcastMessage(TAG .. " " .. err) end
@@ -617,10 +818,108 @@ local function OnLevelChange(event, player, oldLevel)
     RefreshSpellRanks(player)
 end
 
+-- ============================================================
+-- AIO (клиентский UI Classless, полная версия)
+-- Серверная часть: отдаёт клиенту данные (доступные чужие
+-- таланты/спеллы/глифы + текущее состояние игрока) и принимает
+-- команды обучения/снятия/сброса через handle-функции AIO.
+-- Если AIO-стек недоступен — блок пропускается, работает только
+-- чат-команда .aeclassless.
+-- ============================================================
+local CL_AIO = nil
+
+if AIO and type(AIO.AddHandlers) == "function" then
+    CL_AIO = AIO.AddHandlers("CLASSLESS", {})
+
+    function CL_AIO.ReqIndex(player)
+        -- Компактный реестр талантов: talentID → {classIdx, tabID, tier, col, maxRank, spellIDs}
+        local out = {}
+        for tid, t in pairs(talentIndex) do
+            out[tid] = { t.classIdx, t.tabID, t.tier, t.col, t.maxRank, t.spellIDs }
+        end
+        -- classIdx игрока в терминах CLASS_NAMES (для фильтра «чужих классов»)
+        local pc = player:GetClass()
+        local mapIdx = { [1]=10, [2]=5, [3]=3, [4]=7, [5]=6, [6]=1, [7]=8, [8]=4, [9]=9, [11]=2 }
+        AIO.Handle(player, "CLASSLESS_UI", "Index", out, mapIdx[pc] or 0)
+    end
+
+    function CL_AIO.ReqStatus(player)
+        local data = playerData[player:GetGUIDLow()]
+        if not data then
+            AIO.Handle(player, "CLASSLESS_UI", "Status", nil)
+            return
+        end
+        AIO.Handle(player, "CLASSLESS_UI", "Status", {
+            spellPoints = { alloc = AllocSpellPoints(data), total = TotalSpellPoints(player) },
+            glyphMajor  = { alloc = AllocGlyphMajor(data), total = TotalGlyphMajor(player) },
+            glyphMinor  = { alloc = AllocGlyphMinor(data), total = TotalGlyphMinor(player) },
+            talentPoints= { alloc = AllocTalentPoints(data), total = TotalTalentPoints(player) },
+            spells  = data.spells  or {},
+            glyphs  = data.glyphs  or {},
+            talents = data.talents or {},   -- [spellID] = { talentID, rank }
+            resetCost = CFG.reset_costs[1],
+        })
+    end
+
+    function CL_AIO.Learn(player, kind, id, rank)
+        local err
+        if kind == "talent" then
+            err = LearnTalent(player, id, rank or 1)
+        elseif kind == "glyph" then
+            err = LearnGlyph(player, id)
+        else
+            if spellIndex[id] then err = LearnSpell(player, id) else err = LearnGlyph(player, id) end
+        end
+        -- Ответ клиенту: либо ошибка, либо новый статус
+        if err then
+            AIO.Handle(player, "CLASSLESS_UI", "Error", err)
+        else
+            CL_AIO.ReqStatus(player)
+        end
+    end
+
+    function CL_AIO.Unlearn(player, kind, id)
+        local err
+        if kind == "talent" then
+            err = UnlearnTalent(player, id)
+        elseif kind == "glyph" then
+            err = UnlearnGlyph(player, id)
+        else
+            if spellIndex[id] then err = UnlearnSpell(player, id) else err = UnlearnGlyph(player, id) end
+        end
+        if err then
+            AIO.Handle(player, "CLASSLESS_UI", "Error", err)
+        else
+            CL_AIO.ReqStatus(player)
+        end
+    end
+
+    function CL_AIO.Reset(player)
+        local data = playerData[player:GetGUIDLow()]
+        if not data then
+            AIO.Handle(player, "CLASSLESS_UI", "Error", "система недоступна")
+            return
+        end
+        if not CanReset(data) then
+            AIO.Handle(player, "CLASSLESS_UI", "Error", "нечего сбрасывать")
+            return
+        end
+        local cost = CFG.reset_costs[1]
+        if player:GetCoinage() < cost then
+            AIO.Handle(player, "CLASSLESS_UI", "Error", "недостаточно золота")
+            return
+        end
+        player:ModifyMoney(-cost)
+        DoReset(player, data)
+        DBSave(player:GetGUIDLow(), data)
+        CL_AIO.ReqStatus(player)
+    end
+end
+
 RegisterPlayerEvent(3, OnLogin)      -- PLAYER_EVENT_ON_LOGIN
 RegisterPlayerEvent(4, OnLogout)     -- PLAYER_EVENT_ON_LOGOUT
 RegisterPlayerEvent(25, OnSave)      -- PLAYER_EVENT_ON_SAVE
 RegisterPlayerEvent(13, OnLevelChange) -- PLAYER_EVENT_ON_LEVEL_CHANGE
 RegisterPlayerEvent(PLAYER_EVENT_ON_CHAT, OnChat)  -- 18
 
-print("[EchoOfTheVoid] 27_Classless.lua загружен (Classless арка К5, минимальная версия: чужие спеллы + глифы).")
+print("[EchoOfTheVoid] 27_Classless.lua загружен (Classless арка К5, полная версия: чужие спеллы + глифы + таланты).")

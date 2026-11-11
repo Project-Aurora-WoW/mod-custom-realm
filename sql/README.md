@@ -36,7 +36,8 @@
 | `world/0027_pvp_store.sql` | Перенос PvP-шопа в AIO-магазин: категория id 10 «Снабжение Ордена» + услуги 20–25 (тип 1, за Жетоны Эха); НПС-шоп (`30_PvpShop.lua`) остаётся fallback | 0020, 0009 |
 | `world/0028_item_enchant_random.sql` | Random-энчанты (Фаза 2): таблица `item_enchantment_random_tiers` (тиры оружия T1–T4, веса, ilvl-диапазоны) + НПС 70192 «Рандомный Зачарователь» (Даларан, guid 7000192); потребляет `28_RandomEnchant.lua` | 0009, 0001 (схема НПС) |
 | `world/0029_parangon.sql` | Parangon (Фаза 3, Lua-only): таблицы `account_parangon` (уровень/опыт на аккаунт) + `characters_parangon` (потраченные очки) (**acore_characters**); потребляет `29_Parangon.lua` | — |
-| `world/0025_classless.sql` | Classless-арка К5 (минимальный порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; скрипт `27_Classless.lua` | — |
+| `world/0030_classless_full.sql` | Classless «полная версия» (Фаза 3): расширяет `character_classless` (**acore_characters**) колонкой `talents` (CSV «talentSpellID\|talentID\|rank;») — таланты обучаются из БД ядра (`talent_dbc`+`talenttab_dbc`); потребляет `27_Classless.lua` | 0025 |
+| `world/0025_classless.sql` | Classless-арка К5 (порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; таланты — в 0030; скрипт `27_Classless.lua` | — |
 
 ---
 
@@ -93,6 +94,8 @@ mysql -u <user> -p acore_world < sql/world/0027_pvp_store.sql
 mysql -u <user> -p acore_world < sql/world/0028_item_enchant_random.sql
 # 0029: Parangon (account_parangon + characters_parangon → acore_characters):
 mysql -u <user> -p acore_characters < sql/world/0029_parangon.sql
+# 0030: Classless «полная версия» (alter character_classless → acore_characters):
+mysql -u <user> -p acore_characters < sql/world/0030_classless_full.sql
 ```
 
 После применения выполните в консоли `worldserver`:
