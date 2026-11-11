@@ -47,9 +47,17 @@ jobs:
       CC: clang-20
       CXX: clang++-20
     steps:
+      # Важно: checkout нашего репо в КОРЕНЬ workspace. Локальный action
+      # ./.github/actions/setup-tree резолвится ДО запуска composite, поэтому он
+      # должен существовать в $GITHUB_WORKSPACE при резолве. Сам composite при
+      # этом тоже реклонирует репо в realm/ (для чтения модулей/lua).
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       # ---- Подготовка дерева (общий composite action) ----
       - name: Setup tree (core + realm modules + mod-ale)
-        uses: ./realm/.github/actions/setup-tree
+        uses: ./.github/actions/setup-tree
 
       # ---- Кэш ccache (по компилятору/ветке/sha, как у AC) ----
       - name: Cache ccache
@@ -201,9 +209,14 @@ jobs:
     env:
       BOOST_ROOT: C:\local\boost_1_87_0
     steps:
+      # Root-checkout первого шага (локальный action должен быть в workspace).
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
       # ---- Подготовка дерева (общий composite action) ----
       - name: Setup tree (core + realm modules + mod-ale)
-        uses: ./realm/.github/actions/setup-tree
+        uses: ./.github/actions/setup-tree
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.13
