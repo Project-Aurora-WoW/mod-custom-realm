@@ -39,7 +39,7 @@ git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb
 #    внутренние API AzerothCore и несовместим с чужими ревизиями.
 #    Указать проверенный коммит mod-ale перед публикацией релиза.
 git clone https://github.com/azerothcore/mod-ale.git modules/mod-ale
-# cd modules/mod-ale && git checkout <commit-mod-ale>
+cd modules/mod-ale && git checkout 84b85cc55980dbf67d596f3d5cb34ded10c59102
 
 # 3. Модули реалма из этого репозитория (echo-*):
 #    скопировать modules/echo-* в azerothcore-wotlk/modules/

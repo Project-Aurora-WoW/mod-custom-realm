@@ -10,7 +10,7 @@
 | Файл | Назначение | Зависимости |
 |------|-----------|-------------|
 | `world/0001_world_baseline.sql` | НПС «Портальный Страж» (70001) + спавны в Штормграде и Оргриммаре | — |
-| `world/0002_campaign_progress.sql` | Таблица прогресса кампаний `realm_campaign_progress` | — |
+| `world/0002_campaign_progress.sql` | Таблица прогресса кампаний `realm_campaign_progress` **→ acore_characters** (её читают `Campaign*.lua` через `CharDBQuery` и `EchoCampaigns.cpp` через `CharacterDatabase`) | — |
 | `world/0003_cult_npcs.sql` | НПС Культа и сюжетные персонажи: Ахерон-Пустотник (70100), Культист (70101), Пленный маг (70110), Архимаг Элианна (70120) + спавны | 0001 |
 | `world/0004_campaign_reward_item.sql` | Предмет «Слеза Рассвета» (item 70001) — награда кампании 1 | 0001 |
 | `world/0005_campaign2_content.sql` | Контент кампании 2: Хора Шёпота (70500), Пророк Нал'кур (70130), Сквернозор (70140), Командир Валирия (70150), алтари (70103 ×4), культисты в Зул'Драке (×10), item 70004 «Клеймо Стражей Пустоты» | 0001, 0003 |
@@ -38,7 +38,8 @@
 
 ```bash
 mysql -u <user> -p acore_world < sql/world/0001_world_baseline.sql
-mysql -u <user> -p acore_world < sql/world/0002_campaign_progress.sql
+# 0002: realm_campaign_progress -> acore_characters:
+mysql -u <user> -p acore_characters < sql/world/0002_campaign_progress.sql
 mysql -u <user> -p acore_world < sql/world/0003_cult_npcs.sql
 mysql -u <user> -p acore_world < sql/world/0004_campaign_reward_item.sql
 mysql -u <user> -p acore_world < sql/world/0005_campaign2_content.sql
