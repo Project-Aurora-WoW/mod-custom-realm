@@ -100,7 +100,12 @@ function StoreHandler.UpdateCurrencies(player)
 		end
 
 		if(currencyTypeText == "SERVER_HANDLED") then
-			-- Кастомные валюты (донат/голосование) — добавить сюда
+			-- SERVER_HANDLED: очки Возмездия (realm_pvp_stats.tokens_earned, acore_characters).
+			-- Валидация против SQL-инъекции не нужна: guid — число из этой сессии.
+			local q = CharDBQuery("SELECT `tokens_earned` FROM `realm_pvp_stats` WHERE `guid` = " .. player:GetGUIDLow())
+			if(q) then
+				val = q:GetUInt32(0)
+			end
 		end
 
 		-- Ограничение отображения для фрейма
@@ -171,6 +176,16 @@ function SHOP_UI.DeductCurrency(player, currencyId, amount)
 
 	-- Прочие валюты — своя интеграция
 	if(CURRENCY_TYPES[currencyType] == "SERVER_HANDLED") then
+		local guid = player:GetGUIDLow()
+		-- Проверка баланса и списание из realm_pvp_stats.tokens_earned (acore_characters).
+		local q = CharDBQuery("SELECT `tokens_earned` FROM `realm_pvp_stats` WHERE `guid` = " .. guid)
+		if(q and q:GetUInt32(0) >= amount) then
+			local balance = q:GetUInt32(0)
+			CharDBExecute("UPDATE `realm_pvp_stats` SET `tokens_earned` = " .. (balance - amount) .. " WHERE `guid` = " .. guid)
+			return true
+		end
+		player:SendAreaTriggerMessage("|cFFFF0000" .. S(player, "insufficientFunds") .. " " .. currencyName .. "|r")
+		player:PlayDirectSound(GetSoundEffect("notEnoughMoney", player:GetRace(), player:GetGender()), player)
 		return false
 	end
 

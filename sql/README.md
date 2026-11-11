@@ -32,6 +32,8 @@
 | `world/0021_public_scripts.sql` | Системы public-scripts (JadaDev): таблицы наград за наигранное время `realm_played_time_rewards{,_claimed}` (**acore_characters**) + НПС «Страж Перемен» (70174, Даларан, guid 7000174) — смена фракции за Жетоны Эха (**acore_world**). ⚠️ Часть acore_world написана по схеме WotLK (`modelid1`, `dmgschool`, `spawndist`, `creature.id`) — на AzerothCore упадёт; рабочий НПС создаёт `0022` | 0009 |
 | `world/0022_fix_release_blockers.sql` | Релизные фиксы: НПС «Страж Перемен» (70174) по схеме AC + модель 15279 + спавн 7000174; идемпотентный досозд спавна PvP-шопа 70170 (**acore_world**) | 0010, 0021 |
 | `world/0024_tier_b.sql` | Tier B (eluna-scripts): НПС 70175 «Рунный Оружейник» (Weapon Master), 70176 «Хранитель Тиражей» (Lottery), 70177 «Вестник Забвения» (Skip DK Starter), 70178 «Алтарь Ордена» (Prayer) + таблицы `realm_lottery{,_tickets}` (**acore_characters**); гаиды 7000175–7000178 | 0009 (жетоны), 0022 (схема НПС) |
+| `world/0026_store_expansion.sql` | Расширение AIO-магазина: валюта id 3 «Очки Возмездия» (SERVER_HANDLED, из `realm_pvp_stats.tokens_earned`), VIP-категория id 9 (`requiredRank=4`), маунты за жетоны (услуги 10–12); потребляет `Store_Server.lua` (SERVER_HANDLED) | 0020, 0009, 0015/0021 |
+| `world/0027_pvp_store.sql` | Перенос PvP-шопа в AIO-магазин: категория id 10 «Снабжение Ордена» + услуги 20–25 (тип 1, за Жетоны Эха); НПС-шоп (`30_PvpShop.lua`) остаётся fallback | 0020, 0009 |
 | `world/0025_classless.sql` | Classless-арка К5 (минимальный порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; скрипт `27_Classless.lua` | — |
 
 ---
@@ -81,6 +83,10 @@ mysql -u <user> -p acore_world < sql/world/0021_public_scripts.sql
 mysql -u <user> -p acore_world < sql/world/0022_fix_release_blockers.sql
 # 0025: character_classless → acore_characters (Classless арка К5):
 mysql -u <user> -p acore_characters < sql/world/0025_classless.sql
+# 0026: расширение магазина (realm_store_* → acore_world):
+mysql -u <user> -p acore_world < sql/world/0026_store_expansion.sql
+# 0027: перенос PvP-шопа в AIO-магазин (realm_store_* → acore_world):
+mysql -u <user> -p acore_world < sql/world/0027_pvp_store.sql
 ```
 
 После применения выполните в консоли `worldserver`:
