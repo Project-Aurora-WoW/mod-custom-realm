@@ -409,17 +409,29 @@ Lore.npc_lines = {
 
 --- Стадия истории игрока: 0..5 — по прогрессу кампаний.
 -- 0 — кампании не начаты; 1..4 — завершена кампания N; 5 — завершены все.
--- Не бросает ошибок: при отсутствии БД/таблицы возвращает 0.
+-- Таблица realm_campaign_progress встречается в разных развёртываниях
+-- то в characters, то в world (см. docs/deployment.md), поэтому пробуем
+-- сначала CharDBQuery, затем WorldDBQuery. Ошибок не бросает.
+local function QueryProgress(player)
+    local REGc = AzerothEchoCampaigns
+    local tableName = (REGc and REGc.meta and REGc.meta.db_table) or "realm_campaign_progress"
+    local sql = string.format(
+        "SELECT campaign_id, completed FROM %s WHERE guid = %d AND completed = 1",
+        tableName, player:GetGUIDLow()
+    )
+    local q = CharDBQuery(sql)
+    if not q and WorldDBQuery then
+        q = WorldDBQuery(sql)
+    end
+    return q
+end
+
+--- Стадия истории игрока, см. выше. Возвращает 0 при любой проблеме.
 function Lore.Stage(player)
     if not player then
         return 0
     end
-    local REGc = AzerothEchoCampaigns
-    local tableName = (REGc and REGc.meta and REGc.meta.db_table) or "realm_campaign_progress"
-    local q = CharDBQuery(string.format(
-        "SELECT campaign_id, completed FROM %s WHERE guid = %d AND completed = 1",
-        tableName, player:GetGUIDLow()
-    ))
+    local q = QueryProgress(player)
     if not q then
         return 0
     end
@@ -432,7 +444,6 @@ function Lore.Stage(player)
     until not q:NextRow()
     return best
 end
-
 --- Видима ли секция на данной стадии.
 function Lore.IsVisible(section, stage)
     if not section then
@@ -501,8 +512,8 @@ function Lore.MenuEntries(stage)
     return out
 end
 
---- Компактная сериализация каталога для аддона (prefix AECHOLORE).
--- Формат: "stage:0|v:2|s:id~title~line1^line2...;..."
+--- Компактная сериализация каталога (без разбивки на части).
+-- Формат: "stage:N|v:VER|s:id~title~line1^line2|..."
 function Lore.Serialize(stage)
     local parts = {}
     parts[#parts + 1] = "stage:" .. tostring(stage or 0)
@@ -517,4 +528,45 @@ function Lore.Serialize(stage)
     return table.concat(parts, "|")
 end
 
+--- Разбить каталог на части, безопасные для addon-сообщения 3.3.5a.
+-- Одно addon-сообщение ограничено ~255 байтами, поэтому каталог
+-- режется по границам секций (секция никогда не дробится между частями).
+-- Каждая часть: "LORE:<seq>/<total>|<payload>".
+-- Возвращает массив строк.
+function Lore.SerializeChunks(stage, maxBytes)
+    maxBytes = maxBytes or 200
+
+    -- Сначала каждая секция — отдельная строка, затем упаковка в части
+    local entries = {}
+    local head = "stage:" .. tostring(stage or 0) .. "|v:" .. tostring(Lore.meta.version)
+    for _, s in ipairs(Lore.VisibleSections(stage)) do
+        local lines = {}
+        for _, line in ipairs(s.lines or {}) do
+            lines[#lines + 1] = line
+        end
+        entries[#entries + 1] = "s:" .. s.id .. "~" .. s.title .. "~" .. table.concat(lines, "^")
+    end
+
+    local chunks = {}
+    local current = head
+    for _, entry in ipairs(entries) do
+        -- Секция сама по себе больше лимита — отправляем отдельной частью
+        -- (аддон склеит по seq/total, обрезка на клиенте не потребуется,
+        -- т.к. имена и текст короткие; при необходимости увеличьте лимит).
+        local candidate = current .. "|" .. entry
+        if #current > #head and #candidate > maxBytes then
+            chunks[#chunks + 1] = current
+            current = head .. "|" .. entry
+        else
+            current = candidate
+        end
+    end
+    chunks[#chunks + 1] = current
+
+    local total = #chunks
+    for i = 1, total do
+        chunks[i] = "LORE:" .. i .. "/" .. total .. "|" .. chunks[i]
+    end
+    return chunks
+end
 print("[EchoOfTheVoid] 00_LoreRegistry.ext загружен (секций лора: " .. #Lore.sections .. ").")

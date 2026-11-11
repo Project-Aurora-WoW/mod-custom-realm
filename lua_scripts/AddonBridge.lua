@@ -100,9 +100,14 @@ function AE_SendProgress(player)
     -- PvP-статистика отдельным префиксом (таблица может отсутствовать
     -- до первого PvP-килла — шлём нули, аддон отобразит корректно)
     SendAddonMessage("AECHOPVP", BuildPvpPayload(player), "WHISPER", player)
-    -- Лор-каталог по стадии истории (00_LoreRegistry.ext)
-    if AzerothEchoLore and AzerothEchoLore.Serialize then
-        SendAddonMessage("AECHOLORE", AzerothEchoLore.Serialize(AzerothEchoLore.Stage(player)), "WHISPER", player)
+    -- Лор-каталог по стадии истории (00_LoreRegistry.ext).
+    -- Каталог не влезает в одно addon-сообщение 3.3.5a (~255 байт),
+    -- поэтому отправляется частями "LORE:<seq>/<total>|<payload>".
+    if AzerothEchoLore and AzerothEchoLore.SerializeChunks then
+        local chunks = AzerothEchoLore.SerializeChunks(AzerothEchoLore.Stage(player))
+        for _, chunk in ipairs(chunks) do
+            SendAddonMessage("AECHOLORE", chunk, "WHISPER", player)
+        end
     end
 end
 
