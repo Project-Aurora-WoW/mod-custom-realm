@@ -22,8 +22,17 @@
 #include "Log.h"
 #include "World.h"
 #include "SpellMgr.h"
+#include "Tokenize.h"
+#include "StringFormat.h"
 #include <vector>
 #include <cstring>
+
+static std::string TrimStr(std::string s)
+{
+    std::string::size_type b = s.find_first_not_of(" \t\r\n");
+    std::string::size_type e = s.find_last_not_of(" \t\r\n");
+    return b == std::string::npos ? std::string() : s.substr(b, e - b + 1);
+}
 
 namespace
 {
@@ -36,7 +45,7 @@ namespace
 
     char const* GetLocale(Player const* player)
     {
-        return player && player->GetDbcLocale() == LOCALE_ruRU ? "ru" : "en";
+        return player && player->GetSession()->GetSessionDbcLocale() == LOCALE_ruRU ? "ru" : "en";
     }
 
     class EchoStartupWorldscript : public WorldScript
@@ -46,16 +55,16 @@ namespace
 
         void OnAfterConfigLoad(bool /*reload*/) override
         {
-            enable = sConfigMgr->GetBoolDefault("EchoStartup.Enable", true);
-            newbieMaxPlayedTimeSecs = sConfigMgr->GetIntDefault("EchoStartup.NewbieMaxPlayedTimeSecs", 60);
-            minLevel = sConfigMgr->GetIntDefault("EchoStartup.MinLevel", 0);
-            buffSpell = sConfigMgr->GetIntDefault("EchoStartup.BuffSpell", 58452);
+            enable = sConfigMgr->GetOption<bool>("EchoStartup.Enable", true);
+            newbieMaxPlayedTimeSecs = sConfigMgr->GetOption<uint32>("EchoStartup.NewbieMaxPlayedTimeSecs", 60);
+            minLevel = sConfigMgr->GetOption<uint32>("EchoStartup.MinLevel", 0);
+            buffSpell = sConfigMgr->GetOption<uint32>("EchoStartup.BuffSpell", 58452);
 
             startupItems.clear();
-            std::string list = sConfigMgr->GetStringDefault("EchoStartup.Items", "33470:3,33475:3,43005:5,70005:2");
-            for (std::string_view token : Acore::StringSplit(list, ','))
+            std::string list = sConfigMgr->GetOption<std::string>("EchoStartup.Items", "33470:3,33475:3,43005:5,70005:2");
+            for (std::string_view token : Acore::Tokenize(list, ',', false))
             {
-                std::string pair = std::string(Acore::Trim(token));
+                std::string pair = std::string(TrimStr(std::string(token)));
                 auto colon = pair.find(':');
                 if (colon == std::string::npos)
                     continue;
@@ -78,7 +87,7 @@ namespace
         EchoStartupPlayerscript() : PlayerScript("EchoStartupPlayerscript") { }
 
         // Первый вход: детект новичка по played time
-        void OnLogin(Player* player) override
+        void OnPlayerLogin(Player* player) override
         {
             if (!enable || !player)
                 return;

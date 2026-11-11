@@ -29,6 +29,8 @@
 #include "Config.h"
 #include "Log.h"
 #include "World.h"
+#include "GameTime.h"
+#include "Chat.h"
 #include "Common.h"
 #include <unordered_map>
 #include <cstring>
@@ -71,7 +73,7 @@ namespace
     // Локаль игрока: "ru" | "en"
     char const* GetLocale(Player const* player)
     {
-        return player && player->GetDbcLocale() == LOCALE_ruRU ? "ru" : "en";
+        return player && player->GetSession()->GetSessionDbcLocale() == LOCALE_ruRU ? "ru" : "en";
     }
 
     class EchoPvpWorldscript : public WorldScript
@@ -81,18 +83,18 @@ namespace
 
         void OnAfterConfigLoad(bool /*reload*/) override
         {
-            enable = sConfigMgr->GetBoolDefault("EchoPvp.Enable", true);
-            pvpZoneId = sConfigMgr->GetIntDefault("EchoPvp.ZoneId", 4080);
-            zoneTokenKill = sConfigMgr->GetIntDefault("EchoPvp.ZoneTokenKill", 1);
-            minLevelDiff = sConfigMgr->GetIntDefault("EchoPvp.MinLevelDiff", 10);
-            farmCooldownSecs = sConfigMgr->GetIntDefault("EchoPvp.FarmCooldownSecs", 300);
-            enableStreakAnnounce = sConfigMgr->GetBoolDefault("EchoPvp.EnableStreakAnnounce", true);
-            streakThresholds[0] = sConfigMgr->GetIntDefault("EchoPvp.StreakThreshold1", 3);
-            streakThresholds[1] = sConfigMgr->GetIntDefault("EchoPvp.StreakThreshold2", 5);
-            streakThresholds[2] = sConfigMgr->GetIntDefault("EchoPvp.StreakThreshold3", 10);
-            revengeStreakMin = sConfigMgr->GetIntDefault("EchoPvp.RevengeStreakMin", 5);
-            revengeDamageBonusPct = sConfigMgr->GetIntDefault("EchoPvp.RevengeDamageBonusPct", 15);
-            revengeDurationSecs = sConfigMgr->GetIntDefault("EchoPvp.RevengeDurationSecs", 120);
+            enable = sConfigMgr->GetOption<bool>("EchoPvp.Enable", true);
+            pvpZoneId = sConfigMgr->GetOption<uint32>("EchoPvp.ZoneId", 4080);
+            zoneTokenKill = sConfigMgr->GetOption<uint32>("EchoPvp.ZoneTokenKill", 1);
+            minLevelDiff = sConfigMgr->GetOption<uint32>("EchoPvp.MinLevelDiff", 10);
+            farmCooldownSecs = sConfigMgr->GetOption<uint32>("EchoPvp.FarmCooldownSecs", 300);
+            enableStreakAnnounce = sConfigMgr->GetOption<bool>("EchoPvp.EnableStreakAnnounce", true);
+            streakThresholds[0] = sConfigMgr->GetOption<uint32>("EchoPvp.StreakThreshold1", 3);
+            streakThresholds[1] = sConfigMgr->GetOption<uint32>("EchoPvp.StreakThreshold2", 5);
+            streakThresholds[2] = sConfigMgr->GetOption<uint32>("EchoPvp.StreakThreshold3", 10);
+            revengeStreakMin = sConfigMgr->GetOption<uint32>("EchoPvp.RevengeStreakMin", 5);
+            revengeDamageBonusPct = sConfigMgr->GetOption<uint32>("EchoPvp.RevengeDamageBonusPct", 15);
+            revengeDurationSecs = sConfigMgr->GetOption<uint32>("EchoPvp.RevengeDurationSecs", 120);
 
             LOG_INFO("module.echo-pvp",
                 "echo-pvp загружен: enable=%s zone=%u tokenKill=%u minLvlDiff=%u farmCd=%us streaks=%u/%u/%u revenge=%u(+%u%%/%us)",
@@ -113,7 +115,7 @@ namespace
             ApplyRevenge(attacker, damage);
         }
 
-        void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage) override
+        void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage, SpellInfo const* /*spellInfo*/) override
         {
             if (damage <= 0)
                 return;
@@ -133,7 +135,7 @@ namespace
                 return;
 
             auto it = revengeUntil.find(p->GetGUID().GetCounter());
-            if (it == revengeUntil.end() || sWorld->GetGameTime() >= it->second)
+            if (it == revengeUntil.end() || GameTime::GetGameTime().count() >= it->second)
                 return;
 
             damage = uint32(damage * (100 + revengeDamageBonusPct) / 100);
@@ -146,12 +148,12 @@ namespace
         EchoPvpPlayerscript() : PlayerScript("EchoPvpPlayerscript") { }
 
         // Зачёт PvP-киллов: жетоны в зоне, серии, месть
-        void OnPVPKill(Player* killer, Player* victim) override
+        void OnPlayerPVPKill(Player* killer, Player* victim) override
         {
             if (!enable || !killer || !victim || killer == victim)
                 return;
 
-            time_t now = sWorld->GetGameTime();
+            time_t now = GameTime::GetGameTime().count();
             uint32 killerGuid = killer->GetGUID().GetCounter();
             uint32 victimGuid = victim->GetGUID().GetCounter();
 
@@ -209,7 +211,7 @@ namespace
                                     : "|cff9b59b6[Echo of the Void]|r " + name + " — LEGEND OF THE BATTLEFIELD!";
                                 break;
                         }
-                        sWorld->SendWorldText("%s", msg.c_str());
+                        ChatHandler(killer->GetSession()).SendWorldText(msg);
                     }
                 }
             }
@@ -227,7 +229,7 @@ namespace
             }
         }
 
-        void OnPlayerRespawn(Player* player) override
+        void OnPlayerMapChanged(Player* player) override
         {
             // «Месть Эха», фаза 2: активация баффа при возрождении
             if (!enable || revengeStreakMin == 0 || !player)
@@ -240,7 +242,7 @@ namespace
 
             uint32 victimStreak = it->second;
             pendingRevenge.erase(it);
-            revengeUntil[guid] = sWorld->GetGameTime() + revengeDurationSecs;
+            revengeUntil[guid] = GameTime::GetGameTime().count() + revengeDurationSecs;
 
             if (strcmp(GetLocale(player), "ru") == 0)
                 player->SendSystemMessage("|cffc0392b[Месть Эха]|r Пустота помнит ваши победы. Ярость павших — с вами!");
@@ -251,13 +253,13 @@ namespace
                 guid, victimStreak, revengeDamageBonusPct, revengeDurationSecs);
         }
 
-        void OnLogin(Player* player) override
+        void OnPlayerLogin(Player* player) override
         {
             // Ядровая копия серии сбрасывается при входе (истина — в realm_pvp_stats)
             playerStreaks[player->GetGUID().GetCounter()] = 0;
         }
 
-        void OnLogout(Player* player) override
+        void OnPlayerLogout(Player* player) override
         {
             uint32 guid = player->GetGUID().GetCounter();
             playerStreaks.erase(guid);

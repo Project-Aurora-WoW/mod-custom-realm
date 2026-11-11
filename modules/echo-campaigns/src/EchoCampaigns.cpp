@@ -6,7 +6,7 @@
 //   1. Команды игрока в ядре: .ae help|status|tokens|riffs|pvp|events
 //      (аналоги команд аддона AzerothEcho; читают прогресс из
 //      realm_campaign_progress и realm_pvp_stats).
-//   2. GM-команды: .aecampaign list|status|set|complete|reset|tokens
+//   2. GM-команды: .aecampaign list|status|set|complete|RESET_COLOR|tokens
 //   3. Опция источника команд (EchoCampaigns.CommandSource: both/core/lua)
 //      — позволяет выбрать, кто обрабатывает команды: ядро или Lua.
 //   4. Контроль порядка загрузки подсистем реалма (WorldScript::OnStartup):
@@ -24,6 +24,9 @@
 #include "Config.h"
 #include "Log.h"
 #include "WorldSession.h"
+#include "ChatCommand.h"
+
+using namespace Acore::ChatCommands;
 
 namespace
 {
@@ -35,10 +38,10 @@ namespace
     // ============================================================
     // Утилиты вывода (кириллица — UTF-8 в чат)
     // ============================================================
-    constexpr const char* TAG = "|cff9b59b6[Эхо Пустоты]|r";
-    constexpr const char* ORDER = "|cff5dade2";
-    constexpr const char* VOID = "|cff8e44ad";
-    constexpr const char* RESET = "|r";
+    constexpr const char* TAG_COLOR = "|cff9b59b6[Эхо Пустоты]|r";
+    constexpr const char* ORDER_COLOR = "|cff5dade2";
+    constexpr const char* VOID_COLOR = "|cff8e44ad";
+    constexpr const char* RESET_COLOR = "|r";
 
     void SendLine(Player* player, std::string const& text)
     {
@@ -118,22 +121,22 @@ namespace
     // ============================================================
     void CmdHelp(Player* player)
     {
-        SendLine(player, std::string(TAG) + " == Команды Эха Пустоты (ядро) ==");
-        SendLine(player, std::string(TAG) + " " ORDER ".ae status|r — прогресс кампаний");
-        SendLine(player, std::string(TAG) + " " ORDER ".ae tokens|r — баланс Жетонов Эха");
-        SendLine(player, std::string(TAG) + " " ORDER ".ae pvp|r — PvP-статистика");
-        SendLine(player, std::string(TAG) + " " ORDER ".ae events|r — расписание ивентов");
-        SendLine(player, std::string(TAG) + " " ORDER ".ae rifts|r — карта разломов (аддон)");
-        SendLine(player, std::string(TAG) + " Аддон: /ae — панель, /ae rifts — карта.");
+        SendLine(player, std::string(TAG_COLOR) + " == Команды Эха Пустоты (ядро) ==");
+        SendLine(player, std::string(TAG_COLOR) + " " + std::string(ORDER_COLOR) + ".ae status|r — прогресс кампаний");
+        SendLine(player, std::string(TAG_COLOR) + " " + std::string(ORDER_COLOR) + ".ae tokens|r — баланс Жетонов Эха");
+        SendLine(player, std::string(TAG_COLOR) + " " + std::string(ORDER_COLOR) + ".ae pvp|r — PvP-статистика");
+        SendLine(player, std::string(TAG_COLOR) + " " + std::string(ORDER_COLOR) + ".ae events|r — расписание ивентов");
+        SendLine(player, std::string(TAG_COLOR) + " " + std::string(ORDER_COLOR) + ".ae rifts|r — карта разломов (аддон)");
+        SendLine(player, std::string(TAG_COLOR) + " Аддон: /ae — панель, /ae rifts — карта.");
     }
 
     void CmdStatus(Player* player)
     {
-        SendLine(player, std::string(TAG) + " == Прогресс кампаний (ядро) ==");
+        SendLine(player, std::string(TAG_COLOR) + " == Прогресс кампаний (ядро) ==");
         for (auto const& c : CAMPAIGNS)
         {
             auto p = GetProgress(player->GetGUID().GetCounter(), c.id);
-            std::string line = std::string(TAG) + " " + c.name + " — ";
+            std::string line = std::string(TAG_COLOR) + " " + c.name + " — ";
             if (p.completed)
                 line += "ЗАВЕРШЕНА";
             else if (p.chapter == 0)
@@ -147,8 +150,8 @@ namespace
     void CmdTokens(Player* player)
     {
         uint32 tokens = player->GetItemCount(70005);
-        SendLine(player, std::string(TAG) + " Баланс: " VOID + std::to_string(tokens) +
-                 " Жетонов Эха" RESET " (ивенты, PvP-зона; трата — Интендант Ордена).");
+        SendLine(player, std::string(TAG_COLOR) + " Баланс: " + std::string(VOID_COLOR) + std::to_string(tokens) +
+                 " Жетонов Эха" + std::string(RESET_COLOR) + " (ивенты, PvP-зона; трата — Интендант Ордена).");
     }
 
     void CmdPvp(Player* player)
@@ -156,24 +159,24 @@ namespace
         auto result = CharacterDatabase.Query(
             "SELECT kills, deaths, streak, best_streak, zone_kills FROM realm_pvp_stats WHERE guid = {}",
             player->GetGUID().GetCounter());
-        SendLine(player, std::string(TAG) + " == PvP-статистика (ядро) ==");
+        SendLine(player, std::string(TAG_COLOR) + " == PvP-статистика (ядро) ==");
         if (result)
         {
             auto f = result->Fetch();
-            SendLine(player, std::string(TAG) + " Киллы: " + std::to_string(f[0].Get<uint32>()) +
+            SendLine(player, std::string(TAG_COLOR) + " Киллы: " + std::to_string(f[0].Get<uint32>()) +
                      ", смерти: " + std::to_string(f[1].Get<uint32>()) +
                      ", серия: " + std::to_string(f[2].Get<uint32>()) +
                      " (лучшая " + std::to_string(f[3].Get<uint32>()) + ")" +
                      ", в зоне: " + std::to_string(f[4].Get<uint32>()));
         }
         else
-            SendLine(player, std::string(TAG) + " Статистика пуста. Первая кровь ждёт в Драконьем Погосте!");
+            SendLine(player, std::string(TAG_COLOR) + " Статистика пуста. Первая кровь ждёт в Драконьем Погосте!");
     }
 
     void CmdEvents(Player* player)
     {
-        SendLine(player, std::string(TAG) + " Ивенты: Шторм Пустоты (каждые 3 ч), Кровавая Луна Культа (каждые 6 ч).");
-        SendLine(player, std::string(TAG) + " Статус ивентов: .aeevent status (Lua-система ивентов).");
+        SendLine(player, std::string(TAG_COLOR) + " Ивенты: Шторм Пустоты (каждые 3 ч), Кровавая Луна Культа (каждые 6 ч).");
+        SendLine(player, std::string(TAG_COLOR) + " Статус ивентов: .aeevent status (Lua-система ивентов).");
     }
 
     // ============================================================
@@ -181,9 +184,9 @@ namespace
     // ============================================================
     void GmList(Player* player)
     {
-        SendLine(player, std::string(TAG) + " == Реестр кампаний (ядро) ==");
+        SendLine(player, std::string(TAG_COLOR) + " == Реестр кампаний (ядро) ==");
         for (auto const& c : CAMPAIGNS)
-            SendLine(player, std::string(TAG) + " [" + std::to_string(c.id) + "] " + c.name +
+            SendLine(player, std::string(TAG_COLOR) + " [" + std::to_string(c.id) + "] " + c.name +
                      " — глав: " + std::to_string(c.chapters) +
                      ", вход: " + (c.reqToken ? ("item " + std::to_string(c.reqToken)) : "—"));
     }
@@ -194,11 +197,11 @@ namespace
             : ObjectAccessor::FindPlayerByName(targetName);
         if (!target)
         {
-            SendLine(player, std::string(TAG) + " Игрок не найден или не в сети.");
+            SendLine(player, std::string(TAG_COLOR) + " Игрок не найден или не в сети.");
             return;
         }
         auto p = GetProgress(target->GetGUID().GetCounter(), campId);
-        SendLine(player, std::string(TAG) + " Кампания " + std::to_string(campId) +
+        SendLine(player, std::string(TAG_COLOR) + " Кампания " + std::to_string(campId) +
                  " [" + target->GetName() + "]: глава " + std::to_string(p.chapter) +
                  ", завершена: " + (p.completed ? "да" : "нет"));
     }
@@ -206,7 +209,7 @@ namespace
     void GmSet(Player* player, uint32 campId, uint32 chapter)
     {
         SetProgress(player->GetGUID().GetCounter(), campId, chapter, false);
-        SendLine(player, std::string(TAG) + " Кампания " + std::to_string(campId) +
+        SendLine(player, std::string(TAG_COLOR) + " Кампания " + std::to_string(campId) +
                  ": глава = " + std::to_string(chapter));
         LogCampaignAction(player->GetGUID().GetCounter(), campId, chapter, "gm_core_set", "");
     }
@@ -217,10 +220,9 @@ namespace
         SetProgress(player->GetGUID().GetCounter(), campId, info->chapters, true);
         // Жетоны за завершение (баланс реалма)
         player->AddItem(70005, 3);
-        SendLine(player, std::string(TAG) + " Кампания " + std::to_string(campId) +
+        SendLine(player, std::string(TAG_COLOR) + " Кампания " + std::to_string(campId) +
                  " завершена принудительно (+3 жетона).");
-        SendWorldText(std::string(TAG).c_str(), " ", player->GetName().c_str(),
-                      " завершил кампанию «", info->name.c_str(), "»!", nullptr);
+        ChatHandler(player->GetSession()).SendWorldText(Acore::StringFormat("{} {}{} {} «{}»!", TAG_COLOR, player->GetName(), "", "", info->name));
         LogCampaignAction(player->GetGUID().GetCounter(), campId, info->chapters, "gm_core_complete", info->name);
     }
 
@@ -230,7 +232,7 @@ namespace
         {
             for (auto const& c : CAMPAIGNS)
                 ResetProgress(player->GetGUID().GetCounter(), c.id);
-            SendLine(player, std::string(TAG) + " Прогресс всех кампаний сброшен.");
+            SendLine(player, std::string(TAG_COLOR) + " Прогресс всех кампаний сброшен.");
             LogCampaignAction(player->GetGUID().GetCounter(), 0, 0, "gm_core_reset", "all");
         }
         else
@@ -239,7 +241,7 @@ namespace
             if (campId >= 1 && campId <= 4)
             {
                 ResetProgress(player->GetGUID().GetCounter(), campId);
-                SendLine(player, std::string(TAG) + " Кампания " + std::to_string(campId) + " сброшена.");
+                SendLine(player, std::string(TAG_COLOR) + " Кампания " + std::to_string(campId) + " сброшена.");
                 LogCampaignAction(player->GetGUID().GetCounter(), campId, 0, "gm_core_reset", "");
             }
         }
@@ -256,33 +258,30 @@ namespace
         // AzerothCore: чат-команды через OnPlayerChat хук отсутствует;
         // используем CommandScript->GetOnlineCommands для slash-режима
         // и дополнительно перехватываем чат через WorldScript::OnChat.
-        std::vector<ChatCommand> GetCommands() const override
+        std::vector<Acore::ChatCommands::ChatCommandBuilder> GetCommands() const override
         {
-            static std::vector<ChatCommand> aeSubcommands =
+            static std::vector<Acore::ChatCommands::ChatCommandBuilder> aeSubcommands =
             {
-                { "status",  SEC_PLAYER,     false, &HandleAeStatus,   "" },
-                { "tokens",  SEC_PLAYER,     false, &HandleAeTokens,   "" },
-                { "pvp",     SEC_PLAYER,     false, &HandleAePvp,      "" },
-                { "events",  SEC_PLAYER,     false, &HandleAeEvents,   "" },
-                { "help",    SEC_PLAYER,     false, &HandleAeHelp,     "" },
-                { "",        SEC_PLAYER,     false, &HandleAeHelp,     "" },
+                { "status",  HandleAeStatus,   AcoreStrings(), SEC_PLAYER,     Console::No },
+                { "tokens",  HandleAeTokens,   AcoreStrings(), SEC_PLAYER,     Console::No },
+                { "pvp",     HandleAePvp,      AcoreStrings(), SEC_PLAYER,     Console::No },
+                { "events",  HandleAeEvents,   AcoreStrings(), SEC_PLAYER,     Console::No },
+                { "help",    HandleAeHelp,     AcoreStrings(), SEC_PLAYER,     Console::No },
             };
-            static std::vector<ChatCommand> aeCampaignSubcommands =
+            static std::vector<Acore::ChatCommands::ChatCommandBuilder> aeCampaignSubcommands =
             {
-                { "list",     SEC_MODERATOR, true, &HandleAcList,     "" },
-                { "status",   SEC_MODERATOR, true, &HandleAcStatus,   "" },
-                { "set",      SEC_GAMEMASTER, true, &HandleAcSet,     "" },
-                { "complete", SEC_GAMEMASTER, true, &HandleAcComplete, "" },
-                { "reset",    SEC_GAMEMASTER, true, &HandleAcReset,    "" },
+                { "list",     HandleAcList,     AcoreStrings(), SEC_MODERATOR,  Console::Yes },
+                { "status",   HandleAcStatus,   AcoreStrings(), SEC_MODERATOR,  Console::Yes },
+                { "set",      HandleAcSet,      AcoreStrings(), SEC_GAMEMASTER, Console::Yes },
+                { "complete", HandleAcComplete, AcoreStrings(), SEC_GAMEMASTER, Console::Yes },
+                { "reset",    HandleAcReset,    AcoreStrings(), SEC_GAMEMASTER, Console::Yes },
             };
-            static std::vector<ChatCommand> commandTable =
+            static std::vector<Acore::ChatCommands::ChatCommandBuilder> commandTable =
             {
-                { "ae",         SEC_PLAYER,     false, nullptr, "", std::move(aeSubcommands) },
-                { "aecampaign", SEC_MODERATOR,  true,  nullptr, "", std::move(aeCampaignSubcommands) },
-            };
-            return commandTable;
+                { "ae",         aeSubcommands },
+                { "aecampaign", aeCampaignSubcommands },
+            };            return commandTable;
         }
-
         static bool HandleAeStatus(ChatHandler* handler, char const* /*args*/)
         { CmdStatus(handler->GetSession()->GetPlayer()); return true; }
         static bool HandleAeTokens(ChatHandler* handler, char const* /*args*/)
@@ -303,7 +302,7 @@ namespace
             if (sscanf(args, "%u %63s", &campId, targetName) >= 1)
                 GmStatus(handler->GetSession()->GetPlayer(), campId, targetName);
             else
-                handler->PSendSysMessage("%s Формат: .aecampaign status <id> [игрок]", TAG);
+                handler->PSendSysMessage("%s Формат: .aecampaign status <id> [игрок]", TAG_COLOR);
             return true;
         }
 
@@ -313,7 +312,7 @@ namespace
             if (sscanf(args, "%u %u", &campId, &chapter) == 2)
                 GmSet(handler->GetSession()->GetPlayer(), campId, chapter);
             else
-                handler->PSendSysMessage("%s Формат: .aecampaign set <id> <глава>", TAG);
+                handler->PSendSysMessage("%s Формат: .aecampaign set <id> <глава>", TAG_COLOR);
             return true;
         }
 
@@ -323,7 +322,7 @@ namespace
             if (sscanf(args, "%u", &campId) == 1)
                 GmComplete(handler->GetSession()->GetPlayer(), campId);
             else
-                handler->PSendSysMessage("%s Формат: .aecampaign complete <id>", TAG);
+                handler->PSendSysMessage("%s Формат: .aecampaign complete <id>", TAG_COLOR);
             return true;
         }
 
@@ -332,7 +331,7 @@ namespace
             if (args && *args)
                 GmReset(handler->GetSession()->GetPlayer(), args);
             else
-                handler->PSendSysMessage("%s Формат: .aecampaign reset <id|all>", TAG);
+                handler->PSendSysMessage("%s Формат: .aecampaign reset <id|all>", TAG_COLOR);
             return true;
         }
     };
@@ -347,9 +346,9 @@ namespace
 
         void OnAfterConfigLoad(bool /*reload*/) override
         {
-            commandSource  = sConfigMgr->GetStringDefault("EchoCampaigns.CommandSource", "both");
-            enableLogging  = sConfigMgr->GetBoolDefault("EchoCampaigns.EnableLogging", true);
-            checkLoadOrder = sConfigMgr->GetBoolDefault("EchoCampaigns.CheckLoadOrder", true);
+            commandSource  = sConfigMgr->GetOption<std::string>("EchoCampaigns.CommandSource", "both");
+            enableLogging  = sConfigMgr->GetOption<bool>("EchoCampaigns.EnableLogging", true);
+            checkLoadOrder = sConfigMgr->GetOption<bool>("EchoCampaigns.CheckLoadOrder", true);
 
             LOG_INFO("module.echo-campaigns",
                 "echo-campaigns: CommandSource={}, Logging={}, LoadOrderCheck={}",
@@ -390,3 +389,12 @@ void AddEchoCampaignsScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }
+
+
+
+
+
+
+
+
+

@@ -27,6 +27,9 @@
 #include "Config.h"
 #include "Log.h"
 #include "World.h"
+#include "GameTime.h"
+#include "Tokenize.h"
+#include "StringFormat.h"
 #include "Random.h"
 #include "StringFormat.h"
 #include "Common.h"
@@ -41,6 +44,13 @@
 // по алфавиту). Реализация — modules/echo-economy/src/EchoEconomy.cpp.
 extern void EchoEconomy_EnqueueTokenReward(Player* player, std::string const& rewardKey,
                                            uint32 tokens, std::string const& reason);
+
+static std::string TrimStr(std::string s)
+{
+    std::string::size_type b = s.find_first_not_of(" \t\r\n");
+    std::string::size_type e = s.find_last_not_of(" \t\r\n");
+    return b == std::string::npos ? std::string() : s.substr(b, e - b + 1);
+}
 
 namespace
 {
@@ -66,6 +76,8 @@ namespace
     //   ночь (18/6-окно)            -> nightDamageScalar
     //   пик (22:00–04:00)           -> nightDamageScalar * midnightBonusScalar
     // ------------------------------------------------------------
+    bool IsNight(uint32 hour);
+
     float NightScalarForHour(uint32 hour)
     {
         if (!IsNight(hour))
@@ -81,7 +93,7 @@ namespace
     // Текущий час игровых суток (0–23) из мирового времени
     uint32 CurrentHour()
     {
-        return uint32((sWorld->GetGameTime() % DAY) / HOUR);
+        return uint32((GameTime::GetGameTime().count() % DAY) / HOUR);
     }
 
     bool IsNight(uint32 hour)
@@ -100,7 +112,7 @@ namespace
     // Локаль игрока: "ru" | "en"
     char const* GetLocale(Player const* player)
     {
-        return player && player->GetDbcLocale() == LOCALE_ruRU ? "ru" : "en";
+        return player && player->GetSession()->GetSessionDbcLocale() == LOCALE_ruRU ? "ru" : "en";
     }
 
     class EchoPveWorldscript : public WorldScript
@@ -119,10 +131,10 @@ namespace
             tokenDropCooldownSecs = sConfigMgr->GetOption<uint32>("EchoPve.TokenDropCooldownSecs", 600);
 
             voidCreatures.clear();
-            std::string list = sConfigMgr->GetStringDefault("EchoPve.VoidCreatures", "70100,70101,70105,70201,70202,70500,70510,70520");
-            for (std::string_view token : Acore::StringSplit(list, ','))
+            std::string list = sConfigMgr->GetOption<std::string>("EchoPve.VoidCreatures", "70100,70101,70105,70201,70202,70500,70510,70520");
+            for (std::string_view token : Acore::Tokenize(list, ',', false))
             {
-                if (uint32 entry = atoi(std::string(Acore::Trim(token)).c_str()))
+                if (uint32 entry = atoi(std::string(TrimStr(std::string(token))).c_str()))
                     voidCreatures.insert(entry);
             }
 
@@ -144,7 +156,7 @@ namespace
             ApplyNightScalar(target, attacker, damage);
         }
 
-        void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage) override
+        void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage, SpellInfo const* /*spellInfo*/) override
         {
             if (damage <= 0)
                 return;
@@ -153,7 +165,7 @@ namespace
             damage = int32(dmg);
         }
 
-        void ModifyPeriodicDamageAurasTick(Unit* target, Unit* attacker, uint32& damage) override
+        void ModifyPeriodicDamageAurasTick(Unit* target, Unit* attacker, uint32& damage, SpellInfo const* /*spellInfo*/) override
         {
             ApplyNightScalar(target, attacker, damage);
         }
@@ -182,13 +194,13 @@ namespace
         }
     };
 
-    class EchoPveCreaturescript : public CreatureScript
+    class EchoPvePlayerkillhook : public PlayerScript
     {
     public:
-        EchoPveCreaturescript() : CreatureScript("EchoPveCreaturescript") { }
-
+        EchoPvePlayerkillhook() : PlayerScript("EchoPvePlayerkillhook") { }
         // Награда за победу над Пустотой: шанс Жетона Эха
-        void OnCreatureKill(Player* killer, Creature* killed) override
+
+        void OnPlayerCreatureKill(Player* killer, Creature* killed) override
         {
             if (!enable || tokenDropChance <= 0.0f || !killer || !killed)
                 return;
@@ -197,7 +209,7 @@ namespace
                 return;
 
             // Анти-фарм: кулдаун на игрока
-            time_t now = sWorld->GetGameTime();
+            time_t now = time(nullptr);
             auto it = tokenDropCooldown.find(killer->GetGUID().GetCounter());
             if (it != tokenDropCooldown.end() && now - it->second < tokenDropCooldownSecs)
                 return;
@@ -224,7 +236,7 @@ namespace
 // Регистрация в ядре
 EchoPveWorldscript* EchoPveWorldscriptInstance = new EchoPveWorldscript();
 EchoPveUnitscript* EchoPveUnitscriptInstance = new EchoPveUnitscript();
-EchoPveCreaturescript* EchoPveCreaturescriptInstance = new EchoPveCreaturescript();
+EchoPvePlayerkillhook* EchoPvePlayerkillhookInstance = new EchoPvePlayerkillhook();
 
 // Точка входа для генерируемого загрузчика модулей ядра
 // (modules/CMakeLists.txt -> ConfigureScriptLoader -> AddEchoPveScripts()).

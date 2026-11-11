@@ -27,6 +27,7 @@
 #include "Config.h"
 #include "Log.h"
 #include "World.h"
+#include "GameTime.h"
 #include "DatabaseEnv.h"
 #include <cstring>
 #include <ctime>
@@ -44,7 +45,7 @@ namespace
 
     char const* GetLocale(Player const* player)
     {
-        return player && player->GetDbcLocale() == LOCALE_ruRU ? "ru" : "en";
+        return player && player->GetSession()->GetSessionDbcLocale() == LOCALE_ruRU ? "ru" : "en";
     }
 
     class EchoEconomyWorldscript : public WorldScript
@@ -88,7 +89,7 @@ namespace
         EchoEconomyPlayerscript() : PlayerScript("EchoEconomyPlayerscript") { }
 
         // Слив избытка жетонов при входе («Пустота забираёт своё»)
-        void OnLogin(Player* player) override
+        void OnPlayerLogin(Player* player) override
         {
             if (!enable || !player)
                 return;
@@ -102,7 +103,7 @@ namespace
 
         // Периодическая доставка (раз в 60 сек онлайна) — награда
         // доезжает, даже если игрок давно в игре
-        void OnUpdate(uint32 /*diff*/) override
+        void OnPlayerUpdate(Player* /*player*/, uint32 /*diff*/) override
         {
             // PlayerScript не имеет OnUpdate; доставка при login и zone.
             // Дополнительный тик не требуется для пилота.
@@ -152,7 +153,7 @@ namespace
                 "VALUES ('{}', {}, {}, {}, '{}', {}, 0)",
                 rewardKey, player->GetGUID().GetCounter(),
                 player->GetSession()->GetAccountId(), tokens, reason,
-                uint32(sWorld->GetGameTime()));
+                uint32(GameTime::GetGameTime().count()));
         }
 
         // Доставка недоставленных наград игрока (до BatchSize за вызов).
@@ -186,7 +187,7 @@ namespace
                     CharacterDatabase.Execute(
                         "INSERT INTO realm_token_receipt (reward_key, guid, tokens, delivered_at) "
                         "VALUES ('{}', {}, {}, {})",
-                        rewardKey, guid, tokens, uint32(sWorld->GetGameTime()));
+                        rewardKey, guid, tokens, uint32(GameTime::GetGameTime().count()));
                     ++deliveredCount;
                 }
 

@@ -37,11 +37,11 @@ namespace
 
         void OnAfterConfigLoad(bool /*reload*/) override
         {
-            worldDamageScalar  = sConfigMgr->GetFloatDefault("EchoBalance.WorldDamageScalar", 1.0f);
-            playerDamageScalar = sConfigMgr->GetFloatDefault("EchoBalance.PlayerDamageScalar", 1.0f);
-            healingScalar      = sConfigMgr->GetFloatDefault("EchoBalance.HealingScalar", 1.0f);
-            maxHitPercent      = sConfigMgr->GetFloatDefault("EchoBalance.MaxHitPercent", 0.0f);
-            bossDamageScalar   = sConfigMgr->GetFloatDefault("EchoBalance.BossDamageScalar", 1.0f);
+            worldDamageScalar  = sConfigMgr->GetOption<float>("EchoBalance.WorldDamageScalar", 1.0f);
+            playerDamageScalar = sConfigMgr->GetOption<float>("EchoBalance.PlayerDamageScalar", 1.0f);
+            healingScalar      = sConfigMgr->GetOption<float>("EchoBalance.HealingScalar", 1.0f);
+            maxHitPercent      = sConfigMgr->GetOption<float>("EchoBalance.MaxHitPercent", 0.0f);
+            bossDamageScalar   = sConfigMgr->GetOption<float>("EchoBalance.BossDamageScalar", 1.0f);
 
             LOG_INFO("module.echo-balance",
                 "echo-balance загружен: worldDmg=%.2f playerDmg=%.2f heal=%.2f maxHit=%.0f%% bossDmg=%.2f",
@@ -55,7 +55,7 @@ namespace
         EchoBalanceUnitscript() : UnitScript("EchoBalanceUnitscript", true) { }
 
         // --- Урон, получаемый игроком от существ ---
-        void ModifyPeriodicDamageAurasTick(Unit* target, Unit* attacker, uint32& damage) override
+        void ModifyPeriodicDamageAurasTick(Unit* target, Unit* attacker, uint32& damage, SpellInfo const* /*spellInfo*/) override
         {
             if (!attacker || attacker->IsPlayer() || !target || !target->IsPlayer())
                 return;
@@ -64,7 +64,7 @@ namespace
 
             // Боссы (rank 3) — дополнительный множитель
             if (Creature* c = attacker->ToCreature())
-                if (c->IsWorldBoss() || c->GetCreatureTemplate()->rank == CREATURE_ELITE_WORLDBOSS)
+                if (c->isWorldBoss() || c->GetCreatureTemplate()->rank == CREATURE_ELITE_WORLDBOSS)
                     scalar *= bossDamageScalar;
 
             damage = uint32(damage * scalar);
@@ -76,7 +76,7 @@ namespace
             ApplyDamageScalar(target, attacker, damage);
         }
 
-        void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage) override
+        void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage, SpellInfo const* /*spellInfo*/) override
         {
             if (damage <= 0)
                 return;
@@ -85,7 +85,7 @@ namespace
             damage = int32(dmg);
         }
 
-        void ModifyHealReceived(Unit* target, Unit* healer, uint32& heal) override
+        void ModifyHealReceived(Unit* target, Unit* healer, uint32& heal, SpellInfo const* /*spellInfo*/) override
         {
             if (!healer || !healer->IsPlayer() || !target || !target->IsPlayer())
                 return;
