@@ -1,0 +1,88 @@
+# ============================================================
+# Labels / Теги — единая система тегов PR и Issue
+#
+# Единый источник правды для тегов репозитория. Создаются через
+# GitHub CLI (gh label) на основе этого файла (см. scripts/setup-labels.sh).
+# Цвета — в hex (8 цифр), как у national-ная палитра реалма:
+#   Пустота |cff8e44ad, Орден |cff5dade2, Культ |cffc0392b
+# ============================================================
+
+# ---- Тип PR / PR type ----
+- name: fix
+  color: c0392b          # красный — баги/исправления
+  description: Исправление бага / bug fix
+- name: feat
+  color: 5dade2          # синий — новая функциональность
+  description: Новая функциональность / new feature
+- name: refactor
+  color: 95a5a6          # серый — рефакторинг без изменения поведения
+  description: Рефакторинг / refactoring
+- name: module
+  color: 8e44ad          # фиолетовый — C++-модуль echo-*
+  description: C++-модуль / module (modules/echo-*)
+- name: lua
+  color: 16a085          # бирюзовый — Lua-скрипт
+  description: Lua-скрипт / Lua script (lua_scripts/)
+- name: sql
+  color: 2980b9          # синий-тёмный — SQL-миграция
+  description: SQL-миграция / migration (sql/world/)
+- name: addon
+  color: 27ae60          # зелёный — клиентский аддон
+  description: Клиентский аддон / client addon (addons/)
+- name: docs
+  color: eccf6f          # жёлтый — документация
+  description: Документация / docs (docs, wiki, README)
+- name: ci
+  color: 7f8c8d          # тёмно-серый — CI/CD
+  description: CI/CD / GitHub Actions
+- name: deps
+  color: aaa7e0          # лиловый — зависимости
+  description: Зависимости / dependencies
+- name: other
+  color: bdbdbd          # светло-серый — другое
+  description: Другое / other
+
+# ---- Статус / Status ----
+- name: status/blocked
+  color: c0392b
+  description: Блокировано / blocked
+- name: status/in-progress
+  color: 5dade2
+  description: В работе / in progress
+- name: status/review-requested
+  color: 8e44ad
+  description: Требуется ревью / review requested
+- name: status/ready-to-merge
+  color: 27ae60
+  description: Готов к merge / ready to merge
+- name: status/draft
+  color: 95a5a6
+  description: Черновик / draft
+
+# ---- Приоритет / Priority ----
+- name: priority/high
+  color: c0392b
+  description: Высокий приоритет / high priority
+- name: priority/normal
+  color: 5dade2
+  description: Обычный приоритет / normal priority
+- name: priority/low
+  color: 95a5a6
+  description: Низкий приоритет / low priority
+
+# ---- Статус Issue / Issue status ----
+- name: status/new
+  color: 1f618d          # тёмно-синий — новый issue
+  description: Новый / новый issue, ждёт обработки / new issue
+- name: status/answered
+  color: 16a085          # бирюзовый — дан ответ
+  description: Отвечено / answered
+- name: status/reproduced
+  color: 8e44ad          # фиолетовый — воспроизведено
+  description: Воспроизведено / reproduced
+- name: status/wontfix
+  color: 95a5a6          # серый — не будет исправлено
+  description: Не будет исправлено / wont fix
+- name: status/duplicate
+  color: 7f8c8d          # тёмно-серый — дубликат
+  description: Дубликат / duplicate

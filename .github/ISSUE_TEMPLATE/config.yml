@@ -1,0 +1,20 @@
+<!--
+  Конфигурация выбора шаблонов Issues (GitHub form).
+  Управляет тем, какие шаблоны показывать и разрешён ли пустой issue.
+-->
+# Разрешить создавать issue без шаблона (пустой)
+# RU: false = игроки обязаны выбрать шаблон.
+# EN: false = users must pick a template.
+blank_issues_enabled: true
+
+# Полезные ссылки при создании issue
+contact_links:
+  - name: 📖 Wiki / Вики
+    url: https://github.com/Project-Aurora-WoW/mod-custom-realm/wiki
+    about: Установка, конфигурация и развёртывание.
+  - name: 📋 TODO / Backlog
+    url: https://github.com/Project-Aurora-WoW/mod-custom-realm/blob/master/TODO.md
+    about: План работ и известные задачи реалма.
+  - name: 🗳️ SQL-миграции
+    url: https://github.com/Project-Aurora-WoW/mod-custom-realm/blob/master/sql/README.md
+    about: Реестр миграций и порядок применения.

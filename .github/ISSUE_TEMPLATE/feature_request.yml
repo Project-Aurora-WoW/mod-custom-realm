@@ -1,0 +1,34 @@
+---
+name: ✨ Запрос функции / Feature request
+about: Предложить новую функцию или улучшение / Suggest a new feature or improvement
+title: "[Feature] / [Функция]: "
+labels: ["feat", "status/new"]
+---
+
+<!-- Заполните поля / Fill in. RU/EN — оба принимаются / both accepted -->
+
+## Идея / Idea
+**RU:** Что предлагаете и зачем.
+**EN:** What and why.
+
+## Область / Scope
+<!-- Отметьте / select -->
+- [ ] 🧩 C++-модуль / module (echo-*)
+- [ ] 🧩 Lua-скрипт / script (lua_scripts/)
+- [ ] 🗃️ SQL-миграция / migration
+- [ ] 🧹 Аддон / addon (addons/)
+- [ ] 📚 Документация / docs
+- [ ] 🤖 CI/CD
+
+## Связанные / Related
+<!-- closes #, relates to TODO.md -->
+- Relates to [`TODO.md`](../../TODO.md)
+
+## Оценка сложности / Effort (необязательно / optional)
+- [ ] Small
+- [ ] Medium
+- [ ] Large
+
+---
+<!-- Не изменять / do not edit -->
+**Теги (labels):** проставьте `priority/*` в правой панели.

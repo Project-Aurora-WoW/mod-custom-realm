@@ -1,0 +1,48 @@
+---
+name: 🐛 Сообщение об ошибке / Bug report
+about: Сообщить об ошибке или несоответствии / Report a bug or mismatch
+title: "[Bug] / [Баг]: "
+labels: ["fix", "status/new"]
+---
+
+<!-- Заполните поля. Удалите лишнее / Fill in. Remove what's not applicable.
+     RU/EN — оба формата принимаются / both accepted. -->
+
+## Описание / Description
+**RU:** Кратко, что случилось.
+**EN:** Briefly, what happened.
+
+## Шаги воспроизведения / Steps to reproduce
+1.
+2.
+3.
+
+## Ожидаемое поведение / Expected behavior
+**RU:** ...
+**EN:** ...
+
+## Фактическое поведение / Actual behavior
+**RU:** ...
+**EN:** ...
+
+## Среда / Environment
+- ОС / OS:
+- Версия ядра / Core version (commit):
+- Клиент / Client (3.3.5a build):
+- Модуль/скрипт / Module/script (если относится):
+- Миграции применены / Migrations applied?:
+
+## Логи / Logs
+<!-- Вставка соответствующих строк из worldserver.log / paste relevant lines -->
+```
+
+
+```
+
+## Скриншоты / Screenshots (если есть / if any)
+<!-- Прикрепите / attach -->
+
+---
+<!-- Не изменять / do not edit -->
+**Теги (labels):** проставьте `status/*` и `priority/*` в правой панели.
+Проверьте по [`docs/testing-plan.md`](../../docs/testing-plan.md).
