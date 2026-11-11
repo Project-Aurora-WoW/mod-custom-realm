@@ -66,6 +66,8 @@
 | `29_Parangon.lua` | **Parangon** (Фаза 3, Lua-only): псевдо-уровни на аккаунт за опыт PvE/PvP + стаки штатных аур 7464/7471/7477/7468 в качестве статов (сила/ловкость/выносливость/интеллект); команда `.parangon` открывает gossip-панель распределения очков; таблицы `account_parangon`/`characters_parangon` (0029) | `PLAYER_EVENT_ON_LOGIN/LOGOUT/KILL`, `ON_CHAT`, `PLAYER_GOSSIP_EVENT_ON_SELECT` |
 | `LoreArchive.lua` | **Лор-архив**: НПС «Хронист Ордена» (70180, Даларан) — игровой архив вселенной: хроника таймлайна, ключевые фигуры, бестиарий, артефакты, правила, словарь | `GOSSIP_EVENT_ON_HELLO` / `ON_SELECT` |
 | `Campaign4.lua` | Кампания 4 «Второе Эхо» (главы 1–5, босс Архонт Нехал'тхар 70520 с 3 фазами), требуется Печать Хранителя (item 70002) | События игроков + gossip НПС 70210, 70204; `CREATURE_EVENT_ON_DAMAGE_TAKEN` для фаз босса |
+| `gpt_npc_config.lua` | **GPT-НПС — конфиг** (Фаза 4): allowlist entry НПС, rate-limit, канал ответа, таблица очереди; отдельный файл для правки без изменения скрипта | (только конфиг; глобальная `GPT_NPC_CONFIG`) |
+| `gpt_npc.lua` | **GPT-НПС** (Фаза 4): НПС из allowlist отвечают «живым» текстом от LLM; обмен с внешним `service/gpt_npc.py` (OpenAI) через очередь `realm_gpt_queue` (0031, **acore_characters**) | `PLAYER_EVENT_ON_CHAT` (18), `CreateLuaEvent` (опрос очереди) |
 
 ### AIO-стек (фреймворк сервер↔клиент)
 
@@ -128,6 +130,7 @@ Store_DataStruct.lua → Store_Server.lua → Store_Client.lua → AIO-мага�
 27_ClasslessClient.lua                          → Classless AIO-UI (клиент, дерево талантов)
 28_RandomEnchant.lua                            → random-энчанты оружия (0028)
 29_Parangon.lua                                 → Parangon-уровни и стаки аур (0029)
+gpt_npc_config.lua / gpt_npc.lua                → GPT-НПС: allowlist + очередь (0031) → внешний service/gpt_npc.py
 AddonBridge.lua → Campaign1–4.lua → CampaignManager.lua
 LoreArchive.lua → PortalGuardian.lua → WelcomeSystem.lua
 ```

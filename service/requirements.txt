@@ -1,0 +1,7 @@
+# Зависимости внешнего GPT-сервиса (service/gpt_npc.py)
+# Установка:  pip install -r requirements.txt
+#
+# openai  — официальный клиент OpenAI (chat.completions)
+# PyMySQL — чтение/запись очереди realm_gpt_queue (acore_characters)
+openai>=1.12
+PyMySQL>=1.1

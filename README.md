@@ -41,11 +41,12 @@ azeroth-custom-realm/
 │   └── actions/setup-tree/         # composite action: checkout ядра + модули + mod-ale
 ├── addons/AzerothEcho/            # Клиентский аддон (WoW 3.3.5a) — campaign panel + rift map
 ├── docs/                          # Документация (ландшафт, деплой, тесты, client-patch)
-├── lua_scripts/                   # Lua-скрипты ALE (00_CampaignRegistry.ext → 27_Classless.lua, магазин, кампании)
+├── lua_scripts/                   # Lua-скрипты ALE (00_CampaignRegistry.ext → 27_Classless.lua, магазин, кампании, GPT-НПС)
 ├── modules/
 │   ├── echo-balance/ … echo-startup/   # Кастомные C++-модули реалма (7 шт.)
 │   └── README.md                  # Инструкция по модулям
-└── sql/world/                     # Миграции 0001–0025 (нумерованные, только вперёд)
+├── service/                       # Внешние сервисы (GPT-НПС: Python+openai; ключ — вне репо)
+└── sql/world/                     # Миграции 0001–0031 (нумерованные, только вперёд)
 ```
 
 ---
@@ -126,4 +127,5 @@ Linux clang static build with dry-run and error check; Windows MSVC via `acore.s
 - 🧩 Скрипты / Scripts — [`lua_scripts/README.md`](lua_scripts/README.md)
 - 🗃️ Миграции / Migrations — [`sql/README.md`](sql/README.md)
 - 📦 Модули / Modules — [`modules/README.md`](modules/README.md)
+- 🤖 Внешние сервисы / External services (GPT-НПС) — [`service/README.md`](service/README.md)
 - 📋 TODO / Backlog — [`TODO.md`](TODO.md)
