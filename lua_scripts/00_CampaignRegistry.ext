@@ -302,6 +302,25 @@ AzerothEchoCampaigns = {
     },
 
     -- ========================================================
+    -- Parangon (29_Parangon.lua; адаптация lua-parangon, AGPL).
+    -- Псевдо-уровни Parangon на аккаунт + стаки аур 7464/7471/7477/7468.
+    -- Таблицы account_parangon / characters_parangon (acore_characters, 0029).
+    -- ========================================================
+    parangon = {
+        pve_kill_exp       = 50,   -- опыт Parangon за убийство NPC
+        pvp_kill_exp       = 100,  -- опыт Parangon за убийство игрока
+        max_exp_per_level  = 500,  -- опыт, нужный для следующего Parangon
+        points_per_level   = 2,    -- очков Parangon за уровень
+        min_player_level   = 1,    -- мин. обычный уровень до включения Parangon
+        auras = {                  -- [id] = имя (для UI)
+            [7464] = "Сила",
+            [7471] = "Ловкость",
+            [7477] = "Выносливость",
+            [7468] = "Интеллект",
+        },
+    },
+
+    -- ========================================================
     -- Казна золота (16_GoldStorage.lua; адаптация
     -- eluna-scripts/GoldStorage). НПС 70173 (0018), таблица
     -- realm_gold_storage (acore_characters, 0018).
