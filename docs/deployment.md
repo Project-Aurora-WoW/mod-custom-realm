@@ -28,9 +28,21 @@ sudo apt update && sudo apt install git cmake make gcc g++ clang libmysqlclient-
 ## 2. Получение ядра и модулей
 
 ```bash
+# 1. Ядро — ФИКСИРОВАННЫЙ КОММИТ, не master.
+#    Версия, на которой собраны и проверены модули реалма.
 git clone https://github.com/azerothcore/azerothcore-wotlk.git
 cd azerothcore-wotlk
-git clone https://github.com/azerothcore/mod-ale.git modules/mod-ale   # ОБЯЗАТЕЛЬНО
+git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb
+
+# 2. Скриптовый движок ALE — ОБЯЗАТЕЛЬНО.
+#    Версия должна соответствовать коммиту ядра: ALE использует
+#    внутренние API AzerothCore и несовместим с чужими ревизиями.
+#    Указать проверенный коммит mod-ale перед публикацией релиза.
+git clone https://github.com/azerothcore/mod-ale.git modules/mod-ale
+# cd modules/mod-ale && git checkout <commit-mod-ale>
+
+# 3. Модули реалма из этого репозитория (echo-*):
+#    скопировать modules/echo-* в azerothcore-wotlk/modules/
 ```
 
 Доп. модули по желанию — см. [`../modules/README.md`](../modules/README.md).

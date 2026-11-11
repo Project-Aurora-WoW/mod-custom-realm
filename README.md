@@ -10,7 +10,7 @@
 
 | Компонент | Версия / источник |
 |-----------|-------------------|
-| Ядро | [azerothcore/azerothcore-wotlk](https://github.com/azerothcore/azerothcore-wotlk.git) (master) — **внешний клон рядом с репозиторием**, не хранится в нём (см. [`modules/README.md`](modules/README.md)) |
+| Ядро | [azerothcore/azerothcore-wotlk](https://github.com/azerothcore/azerothcore-wotlk.git), **фиксированный коммит** `1459af9576eb8bd0a67f38ac54236965b5fe28eb` — внешний клон рядом с репозиторием, не хранится в нём (см. [`modules/README.md`](modules/README.md)). Не использовать `master`: API ядра меняется, модули соберутся не на всех ревизиях |
 | Клиент | WoW 3.3.5a (12340) |
 | Скриптовый движок | [mod-ale](https://github.com/azerothcore/mod-ale) (ALE — AzerothCore Lua Engine, форк Eluna) |
 | БД | MySQL (схемы `acore_world` и др.) |
@@ -70,6 +70,7 @@ azeroth-custom-realm/
    ```bash
    git clone <этот репозиторий>.git
    git clone https://github.com/azerothcore/azerothcore-wotlk.git
+   git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb   # фиксированная версия ядра
    cd azerothcore-wotlk
    ```
 2. Установить модули (mod-ale обязателен) и собрать ядро —
@@ -128,3 +129,5 @@ azeroth-custom-realm/
 - 🗃️ Миграции — [`sql/README.md`](sql/README.md)
 - 🧩 Аддон — [`addons/README.md`](addons/README.md)
 - 📦 Модули — [`modules/README.md`](modules/README.md)
+
+
