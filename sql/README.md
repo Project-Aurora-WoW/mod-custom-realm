@@ -34,6 +34,7 @@
 | `world/0024_tier_b.sql` | Tier B (eluna-scripts): НПС 70175 «Рунный Оружейник» (Weapon Master), 70176 «Хранитель Тиражей» (Lottery), 70177 «Вестник Забвения» (Skip DK Starter), 70178 «Алтарь Ордена» (Prayer) + таблицы `realm_lottery{,_tickets}` (**acore_characters**); гаиды 7000175–7000178 | 0009 (жетоны), 0022 (схема НПС) |
 | `world/0026_store_expansion.sql` | Расширение AIO-магазина: валюта id 3 «Очки Возмездия» (SERVER_HANDLED, из `realm_pvp_stats.tokens_earned`), VIP-категория id 9 (`requiredRank=4`), маунты за жетоны (услуги 10–12); потребляет `Store_Server.lua` (SERVER_HANDLED) | 0020, 0009, 0015/0021 |
 | `world/0027_pvp_store.sql` | Перенос PvP-шопа в AIO-магазин: категория id 10 «Снабжение Ордена» + услуги 20–25 (тип 1, за Жетоны Эха); НПС-шоп (`30_PvpShop.lua`) остаётся fallback | 0020, 0009 |
+| `world/0028_item_enchant_random.sql` | Random-энчанты (Фаза 2): таблица `item_enchantment_random_tiers` (тиры оружия T1–T4, веса, ilvl-диапазоны) + НПС 70192 «Рандомный Зачарователь» (Даларан, guid 7000192); потребляет `28_RandomEnchant.lua` | 0009, 0001 (схема НПС) |
 | `world/0025_classless.sql` | Classless-арка К5 (минимальный порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; скрипт `27_Classless.lua` | — |
 
 ---
@@ -87,6 +88,8 @@ mysql -u <user> -p acore_characters < sql/world/0025_classless.sql
 mysql -u <user> -p acore_world < sql/world/0026_store_expansion.sql
 # 0027: перенос PvP-шопа в AIO-магазин (realm_store_* → acore_world):
 mysql -u <user> -p acore_world < sql/world/0027_pvp_store.sql
+# 0028: random-энчанты (таблица тиров + НПС → acore_world):
+mysql -u <user> -p acore_world < sql/world/0028_item_enchant_random.sql
 ```
 
 После применения выполните в консоли `worldserver`:

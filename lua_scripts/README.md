@@ -61,6 +61,7 @@
 | `10_EventSystem.lua` | **Авто-ивенты**: «Шторм Пустоты» (3 ч) и «Кровавая Луна Культа» (6 ч) — спавн волн у разлома, жетоны за мобов; GM-команды `.aeevent start/stop/status` | `PLAYER_EVENT_ON_CREATURE_KILL`, `ON_CHAT`, `CreateLuaEvent` (расписание 5 мин) |
 | `20_PvpSystem.lua` | **PvP-подсистема**: статистика `realm_pvp_stats`, анти-абюз (уровень ±10, кулдаун 5 мин на пару), killstreak-объявления (3/5/10), PvP-зона Драконий Погост (жетоны за килл), `.aepvp top/me` | `PLAYER_EVENT_ON_HONORABLE_KILL`, `ON_CHAT`, `ON_LOGIN` |
 | `30_PvpShop.lua` | **PvP-шоп**: gossip-магазин «Интендант Ордена» (НПС 70170, Даларан) — расходники и косметика за Жетоны Эха (item 70005); ассортимент и цены в реестре (`shop.items`) | `GOSSIP_EVENT_ON_HELLO` / `ON_SELECT` |
+| `28_RandomEnchant.lua` | **Random-энчанты оружия** (Фаза 2): НПС «Рандомный Зачарователь» (70192, Даларан) применяет случайный энчант из пула тиров `item_enchantment_random_tiers` (0028) к надетому оружию за золото — взвешенный выбор по `weight`, диапазоны ilvl | `GOSSIP_EVENT_ON_HELLO` / `ON_SELECT` |
 | `LoreArchive.lua` | **Лор-архив**: НПС «Хронист Ордена» (70180, Даларан) — игровой архив вселенной: хроника таймлайна, ключевые фигуры, бестиарий, артефакты, правила, словарь | `GOSSIP_EVENT_ON_HELLO` / `ON_SELECT` |
 | `Campaign4.lua` | Кампания 4 «Второе Эхо» (главы 1–5, босс Архонт Нехал'тхар 70520 с 3 фазами), требуется Печать Хранителя (item 70002) | События игроков + gossip НПС 70210, 70204; `CREATURE_EVENT_ON_DAMAGE_TAKEN` для фаз босса |
 
@@ -120,6 +121,9 @@ extensions/_Misc.ext + StackTracePlus.ext        → .ext: randomseed + tracebac
 AIO.lua + queue.lua + Dep_*/lualzw-zeros (deps)  → AIO-стек (Rochet2/AIO v1.74, dwrath-eluna-3-3-5a)
 Store_DataStruct.lua → Store_Server.lua → Store_Client.lua → AIO-магазин
 21_FactionChanger.lua / 22_SanctuaryPvP.lua     → перемена фракции / убежища-FFA (public-scripts)
+23_WeaponMaster.lua / 24_Lottery.lua / 25_SkipDkStarter.lua / 26_PrayerAltar.lua → Tier B (0024)
+27_Classless.lua                                → Classless-арка К5 (0025)
+28_RandomEnchant.lua                            → random-энчанты оружия (0028)
 AddonBridge.lua → Campaign1–4.lua → CampaignManager.lua
 LoreArchive.lua → PortalGuardian.lua → WelcomeSystem.lua
 ```
