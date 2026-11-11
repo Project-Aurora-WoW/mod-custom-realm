@@ -1,4 +1,5 @@
 # 🌌 Azeroth: Эхо Пустоты / Echo of the Void
+[![windows-release](https://github.com/Project-Aurora-WoW/mod-custom-realm/actions/workflows/windows-release.yml/badge.svg)](https://github.com/Project-Aurora-WoW/mod-custom-realm/actions/workflows/windows-release.yml)
 
 > **RU:** Кастомный реалм на базе **AzerothCore** для клиента **WoW 3.3.5a (build 12340)**.
 > Альтернативная временная линия: осколок трона Короля-лича пропитался энергией
