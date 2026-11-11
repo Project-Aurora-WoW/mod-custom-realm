@@ -237,13 +237,18 @@ namespace
         }
         else
         {
-            uint32 campId = *Acore::StringTo<uint32>(arg);
+            // Защита: StringTo<uint32> может вернуть nullopt для
+            // нечисловой строки — разыменование сломалось бы (UB/краш).
+            auto parsedId = Acore::StringTo<uint32>(arg);
+            uint32 campId = parsedId.value_or(0);
             if (campId >= 1 && campId <= 4)
             {
                 ResetProgress(player->GetGUID().GetCounter(), campId);
                 SendLine(player, std::string(TAG_COLOR) + " Кампания " + std::to_string(campId) + " сброшена.");
                 LogCampaignAction(player->GetGUID().GetCounter(), campId, 0, "gm_core_reset", "");
             }
+            else
+                SendLine(player, std::string(TAG_COLOR) + " Укажите ID кампании (1–4) или 'all'.");
         }
     }
 
