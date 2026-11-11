@@ -49,7 +49,7 @@ jobs:
     steps:
       # ---- Подготовка дерева (общий composite action) ----
       - name: Setup tree (core + realm modules + mod-ale)
-        uses: ./.github/actions/setup-tree
+        uses: ./realm/.github/actions/setup-tree
 
       # ---- Кэш ccache (по компилятору/ветке/sha, как у AC) ----
       - name: Cache ccache
@@ -203,7 +203,7 @@ jobs:
     steps:
       # ---- Подготовка дерева (общий composite action) ----
       - name: Setup tree (core + realm modules + mod-ale)
-        uses: ./.github/actions/setup-tree
+        uses: ./realm/.github/actions/setup-tree
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.13
