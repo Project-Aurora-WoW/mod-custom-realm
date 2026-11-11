@@ -1,108 +1,160 @@
-# 🧩 Клиентский аддон AzerothEcho 2.0 (WoW 3.3.5a)
+# 🧩 Аддоны / Addons — Azeroth: Эхо Пустоты / Echo of the Void
 
-> Полноценный интерфейс реалма «Эхо Пустоты»: кампании, ивенты, PvP-статистика,
-> карта разломов, всплывающие уведомления о прогрессе.
-> Работает в паре с серверным скриптом [`../lua_scripts/AddonBridge.lua`](../lua_scripts/AddonBridge.lua)
-> (mod-ale обязателен).
-
----
-
-## Возможности
-
-### 📊 Панель реалма (`/ae`) — 4 вкладки
-| Вкладка | Содержимое |
-|---------|-----------|
-| **Кампании** | Прогресс по всем 3 кампаниям с прогресс-барами: «Эхо Шёпота» (3 гл.), «Пепел Зул'Драка» (5 гл.), «Пробуждение» (4 гл.) |
-| **Ивенты** | Статус «Шторма Пустоты» и «Кровавой Луны Культа»: идёт/через N минут |
-| **PvP** | Личная статистика: киллы, смерти, серия, лучшая серия, киллы в PvP-зоне |
-| **Справка** | Краткий лор: фракции, Осколок Трона, валюта «Жетон Эха» |
-
-Панель перетаскивается мышью за фон.
-
-### 🗺️ Карта разломов Пустоты (`/ae rifts` или кнопка на панели)
-Пины на карте Northrend с тултипами и уровнями опасности
-(голубой — низкая, оранжевый — средняя, красный — высокая):
-- Драконий Погост — эпицентр (осколок Трона)
-- Зул'Драк — Храм Шёпота (алтари Культа)
-- Бесплодные земли — перевал (пункт Культа)
-
-### 🔔 Всплывающие уведомления
-При повышении главы или завершении кампании — сообщение в центре экрана
-(стиль «достижения»).
-
-### ⌨️ Slash-команды
-| Команда | Действие | Серверный аналог |
-|---------|----------|------------------|
-| `/ae` | Открыть/закрыть панель | `.ae status` |
-| `/ae rifts` | Карта разломов Пустоты | `.ae rifts` |
-| `/ae pvp` | Открыть панель на вкладке PvP | `.ae pvp` |
-| `/ae events` | Открыть панель на вкладке Ивенты | `.ae events` |
-| `/ae campaigns` | Открыть панель на вкладке Кампании | — |
-| `/ae help` | Список команд | `.ae help` |
-
-Серверные команды обрабатывает `lua_scripts/CampaignManager.lua`; команды
-`.ae rifts/pvp/events` отправляют аддону управляющие сообщения
-(`AECHORIFTS:show`, `AECHOUI:tab:N`), поэтому клиент и сервер действуют синхронно.
+> **RU:** Клиентские аддоны и UI-компоненты реалма «Эхо Пустоты».
+> Каталог содержит рабочий аддон `AzerothEcho`, а также клиентские
+> референс-компоненты (`aio-client`, `store-ui`), необходимые для
+> работы AIO-магазина и обмена клиент↔сервер.
+>
+> **EN:** Client addons and UI components of the "Echo of the Void" realm.
+> This folder holds the `AzerothEcho` addon plus the client reference
+> components (`aio-client`, `store-ui`) required for the AIO store and
+> client↔server exchange.
 
 ---
 
-## Структура аддона
+## 📑 Содержимое / Contents
 
+| Каталог / Folder | Тип / Type | Назначение / Purpose |
+|------------------|-----------|----------------------|
+| [`AzerothEcho/`](AzerothEcho/) | Рабочий аддон / Active addon | Панель реалма: кампании, ивенты, PvP, карта разломов, лор |
+| [`aio-client/`](aio-client/) | Референс / Reference | Клиентская часть AIO-фреймворка (Rochet2/AIO) — нужна для магазина и AIO-систем |
+| [`store-ui/`](store-ui/) | Референс / Reference | Клиентский UI магазина (BLP-текстуры, загружается в `patch-x.mpq`) |
+
+> **RU:** `AzerothEcho` — единственный аддон, который игрок включает штатно.
+> `aio-client` и `store-ui` — клиентские компоненты, доставляются внутри
+> `patch-x.mpq`/через установку и не активируются игроком вручную.
+>
+> **EN:** `AzerothEcho` is the only addon a player enables normally.
+> `aio-client` and `store-ui` are client components delivered inside
+> `patch-x.mpq`/setup and are not enabled by the player manually.
+
+---
+
+## 🧩 AzerothEcho — панель реалма
+
+Полноценный интерфейс реалма: кампании, ивенты, PvP-статистика, карта
+разломов, лор. Работает в паре с серверным скриптом
+[`lua_scripts/AddonBridge.lua`](../lua_scripts/AddonBridge.lua) (mod-ale обязателен).
+
+### Возможности / Features
+- **Панель `/ae`** — 4 вкладки: Кампании, Ивенты, PvP, Справка (перетаскивается за фон).
+- **Карта разломов** (`/ae rifts` или кнопка) — пины Northrend с уровнями опасности.
+- **Всплывающие уведомления** при повышении главы / завершении кампании.
+- **Вкладка «Лор»** — разделы вселенной (через `AECHOLORE`).
+
+### Slash-команды / Commands
+| Команда / Command | Действие / Action |
+|-------------------|-------------------|
+| `/ae` | Открыть/закрыть панель / Toggle panel |
+| `/ae rifts` | Карта разломов / Rift map |
+| `/ae pvp` | Вкладка PvP / PvP tab |
+| `/ae events` | Вкладка Ивенты / Events tab |
+| `/ae campaigns` | Вкладка Кампании / Campaigns tab |
+| `/ae help` | Список команд / Command list |
+
+### Установка в клиент / Client install
+Скопировать каталог `AzerothEcho` в клиент:
 ```
-AzerothEcho/
-├── AzerothEcho.toc   # Манифест (порядок загрузки важен!)
-├── Core.lua          # Константы, цвета, состояние, парсинг payload'ов
-├── Panel.lua         # Окно с 4 вкладками (API: AE.ShowTab(N))
-├── RiftMap.lua       # Карта разломов с пинами
-└── AzerothEcho.lua   # Точка входа: события, уведомления, slash-команды
+WoW/Interface/AddOns/AzerothEcho/
+```
+Включить аддон на экране выбора персонажа. Подробности и протокол обмена —
+в [`addons/AzerothEcho/`](AzerothEcho/) и старом описании ниже.
+
+---
+
+## 🌐 aio-client — AIO-фреймворк (клиент)
+
+**RU:** Кроссплатформенный фреймворк обмена сообщениями клиент↔сервер
+([Rochet2/AIO](https://github.com/Rochet2/AIO)) — сервер доставляет
+клиентский Lua-код игроку. Клиентская часть (`Interface/AddOns/AIO/`)
+необходима для работы AIO-магазина и любых будущих AIO-систем.
+
+**EN:** Cross-platform client↔server messaging framework
+([Rochet2/AIO](https://github.com/Rochet2/AIO)) — the server delivers client
+Lua code to the player. The client part (`Interface/AddOns/AIO/`) is required
+for the AIO store and any future AIO systems.
+
+### Содержимое / Contents (`aio-client/AIO/`)
+| Файл / File | Назначение / Purpose |
+|-------------|----------------------|
+| `AIO_Client.toc` | Манифест аддона / Addon manifest |
+| `AIO.lua` | Ядро AIO / AIO core |
+| `queue.lua` | Очередь сообщений / Message queue |
+| `Dep_LibWindow-1.1/` | Зависимость окна / Window dependency |
+| `Dep_Smallfolk/` | Сериализация / Serialization |
+| `lualzw-zeros/` | LZW-сжатие / LZW compression |
+
+### Зачем нужен / Why it matters
+- **Магазин** (`store-ui` + серверный `Store_*.lua`) требует AIO для приёма
+  кода и сообщений.
+- Рассылается сервером через `SendAddonMessage`; без клиентской части
+  `Interface/AddOns/AIO/` магазин не откроется.
+
+---
+
+## 🛍️ store-ui — клиентский UI магазина
+
+**RU:** Клиентские текстуры AIO-магазина (из референса `eluna-aio-storesystem`).
+Включаются в `patch-x.mpq` при сборке (см. [`docs/client-patch.md`](../docs/client-patch.md) ч. 7).
+
+**EN:** AIO store client textures (from the `eluna-aio-storesystem` reference).
+Embedded into `patch-x.mpq` at build time (see [`docs/client-patch.md`](../docs/client-patch.md) part 7).
+
+### Содержимое / Contents
+| Файл / File | Назначение / Purpose |
+|-------------|----------------------|
+| `Frames/StoreFrame_Main.blp` | Атлас текстур UI магазина (1024×1024) |
+| `Currencies/Gold.blp` | Иконка валюты «Золото» / Gold currency icon |
+| `Currencies/Token.blp` | Иконка валюты «Жетон Эха» / Echo Token icon |
+
+### Структура в MPQ / MPQ layout
+```
+Interface/
+└── Store_UI/
+    ├── Frames/StoreFrame_Main.blp
+    └── Currencies/
+        ├── Gold.blp
+        └── Token.blp
 ```
 
----
-
-## Установка в клиент
-
-1. Скопируйте каталог `AzerothEcho` в клиент игры:
-   ```
-   WoW/Interface/AddOns/AzerothEcho/
-   ```
-   (итог: `WoW/Interface/AddOns/AzerothEcho/AzerothEcho.toc` + `*.lua`)
-
-2. Запустите клиент 3.3.5a и включите аддон на экране выбора персонажа
-   (кнопка «Аддоны»).
-
-3. В игре:
-   - панель открывается командой `/ae` (данные придут от сервера автоматически
-     при входе в мир);
-   - кнопка «Карта разломов» на панели или `/ae rifts` — карта Northrend с пинами.
+> ⚠️ **RU:** BLP-файлы бинарные и не переносятся через git репозитория —
+> берутся напрямую из референса `eluna-aio-storesystem` при сборке патча
+> (аналогично `patch-Z` из custom-maps). Здесь размещён только README-манифест.
+>
+> **EN:** BLP files are binary and not stored in this git repo — they are taken
+> from the `eluna-aio-storesystem` reference when building the patch (like
+> `patch-Z` from custom-maps). Only the README manifest lives here.
 
 ---
 
-## Протокол обмена (аддон ↔ сервер)
+## 🔧 Порядок установки / Setup order
 
-| Направление | Канал | Формат |
-|-------------|-------|--------|
-| Сервер → клиент | `SendAddonMessage("AECHO", payload, "WHISPER")` | `1:2:3;2:0:5;3:4:done;4:1:5` — прогресс кампаний (К1–К4) |
-| Сервер → клиент | `SendAddonMessage("AECHOEV", payload, "WHISPER")` | `storm:1:25:40;blood:0:0:180;tokens:12` — ивенты + жетоны |
-| Сервер → клиент | `SendAddonMessage("AECHOPVP", payload, "WHISPER")` | `kills:12;deaths:3;streak:4;best:9;zone:5` — PvP-статистика |
-| Сервер → клиент | `SendAddonMessage("AECHOUI", payload, "WHISPER")` | `tab:N` — открыть вкладку N (серверные .ae-команды) |
-| Сервер → клиент | `SendAddonMessage("AECHORIFTS", payload, "WHISPER")` | `show` — открыть карту разломов |
-| Клиент → сервер | `SendAddonMessage("AECHO", "hello", ...)` | Регистрация (запрос данных при входе) |
+**RU:** Для полной работы клиентской части реалма нужно:
 
-- Прогресс: `campaignId:chapter:totalChapters` или `campaignId:chapter:done`,
-  кампании разделены `;`.
-- Ивенты: `key:active(0/1):minutesLeft:nextStartMinutes`; `tokens:N` — жетоны.
-- PvP: `поле:значение`, разделены `;`.
+1. **AzerothEcho** → `WoW/Interface/AddOns/` (включает игрок вручную).
+2. **AIO-клиент** (`aio-client/AIO/`) → `WoW/Interface/AddOns/AIO/` либо в
+   `patch-x.mpq`. Без него не работают AIO-системы (магазин).
+3. **store-ui** (BLP) → в `patch-x.mpq` (`Interface/Store_UI/`). Без него
+   нет кнопки/UI магазина.
+4. Серверная часть: `lua_scripts/` (все скрипты, включая `Store_*.lua`)
+   копируются в каталог сервера автоматически через `setup-build.sh`.
 
-Сервер отправляет все три payload'а: при входе в мир (событие ON_LOGIN) и
-по команде `.ae status`.
+**EN:** For the full client side:
+
+1. **AzerothEcho** → `WoW/Interface/AddOns/` (enabled by the player manually).
+2. **AIO client** (`aio-client/AIO/`) → `WoW/Interface/AddOns/AIO/` or into
+   `patch-x.mpq`. Required for AIO systems (store).
+3. **store-ui** (BLP) → into `patch-x.mpq` (`Interface/Store_UI/`). Without it
+   the store button/UI is missing.
+4. Server side: `lua_scripts/` (all scripts incl. `Store_*.lua`) are copied into
+   the server folder automatically via `setup-build.sh`.
 
 ---
 
-## Известные ограничения
+## 🔗 Связанные документы / Related docs
 
-- Кастомный титул «Хранитель Эха» и маунт «Бездна-Пегас»
-  отображаются только при DBC-патче клиента (см. `sql/world/0006_campaign3_rewards.sql`).
-- Панель использует стандартные шрифты 3.3.5a; кириллица отображается
-  корректно при установленном шрифте с поддержкой Cyrillic в клиенте.
-- PvP-статистика приходит нулями до первого зачётного килла
-  (строка в `realm_pvp_stats` создаётся при первом килле).
+- 🧩 Клиентский дистрибутив — [`../client/README.md`](../client/README.md)
+- 🧩 DBC/MPQ-патч клиента — [`../docs/client-patch.md`](../docs/client-patch.md)
+- 🛍️ Store UI (сервер) — [`../client/store-ui/README.md`](../client/store-ui/README.md)
+- 🧩 Lua-скрипты (сервер) — [`../lua_scripts/README.md`](../lua_scripts/README.md)
+- 📋 TODO / Backlog — [`../TODO.md`](../TODO.md)

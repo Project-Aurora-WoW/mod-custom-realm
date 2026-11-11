@@ -1,133 +1,128 @@
-# 🌌 Azeroth: Эхо Пустоты — Azeroth Custom Realm
+# 🌌 Azeroth: Эхо Пустоты / Echo of the Void
 
-> Кастомный реалм на базе **AzerothCore** для клиента **WoW 3.3.5a (build 12340)**.
+> **RU:** Кастомный реалм на базе **AzerothCore** для клиента **WoW 3.3.5a (build 12340)**.
 > Альтернативная временная линия: осколок трона Короля-лича пропитался энергией
 > Пустоты, и Культ Усмешки Бездны готовит пробуждение Старого Бога.
+>
+> **EN:** A custom realm built on **AzerothCore** for the **WoW 3.3.5a (build 12340)** client.
+> An alternate timeline: a shard of the Lich King's throne became saturated with Void
+> energy, and the Cult of the Voided Smile prepares the awakening of an Old God.
+
+> **Двуязычность / Bilingual:** README ведётся и на русском, и на английском.
+> Документация в `docs/` — на русском. / This README is maintained in both Russian
+> and English. Documentation under `docs/` is in Russian.
 
 ---
 
-## 🧰 Стек
+## 🧰 Стек / Tech stack
 
-| Компонент | Версия / источник |
+| Компонент / Component | Версия / источник · Version / source |
 |-----------|-------------------|
-| Ядро | [azerothcore/azerothcore-wotlk](https://github.com/azerothcore/azerothcore-wotlk.git), **фиксированный коммит** `1459af9576eb8bd0a67f38ac54236965b5fe28eb` — внешний клон рядом с репозиторием, не хранится в нём (см. [`modules/README.md`](modules/README.md)). Не использовать `master`: API ядра меняется, модули соберутся не на всех ревизиях |
-| Клиент | WoW 3.3.5a (12340) |
-| Скриптовый движок | [mod-ale](https://github.com/azerothcore/mod-ale) (ALE — AzerothCore Lua Engine, форк Eluna) |
-| БД | MySQL (схемы `acore_world` и др.) |
-| Клиентские аддоны | [`addons/AzerothEcho`](addons/README.md) — панель кампаний, карта разломов |
+| Ядро / Core | [azerothcore/azerothcore-wotlk](https://github.com/azerothcore/azerothcore-wotlk.git), **фиксированный коммит** `1459af9576eb8bd0a67f38ac54236965b5fe28eb` — внешний клон рядом с репозиторием (см. [`modules/README.md`](modules/README.md)). / **pinned commit** — external clone next to this repo. |
+| Клиент / Client | WoW 3.3.5a (12340) |
+| Скриптовый движок / Script engine | [mod-ale](https://github.com/azerothcore/mod-ale) (ALE — AzerothCore Lua Engine, форк Eluna) |
+| БД / DB | MySQL (схемы `acore_world` и др.) |
+| CI | GitHub Actions: `core-build.yml` — Linux (clang) + Windows (MSVC), эмуляция мастер-сборки ядра со всеми модулями. / GitHub Actions: `core-build.yml` — Linux (clang) + Windows (MSVC), master-build emulation with all modules. |
 
-> **Принцип**: этот репозиторий содержит только контент реалма
-> (миграции, Lua, аддон, доки). Ядро развёртывается отдельно — клонированием
-> рядом с репозиторием, по гайду [`docs/deployment.md`](docs/deployment.md).
+> **Принцип / Principle:** этот репозиторий содержит только контент реалма
+> (миграции, Lua, аддон, доки, CI). Ядро развёртывается отдельно — клонированием
+> рядом. / This repo holds only realm content (migrations, Lua, addon, docs, CI).
+> The core is deployed separately, cloned next to it.
 
 ---
 
-## 📁 Структура репозитория
+## 📁 Структура репозитория / Repository layout
 
 ```
 azeroth-custom-realm/
-├── addons/
-│   ├── AzerothEcho/             # Клиентский аддон (WoW 3.3.5a)
-│   │   ├── AzerothEcho.toc
-│   │   └── AzerothEcho.lua      # UI-панель прогресса кампаний (/ae)
-│   └── README.md                # Установка аддона в клиент
-├── docs/
-│   ├── campaigns/README.md      # Реестр кампаний (главы, награды, механики)
-│   ├── lore/universe.md         # Лор вселенной «Эхо Пустоты»
-│   ├── roadmap.md               # План развития по фазам
-│   ├── deployment.md            # Гайд развёртывания ядра + миграции
-│   ├── testing-plan.md          # Чек-листы тестирования
-│   └── client-patch.md          # DBC-патч клиента (титул, маунт)
-├── lua_scripts/                 # Lua-скрипты сервера (движок ALE)
-│   ├── 00_CampaignRegistry.ext  # Центральный реестр кампаний + баланс (.ext грузится первым)
-│   ├── CampaignManager.lua      # Служебный модуль кампаний: API, .ae*, .aecampaign*, журнал
-│   ├── WelcomeSystem.lua        # Приветствие и лор-вступление при входе
-│   ├── PortalGuardian.lua       # Gossip-телепортер (НПС 70001)
-│   ├── Campaign1.lua            # Кампания 1 «Эхо Шёпота» (главы 1–3)
-│   ├── Campaign2.lua            # Кампания 2 «Пепел Зул'Драка» (главы 1–5)
-│   ├── Campaign3.lua            # Кампания 3 «Пробуждение» (главы 1–4, рейд-босс)
-│   ├── Campaign4.lua            # Кампания 4 «Второе Эхо» (главы 1–5, Архонт Нехал'тхар)
-│   ├── LoreArchive.lua          # Лор-архив: Хронист Ордена (НПС 70180)
-│   ├── AddonBridge.lua          # Мост аддон↔сервер (AECHO + AECHOEV + AECHOPVP)
-│   ├── 10_EventSystem.lua       # Ивенты: Шторм Пустоты, Кровавая Луна (.aeevent)
-│   ├── 20_PvpSystem.lua         # PvP: статистика, killstreak, PvP-зона (.aepvp)
-│   ├── 30_PvpShop.lua           # PvP-шоп за Жетоны Эха (НПС 70170)
-│   └── README.md                # Документация скриптов
-├── modules/                     # Модули AzerothCore
-│   ├── README.md                # Инструкция по модулям
-│   └── echo-balance/            # 🆡 Кастомный C++-модуль баланса (урон/лечение/ваншоты)
-└── sql/
-    ├── world/                   # Миграции world-БД (нумерованные, 0001–0010)
-    └── README.md                # Реестр миграций и порядок применения
+├── .github/
+│   ├── workflows/core-build.yml    # CI: Linux + Windows мастер-сборка ядра
+│   └── actions/setup-tree/         # composite action: checkout ядра + модули + mod-ale
+├── addons/AzerothEcho/            # Клиентский аддон (WoW 3.3.5a) — campaign panel + rift map
+├── docs/                          # Документация (ландшафт, деплой, тесты, client-patch)
+├── lua_scripts/                   # Lua-скрипты ALE (00_CampaignRegistry.ext → 27_Classless.lua, магазин, кампании)
+├── modules/
+│   ├── echo-balance/ … echo-startup/   # Кастомные C++-модули реалма (7 шт.)
+│   └── README.md                  # Инструкция по модулям
+└── sql/world/                     # Миграции 0001–0025 (нумерованные, только вперёд)
 ```
 
 ---
 
-## 🚀 Быстрый старт
+## 🚀 Быстрый старт / Quick start (**RU**)
 
-1. Клонировать этот репозиторий и **рядом с ним** — ядро AzerothCore
-   (ядро не хранится внутри репозитория реалма):
+1. Клонировать этот репозиторий и **рядом с ним** — ядро AzerothCore:
    ```bash
    git clone <этот репозиторий>.git
    git clone https://github.com/azerothcore/azerothcore-wotlk.git
    git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb   # фиксированная версия ядра
    cd azerothcore-wotlk
    ```
-2. Установить модули (mod-ale обязателен) и собрать ядро —
-   см. [`modules/README.md`](modules/README.md).
-3. Применить миграции из `sql/world/` **в порядке нумерации** —
-   см. [`sql/README.md`](sql/README.md) и [`docs/deployment.md`](docs/deployment.md).
-4. Скопировать `lua_scripts/*.ext` и `lua_scripts/*.lua` в каталог
-   `lua_scripts/` сервера.
-5. Запустить `worldserver`. В логе ожидать строки:
+2. Установить модули (mod-ale обязателен) и собрать ядро — см. [`modules/README.md`](modules/README.md).
+3. Применить миграции из `sql/world/` **в порядке нумерации** — см. [`sql/README.md`](sql/README.md).
+4. Скопировать `lua_scripts/*.ext` и `lua_scripts/*.lua` в `lua_scripts/` сервера.
+5. Запустить `worldserver`. В логе ожидать строки `[EchoOfTheVoid] …` (см. `lua_scripts/README.md`).
+
+## 🚀 Quick start (**EN**)
+
+1. Clone this repository and, **next to it**, the AzerothCore core:
+   ```bash
+   git clone <this-repo>.git
+   git clone https://github.com/azerothcore/azerothcore-wotlk.git
+   git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb   # pinned core version
+   cd azerothcore-wotlk
    ```
-   [EchoOfTheVoid] 00_CampaignRegistry.ext загружен (реестр кампаний: 4 кампании).
-   [EchoOfTheVoid] WelcomeSystem.lua загружен.
-   [EchoOfTheVoid] PortalGuardian.lua загружен (НПС 70001).
-   [EchoOfTheVoid] Campaign1.lua загружен (НПС 70100/70110/70120).
-   [EchoOfTheVoid] Campaign2.lua загружен (кампания 2, главы 1–5).
-   [EchoOfTheVoid] Campaign3.lua загружен (кампания 3, главы 1–4, рейд-босс 70510).
-   [EchoOfTheVoid] Campaign4.lua загружен (кампания 4 «Второе Эхо», главы 1–5, босс 70520).
-   [EchoOfTheVoid] LoreArchive.lua загружен (НПС 70180, архив лора: 6 разделов).
-   [EchoOfTheVoid] 10_EventSystem.lua загружен (ивенты: storm, blood; GM: .aeevent).
-   [EchoOfTheVoid] 20_PvpSystem.lua загружен (статистика, killstreak, PvP-зона, .aepvp).
-   [EchoOfTheVoid] 30_PvpShop.lua загружен (шоп НПС 70170, товаров: 6).
-   [EchoOfTheVoid] AddonBridge.lua загружен (аддон AzerothEcho, AE_SendProgress экспортирован).
-   [EchoOfTheVoid] CampaignManager.lua загружен (API кампаний, .ae*, .aecampaign*, журнал realm_campaign_log).
-   echo-balance загружен: worldDmg=1.00 playerDmg=1.00 heal=1.00 maxHit=0% bossDmg=1.00
-   ```
-5. Для клиентского аддона — скопировать `addons/AzerothEcho/`
-   в `WoW/Interface/AddOns/` (см. [`addons/README.md`](addons/README.md)).
+2. Install modules (mod-ale is required) and build the core — see [`modules/README.md`](modules/README.md).
+3. Apply migrations from `sql/world/` **in numeric order** — see [`sql/README.md`](sql/README.md).
+4. Copy `lua_scripts/*.ext` and `lua_scripts/*.lua` into the server `lua_scripts/` dir.
+5. Start `worldserver`. Expect `[EchoOfTheVoid] …` log lines (see `lua_scripts/README.md`).
 
 ---
 
-## 📜 Конвенции проекта
+## 🧪 CI / Emulated master build
 
-| Конвенция | Значение |
+`core-build.yml` клонирует мастер-ядро `azerothcore/azerothcore-wotlk@master`, встраивает
+все 7 кастомных модулей `echo-*` и обязательный `mod-ale`, затем собирает ядро:
+
+- **Linux** (`ubuntu-26.04`, clang-20 + ccache): CMake `SCRIPTS=static`, `MODULES=static`, `-Werror`,
+  build → install → dry-run `authserver`/`worldserver` → проверка `Errors.log` → юнит-тесты.
+- **Windows** (`windows-latest`, MSVC): кэш Boost 1.87 + MySQL 8.4, OpenSSL из образа,
+  сборка через `./acore.sh compiler build`.
+
+Подготовка дерева вынесена в composite action `.github/actions/setup-tree`.
+
+Trigger: push/PR на `main`/`master`.
+
+*(EN: CI clones the master core, embeds all 7 `echo-*` modules + required `mod-ale`, then builds:
+Linux clang static build with dry-run and error check; Windows MSVC via `acore.sh`.)*
+
+---
+
+## 📜 Конвенции проекта / Project conventions
+
+| Конвенция / Convention | Значение / Value |
 |-----------|----------|
-| Entry НПС (кастомные) | 70001–79999 |
-| ├─ Портальный Страж | 70001 |
-| ├─ Культ / порождения Пустоты | 70100–70199 |
-| ├─ Ключевые сюжетные НПС | 70110+ (сюжет), 70120+ (квестодатели) |
-| Item--entry (кастомные) | 70001–79999 |
-| ID кампаний | 1–3 (см. `docs/campaigns/README.md`) |
-| Прогресс игроков | таблица `realm_campaign_progress` |
-| Миграции | `sql/world/NNNN_*.sql`, только вперёд |
-| Цвета чата | Пустота `|cff8e44ad`, Орден `|cff5dade2`, Культ `|cffc0392b` |
+| Entry НПС (кастомные) / Custom NPC entries | 70001–79999 |
+| item entry (кастомные) / custom item entries | 70001–79999 |
+| ID кампаний / Campaign IDs | 1–4 |
+| Прогресс игроков / Player progress | таблица `realm_campaign_progress` |
+| Миграции / Migrations | `sql/world/NNNN_*.sql`, только вперёд / forward only |
+| Цвета чата / Chat colors | Пустота `|cff8e44ad`, Орден `|cff5dade2`, Культ `|cffc0392b` |
+| Локализация / Localization | полная ru/en (скрипты, магазин, аддон) / full ru/en |
 
 ---
 
-## 🔗 Документация
+## 🔗 Документация / Documentation
 
-- 🌌 Лор — [`docs/lore/universe.md`](docs/lore/universe.md)
-- ⚔️ Кампании — [`docs/campaigns/README.md`](docs/campaigns/README.md)
+> 🆕 **Вики / Wiki (RU/EN):** [`wiki/`](wiki/) — установка на Windows/Ubuntu,
+> конфигурация, CI. / installation on Windows/Ubuntu, config, CI.
+- 🌌 Лор / Lore — [`docs/lore/universe.md`](docs/lore/universe.md)
+- ⚔️ Кампании / Campaigns — [`docs/campaigns/README.md`](docs/campaigns/README.md)
 - 🗺️ Roadmap — [`docs/roadmap.md`](docs/roadmap.md)
-- 🧪 Развёртывание сервера — [`docs/deployment.md`](docs/deployment.md)
-- 🧪 План тестирования — [`docs/testing-plan.md`](docs/testing-plan.md)
-- 🧩 DBC-патч клиента (титул/маунт) — [`docs/client-patch.md`](docs/client-patch.md)
-- 🧩 Скрипты — [`lua_scripts/README.md`](lua_scripts/README.md)
-- 🗃️ Миграции — [`sql/README.md`](sql/README.md)
-- 🧩 Аддон — [`addons/README.md`](addons/README.md)
-- 📦 Модули — [`modules/README.md`](modules/README.md)
-
-
+- 🧪 Развёртывание сервера / Server deployment — [`docs/deployment.md`](docs/deployment.md)
+- 🧪 План тестирования / Testing plan — [`docs/testing-plan.md`](docs/testing-plan.md)
+- 🧩 DBC-патч клиента / Client DBC patch — [`docs/client-patch.md`](docs/client-patch.md)
+- 🧩 Скрипты / Scripts — [`lua_scripts/README.md`](lua_scripts/README.md)
+- 🗃️ Миграции / Migrations — [`sql/README.md`](sql/README.md)
+- 📦 Модули / Modules — [`modules/README.md`](modules/README.md)
+- 📋 TODO / Backlog — [`TODO.md`](TODO.md)

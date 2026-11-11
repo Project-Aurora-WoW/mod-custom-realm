@@ -1,137 +1,81 @@
-# 📋 TODO — Azeroth: Эхо Пустоты
+# 📋 TODO / Backlog — Azeroth: Эхо Пустоты
 
 > Живой файл задач реалма. **Правило ведения:** обновляется после каждого
 > нового коммита — выполненное переносится в «Готово» с хешем коммита,
 > новые задачи добавляются в актуальный бэклог.
-> Дата последнего обновления: после коммита `77b97df`.
+>
+> Live project task list. **Maintenance rule:** updated after every new commit —
+> completed work moves to "Done" with its commit hash, new tasks are added to
+> the current backlog.
+>
+> Дата последнего обновления / Last updated: 2026-11-11
 
 ---
 
-## ✅ Готово
+## ✅ Готово / Done
 
-| Коммит | Что сделано |
+| Коммит / Commit | Что сделано / What was done |
 |--------|-------------|
-| (ранние) | Инфраструктура, кампании 1–4, аддон AzerothEcho, C++-модули echo-*, миграции 0001–0017, миграция на ALE (`00_CampaignRegistry.ext`) |
-| `8ac9584` | **Tier A из eluna-scripts** (референс Cloticc): миграция `0018_eluna_scripts_tier_a.sql` (НПС 70172/70173, шаблоны 70190/70191, item 70008, спелл 70050, `realm_gold_storage`); секции реестра (`services.enchanter`, `gold_storage`, `account_mounts`, `auto_skills`, `time_rift`, `corruption`); скрипты 13–18 с исправленными багами оригиналов (см. шапки скриптов) |
-| `0220ff3` | **Интеграция кастомных карт** (референс RStijn/custom-maps): телепорты Портального Стража на карту 5000 (Морза, Долина Предательства) + лор «опасных мест»; `patch-Z.mpq` в клиентском манифесте; docs — `client-patch.md` ч. 6 (правило Map.dbc только в patch-Z), `deployment.md` шаг 4 (экстракция с патчем), `testing-plan.md` раздел 11, `roadmap.md` |
-| `6357815` | `TODO.md` — живой трекер задач (обновляется после каждого коммита) |
-| `db92ea0` | **Режимы испытаний** (референс mod-challenge-modes, локализованный форк ru/en — `modules/echo-challenge-modes`): 8 режимов (Hardcore, SemiHardcore, SelfCrafted, ItemQualityLevel, Slow/VerySlow XP, QuestXpOnly, IronMan); Алтарь Испытаний GO 705605 (`0019_challenge_modes.sql`, 9 спавнов у кладбищ стартовых зон); конфиг с наградами за уровни; `setup-build.sh`, `modules/README.md`; docs — `deployment.md` (EnablePlayerSettings=1), `testing-plan.md` раздел 12, `roadmap.md` |
-| `25dcf23` | GPT-НПС (elunamod-gpt-npcs) — в бэклог (нужны OpenAI-ключ и решения по entry/модели/каналу) |
-| `6930313` | **AIO-магазин** (референс eluna-aio-storesystem): `Store_DataStruct/Server/Client.lua` (ru/en, guard без AIO, фикс `self.Flags` превью); миграция `0020_store_system.sql` — таблицы `realm_store_*`, валюты золото + Жетон Эха (70005), демо-услуги (Пегас, титул 48, баффы, смена имени); `client/store-ui/README.md`; docs — `client-patch.md` ч. 7, `deployment.md`, `testing-plan.md` раздел 13, `roadmap.md`, `lua_scripts/README.md` |
-| `d9cc318` | TODO — AIO-магазин |
-| `287b508` | **Системы public-scripts** (референс JadaDev, портировано на ALE): награды за наигранное время (`19_PlayedTimeRewards.lua`, `realm_played_time_rewards{,_claimed}` — 0021), смена фракции за 25 Жетонов Эха (НПС 70174 «Страж Перемен», `21_FactionChanger.lua`), убежища/FFA с фиксами оригинала (слит 4-кратный хендлер, сброс FFA при выходе — `22_SanctuaryPvP.lua`); миграция `0021_public_scripts.sql` (двойное применение); **не взято**: Reviving (конфликт с Hardcore), AllTalents/Level80-255 (против концепции 80 и стоковых классов); чек-лист — `testing-plan.md` раздел 14 |
-| `77b97df` | **AIO-фреймворк** (референс dwrath-eluna-3-3-5a, оригинал Rochet2/AIO v1.74 GPLv2): серверный стек в `lua_scripts/` — `AIO.lua` + deps (queue, smallfolk, crc32lua, lualzw, LuaSrcDiet → модуль `process_code`), `extensions/` (StackTracePlus — traceback всех Lua-ошибок, `_Misc.ext`); магазин `Store_*.lua` ожил (guard снят). Клиентский аддон AIO_Client — из оригинального Rochet2/AIO (в референсе отсутствует), patch-x — `client-patch.md` ч. 8. Docs sync: `deployment.md` шаг 7 (`cp -r`, `AIO_CODE_OBFUSCATE` при отладке), `testing-plan.md` раздел 15 + 13.0.1, `roadmap.md`, `modules/README.md`, `lua_scripts/README.md`. **Не взято из dWrath**: ClassLess, RandomSpell/rollstable, StatAllo, rage_gen, nakedbugfix, learnkrabe, helloworld, sql/custom (classless / зависимость от C++ ядра dWrath) |
-
-## 🔥 Актуально (следующий шаг)
-
-- [ ] **Клиентский аддон AIO_Client**: взять из оригинального репозитория
-      Rochet2/AIO (github) и вшить в patch-x как `Interface/AddOns/AIO/`
-      (`client-patch.md` ч. 8) — без него AIO-клиентская часть не работает
-- [ ] **Тестовый прогон Tier A** на тестовом реалме: логи загрузки
-      `[EchoOfTheVoid] 13_AccountMounts … 18_VoidCorruption`, чек-листы
-      зачарователя/казны/маунтов/авто-навыков/разломов/порчи
-- [ ] **Пересборка ядра** с `echo-challenge-modes` + миграции 0019–0021 +
-      `EnablePlayerSettings = 1` → чек-листы разделов 12, 13, 14, 15
-      (раздел 15 — AIO: рукопожатие, доставка кода, кэш, `/aio`-команды)
-- [ ] **Выверка Corruption-дебаффов**: в реестре (`corruption`) стоят
-      ID-заглушки порогов 20/40/60/80/100 — подобрать/создать реальные
-      спеллы (миграция `0021+`)
-- [ ] **Сборка `patch-x.mpq`** по `client-patch.md` ч. 1–4 + ч. 7–8
-      (база `Patch-T.MPQ.rar`; Map.dbc НЕ включать; + Store_UI BLP
-      из eluna-aio-storesystem + аддон AIO_Client)
-
-## 📦 Бэклог (по приоритету)
-
-- [ ] **Tier B из eluna-scripts**: Weapon Master, Lottery, Skip DK Starter,
-      Алтари молитвы — инспекция и адаптация с фиксами
-- [ ] **GPT-НПС** (референс `elunamod-gpt-npcs`, Ember-RP, MIT — Lua+Python+
-      OpenAI): разговоры с НПС через чат. Открытые вопросы перед реализацией:
-      ограничение entry-листом кастомных НПС, модель (рекомендуется
-      `gpt-4o-mini` вместо устаревшего gpt-3.5-turbo), канал ответа
-      (рекомендуется шёпот вместо SendUnitSay), экранирование argv в
-      os.execute (инъекция в оригинале), rate-limit, локализация ru/en промпта.
-      Зависимость: Python3 + pip openai + OPENAI_API_KEY на хосте сервера
-- [ ] Заполнить SHA256/size в `client/manifest.json` после выкладки
-      `patch-Z.mpq` и сборки `patch-x.mpq` на хостинг
-- [ ] Тестовый прогон кастомных карт — `testing-plan.md` раздел 11
-      (нужен клиент с patch-Z + извлечённые серверные данные)
-- [ ] Настройка наград режимов испытаний в `echo-challenge-modes.conf`
-      (титул 48 / item 70001 — значения-примеры в `.conf.dist`)
-- [ ] Наполнение магазина: расширение ассортимента `realm_store_services`
-      (маунты за жетоны, VIP-категория requiredRank, SERVER_HANDLED-валюта)
-- [ ] Миграция PvP-шопа (`30_PvpShop.lua`, НПС 70170) в AIO-магазин
-      (по мере готовности UI)
-- [ ] **Parangon** (референс `lua-parangon`, Open-Wow/Khalar, AGPL —
-      Diablo 3 Paragon без UI): уровень Paragon на аккаунт (exp за PvE/PvP
-      киллы, анти-абюз ±10 lvl, опыт группе), 2 очка/уровень → 4 стата
-      через стаки штатных аур 7464/7471/7477/7468 (`SetStackAmount`),
-      gossip-меню `.parangon`, локализация уже с ru. **Зависимости**:
-      ObjectVariables.ext (`SetData/GetData`, инспектирован в
-      dwrath-eluna-3-3-5a) + `GossipSetText` (кастомный пакет SMSG 384).
-      **Известные баги оригинала** (для фиксов при адаптации): nil `pAcc`
-      при первом входе, `player` вместо `self` в SetParangonLevel,
-      ru-PvE показывает pvpKill, gossip-хендлер перехватывает ВСЕХ НПС,
-      отдельная БД `R1_Eluna` → наша конвенция — `0022_*` в
-      acore_characters. **Отложено осознанно**: как и StatAllo (dWrath),
-      распределение статов поверх стокового баланса — отдельное решение
-      (пересечение с echo-balance, место в прогрессии 80+)
-- [ ] **Classless-арка К5 «Пустота дробит классы»** — выбранная
-      реализация: референс `azerothcore-classless-solo` (Shikifuyin):
-      спеллы/таланты/глифы всех 10 классов через чистый Eluna + AIO-UI,
-      сессионный токен против темперинга, полные таблицы ID 3.3.5a,
-      платный сброс (прогрессирующие цены), авто-брони 10/20/40,
-      таблица `character_classless` (guid + сериализованные массивы).
-      **Лучше dWrath ClassLess** (не требует пересборки ядра). Запуск
-      возможен сразу: AIO уже в репозитории (77b97df); понадобится
-      OOP-зависимость `class.lua` (взять из репозитория Shikifuyin или
-      заменить на нашу структуру). Привязка к опции —
-      `docs/classless-option.md`. **Не запускаем**: противоречит текущей
-      концепции «стоковые классы 1–80» — только в рамках арки К5
-- [ ] RAI / SpellAIO из waloriaold (крупные, отдельные модули)
-- [ ] mod-delves (wow-mod-delves) — после запуска тестового реалма
-- [ ] Интеграция модулей AzerothCore: mod-ah-bot, mod-transmog, mod-cfbg,
-      mod-duel-reset (`modules/README.md`)
-- [ ] Полный тестовый прогон кампаний 1–4 по чек-листам
-- [ ] **Random-энчанты предметов** — референс `azerothcore-content`
-      (StygianTheBest, 2017, mod-randomenchants): таблица
-      `item_enchantment_random_tiers` (~700 энчантов, тиры 1–5,
-      классы WEAPON/ARMOR/ANY, exclusiveSubClass). **Требует C++-модуля-
-      потребителя** (оригинальный mod-randomenchants устарел) — реализация
-      будет своей (echo-модуль или Lua-хук на лут/крафт), таблица — база
-      данных; пересечение с зачарователем (15_Enchanter) — проверить
-- [ ] **Solo-friendly данжи** — идея из `azerothcore-content`
-      (mod-solocraft / mod-vasautobalance): масштабирование статов/HP
-      игрока или мобов от размера группы и типа инстанса. Кандидат на
-      обсуждение после тестового прогона; реализация была бы своей
-      (echo-модуль по паттерну echo-balance), оригиналы — C++ и
-      конфликтуют с echo-balance/челлендж-режимами при прямом переносе
-- [ ] Вариант B PermaDeath (Hardcore) — рассмотрен, отложен
-
-## ⚠️ Техдолг / известные проблемы
-
-- [ ] `deployment.md` шаг 8: расхождение CharDB/WorldDB в `0002` —
-      применять миграцию в `acore_characters` (вариант A) до запуска кампаний
-- [ ] Координаты спавнов Драконьего Погоста/Зул'Драка приблизительные —
-      выверка на тестовом реалме (testing-plan р. 1)
-- [ ] Титул ID 48 (TitleMask) — эмпирика, обязательная проверка на клиенте
-- [ ] Entry-занятость при новых миграциях: НПС 70170/70172/70173/70174/70180,
-      items 70001–70008, 70100/70101, guid 7000170–7000174,
-      GO 705605 + guid 7005601–7005609 — см. `sql/README.md`
+| (ранние / early) | Инфраструктура, кампании 1–4, аддон AzerothEcho, C++-модули echo-*, миграции 0001–0017, миграция на ALE (`00_CampaignRegistry.ext`). / Infrastructure, campaigns 1–4, AzerothEcho addon, echo-* C++ modules, migrations 0001–0017, ALE migration (`00_CampaignRegistry.ext`). |
+| `8ac9584` | **Tier A из eluna-scripts** (референс Cloticc): миграция `0018_eluna_scripts_tier_a.sql` (НПС 70172/70173, шаблоны 70190/70191, item 70008, спелл 70050, `realm_gold_storage`); секции реестра; скрипты 13–18. / **Tier A from eluna-scripts** (ref. Cloticc): migration `0018_eluna_scripts_tier_a.sql` (NPCs 70172/70173, templates 70190/70191, item 70008, spell 70050, `realm_gold_storage`); registry sections; scripts 13–18. |
+| `0220ff3` | **Интеграция кастомных карт** (RStijn/custom-maps): телепорты Портального Стража на карту 5000 + лор; `patch-Z.mpq`; docs. / **Custom maps** (RStijn/custom-maps): Portal Guardian teleports to map 5000 + lore; `patch-Z.mpq`; docs. |
+| `db92ea0` | **Режимы испытаний** (mod-challenge-modes, ru/en): 8 режимов, Алтарь Испытаний GO 705605 (`0019`), конфиг наград. / **Challenge modes** (mod-challenge-modes, ru/en): 8 modes, Trial Altar GO 705605 (`0019`), rewards config. |
+| `6930313` | **AIO-магазин** (eluna-aio-storesystem): `Store_DataStruct/Server/Client.lua` (ru/en), миграция `0020_store_system.sql` (`realm_store_*`). / **AIO store** (eluna-aio-storesystem): `Store_DataStruct/Server/Client.lua` (ru/en), migration `0020_store_system.sql` (`realm_store_*`). |
+| `287b508` | **Системы public-scripts** (JadaDev, на ALE): награды за время (`19`, 0021), смена фракции (`21`, НПС 70174), убежища/FFA (`22`). / **public-scripts systems** (JadaDev, on ALE): played-time rewards (`19`, 0021), faction change (`21`, NPC 70174), sanctuary/FFA (`22`). |
+| `77b97df` | **AIO-фреймворк** (Rochet2/AIO v1.74, на ALE): `AIO.lua` + deps, `extensions/` (StackTracePlus), магазин ожил. / **AIO framework** (Rochet2/AIO v1.74, on ALE): `AIO.lua` + deps, `extensions/` (StackTracePlus), store enabled. |
+| `90fd3bd` | **Фиксы задач 1/3/4**: хелпер `escape` против SQL-инъекций (registry, `16_GoldStorage.lua`, `CampaignManager.lua`); выверенные ID дебаффов Corruption (55095/770/55078/51735/48301 вместо несуществующих 822xx); `pcall`-guard загрузки таблиц в `19_PlayedTimeRewards.lua`. / **Fixes 1/3/4**: `escape` helper vs SQL injection (registry, `16_GoldStorage.lua`, `CampaignManager.lua`); verified Corruption debuff IDs (55095/770/55078/51735/48301 instead of non-existent 822xx); `pcall` guard for table load in `19_PlayedTimeRewards.lua`. |
+| `4431211` | **Фикс задачи 2**: краш `HandleAcReset` на нечисловом ID (`value_or(0)` вместо UB-разыменования) в `echo-campaigns`. / **Fix 2**: `HandleAcReset` crash on non-numeric ID (`value_or(0)` instead of UB deref) in `echo-campaigns`. |
+| `f22536e` | **Tier B из eluna-scripts (задача 5)**: Weapon Master (`23`, 70175), Lottery (`24`, 70176), Skip DK Starter (`25`, 70177), Prayer Altar (`26`, 70178); миграция `0024_tier_b.sql` + таблицы `realm_lottery{,_tickets}`. / **Tier B from eluna-scripts (task 5)**: Weapon Master (`23`, 70175), Lottery (`24`, 70176), Skip DK Starter (`25`, 70177), Prayer Altar (`26`, 70178); migration `0024_tier_b.sql` + `realm_lottery{,_tickets}` tables. |
+| `f0956d6` | **Classless-арка К5 (задача 6)**: минимальный порт `azerothcore-classless-solo` (Shikifuyin) на ALE — обучение «чужих» классовых спеллов и глифов через `.aeclassless`; таблица `character_classless` (`0025_classless.sql`); таланты НЕ включены (см. скрипт). / **Campaign arc K5 (task 6)**: minimal ALE port of `azerothcore-classless-solo` (Shikifuyin) — learn foreign-class spells and glyphs via `.aeclassless`; `character_classless` table (`0025_classless.sql`); talents excluded (see script). |
+| `86842f3` | Docs sync: `lua_scripts/README.md`, `sql/README.md` (Tier B + Classless, миграции 0024/0025). / Docs sync: `lua_scripts/README.md`, `sql/README.md` (Tier B + Classless, migrations 0024/0025). |
+| (не закоммичено / not committed) | **CI/эмуляция мастер-сборки** (`.github/`): `.github/workflows/core-build.yml` (Linux clang + Windows MSVC, CCP-clone master+модули+mod-ale, dry-run), `.github/actions/setup-tree/action.yml`. / **CI / master-build emulation** (`.github/`): `.github/workflows/core-build.yml` (Linux clang + Windows MSVC, master clone+modules+mod-ale, dry-run), `.github/actions/setup-tree/action.yml`. |
 
 ---
 
-## Конвенции (кратко)
+## 🔥 Актуально (следующий шаг) / Next up
 
-- Entry НПС/предметы: 70001–79999; SQL-миграции `NNNN_*.sql` строго вперёд
-- Порядок загрузки ALE: `*.ext` до всех `*.lua`; реестр — `00_CampaignRegistry.ext`
-- Локализация скриптов — полная ru/en
-- Референсы: `maxteam/azerothcore-wotlk`, `waloria`, `waloriaold`,
-  `wow-mod-delves`, `azerothcore-wotlk-classless`, `mod-ale`,
-  `skywall-hardcore-mode-3-3-5-wow`, `eluna-scripts`, `custom-maps`,
-  `mod-challenge-modes`, `elunamod-gpt-npcs`, `eluna-aio-storesystem`,
-  `public-scripts`, `dwrath-eluna-3-3-5a`, `lua-parangon`,
-  `counterscripts` (инспектирован, не применим — MVC-шаблон без контента),
-  `azerothcore-classless-solo` (кандидат на реализацию classless-арки К5),
-  `azerothcore-content` (архив StygianTheBest 2017; взяты идеи:
-  random-enchants, solo-данжи — см. бэклог; остальное дублирует
-  имеющиеся системы)
+- [ ] **Закоммитить и запушить CI** — `.github/` (workflow + composite action) ещё не в git. / **Commit and push CI** — `.github/` (workflow + composite action) is not yet in git.
+- [ ] **Клиентский аддон AIO_Client**: взять из Rochet2/AIO и вшить в patch-x как `Interface/AddOns/AIO/` — без него AIO-клиентская часть не работает. / **AIO_Client addon**: take from Rochet2/AIO and embed into patch-x as `Interface/AddOns/AIO/`.
+- [ ] **Тестовый прогон Tier A/B + Classless** на тестовом реалме: логи загрузки `[EchoOfTheVoid] 13_…18_…, 23_…27_`, чек-листы. / **Test run of Tier A/B + Classless** on a test realm: `[EchoOfTheVoid] 13_…18_…, 23_…27_` load logs, checklists.
+- [ ] **Пересборка ядра** с модулями + миграции 0018–0025 → чек-листы разделов 12–15 (`echo-challenge-modes`, AIO, Tier A/B, Classless). / **Core rebuild** with modules + migrations 0018–0025 → checklist sections 12–15 (`echo-challenge-modes`, AIO, Tier A/B, Classless).
+- [ ] **Сборка `patch-x.mpq`** по `client-patch.md` (база `Patch-T.MPQ.rar`; Map.dbc НЕ включать; Store_UI BLP + аддон AIO_Client). / **Build `patch-x.mpq`** per `client-patch.md`.
+- [ ] **Проверить фактический прогон CI** (зарегистрировать репозиторий на GitHub Actions — мастере-ядро собирает все 7 модулей + mod-ale). / **Verify CI actually runs** (register repo on GitHub Actions — master core builds all 7 modules + mod-ale).
+
+---
+
+## 📦 Бэклог (по приоритету) / Backlog (by priority)
+
+- [ ] **GPT-НПС** (референс `elunamod-gpt-npcs`, Ember-RP, MIT): разговоры с НПС через чат. Открытые вопросы: entry-лист, модель (`gpt-4o-mini`), канал ответа (шёпот), экранирование argv, rate-limit, локализация ru/en. Зависимость: Python3 + openai + API-ключ. / **GPT-NPC** (ref. `elunamod-gpt-npcs`): NPC chat conversations. Open questions: entry allowlist, model, response channel, argv escaping, rate-limit, ru/en locale. Deps: Python3 + openai + API key.
+- [ ] Заполнить SHA256/size в `client/manifest.json` после выкладки `patch-Z.mpq` и сборки `patch-x.mpq`. / Fill SHA256/size in `client/manifest.json` after shipping `patch-Z.mpq` and building `patch-x.mpq`.
+- [ ] Тестовый прогон кастомных карт — `testing-plan.md` раздел 11. / Test run of custom maps — `testing-plan.md` section 11.
+- [ ] Настройка наград режимов испытаний в `echo-challenge-modes.conf` (титул 48 / item 70001 — примеры). / Configure challenge-mode rewards in `echo-challenge-modes.conf`.
+- [ ] Наполнение магазина: расширение `realm_store_services` (маунты за жетоны, VIP-категория requiredRank, SERVER_HANDLED-валюта). / Expand store: `realm_store_services` (token mounts, VIP requiredRank tier, SERVER_HANDLED currency).
+- [ ] Миграция PvP-шопа (`30_PvpShop.lua`, 70170) в AIO-магазин. / Migrate PvP shop (`30_PvpShop.lua`, 70170) into the AIO store.
+- [ ] **Parangon** (референс `lua-parangon`, Open-Wow/Khalar, AGPL): уровень Paragon на аккаунт, стаки штатных аур 7464/7471/7477/7468, `.parangon`. Зависимости: ObjectVariables.ext + GossipSetText (SMSG 384). Отложено осознанно (пересечение с балансом статов). / **Parangon** (ref. `lua-parangon`): account-wide Paragon level, stock aura stacks, `.parangon`. Deps: ObjectVariables.ext + GossipSetText. Deferred (stat-balance overlap).
+- [ ] **Classless — полная версия** (таланты + AIO-UI + класс Hero + мобильный кастинг): сейчас включена минимальная версия (спеллы+глифы); таланты требуют C++-класс талантов / референс-ядро. / **Classless — full version** (talents + AIO-UI + Hero class + mobile casting): currently minimal version (spells+glyphs) is in; talents need the C++ talent class / classless reference core.
+- [ ] RAI / SpellAIO из waloriaold (крупные модули). / RAI / SpellAIO from waloriaold (large modules).
+- [ ] mod-delves (wow-mod-delves) — после запуска тестового реалма. / mod-delves (wow-mod-delves) — after test realm launch.
+- [ ] Интеграция модулей AzerothCore: mod-ah-bot, mod-transmog, mod-cfbg, mod-duel-reset (`modules/README.md`). / Integrate AzerothCore modules: mod-ah-bot, mod-transmog, mod-cfbg, mod-duel-reset.
+- [ ] Полный тестовый прогон кампаний 1–4 по чек-листам. / Full test run of campaigns 1–4 per checklists.
+- [ ] **Random-энчанты предметов** (референс `azerothcore-content`): таблица `item_enchantment_random_tiers` (~700 энчантов); требуется C++-потребитель. / **Random item enchants** (ref. `azerothcore-content`): table + C++/Lua consumer.
+- [ ] **Solo-friendly данжи** (мод-solocraft / vasautobalance): масштабирование статов/HP от размера группы. / **Solo-friendly dungeons** (mod-solocraft/vasautobalance): group-size stat scaling.
+- [ ] Вариант B PermaDeath (Hardcore) — рассмотрен, отложен. / PermaDeath (Hardcore) variant B — considered, deferred.
+
+---
+
+## ⚠️ Техдолг / известные проблемы (Technical debt / known issues)
+
+- [ ] `deployment.md` шаг 8: расхождение CharDB/WorldDB в `0002` — применять в `acore_characters` (вариант A). / `deployment.md` step 8: CharDB/WorldDB mismatch in `0002` — apply to `acore_characters` (variant A).
+- [ ] Координаты спавнов Драконьего Погоста/Зул'Драка приблизительные — выверка на тестовом реалме. / Dragonblight/Zul'Drak spawn coords approximate — verify on test realm.
+- [ ] Титул ID 48 (TitleMask) — эмпирика, обязательная проверка на клиенте. / Title ID 48 (TitleMask) — empirical, must verify in client.
+- [ ] Entry-занятость при новых миграциях: НПС 70170–70178/70180, items 70001–70008/70100/70101, guid 7000170–7000178, GO 705605+guid 7005601–7005609 — см. `sql/README.md`. / Entry usage for new migrations: NPCs 70170–70178/70180, items 70001–70008/70100/70101, guid 7000170–7000178, GO 705605+guid 7005601–7005609 — see `sql/README.md`.
+
+---
+
+## Конвенции (кратко) / Conventions (short)
+
+- Entry НПС/предметы: 70001–79999; SQL-миграции `NNNN_*.sql` строго вперёд. / NPC/item entries: 70001–79999; migrations strictly forward.
+- Порядок загрузки ALE: `*.ext` до всех `*.lua`; реестр — `00_CampaignRegistry.ext`. / ALE load order: `*.ext` before `*.lua`; registry — `00_CampaignRegistry.ext`.
+- Локализация скриптов — полная ru/en. / Script localization — full ru/en.
+- CI: `.github/workflows/core-build.yml` эмулирует мастер-сборку (мастер-ядро + 7 модулей + mod-ale, Linux/Windows). / CI: `.github/workflows/core-build.yml` emulates a master build (master core + 7 modules + mod-ale, Linux/Windows).
+- Референсы: `azerothcore-wotlk`, `waloria(old)`, `wow-mod-delves`, `mod-ale`, `eluna-scripts`, `custom-maps`, `mod-challenge-modes`, `elunamod-gpt-npcs`, `eluna-aio-storesystem`, `public-scripts`, `dwrath-eluna-3-3-5a`, `lua-parangon`, `azerothcore-content`, `azerothcore-classless-solo`. / References: listed above.
