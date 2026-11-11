@@ -137,6 +137,23 @@
 
 ---
 
+## 🧩 Оценка внешних репозиториев (Youpeoples / 55Honey) — вердикты
+
+Сводка решений по кандидатам (2026-11-12). Из «Референс/Отклонить» в код ничего не добавлялось —
+интегрирован только `extend_paladin_buffs` из ACScripts как `30_PaladinBlessings.lua`.
+
+| Репозиторий | Лицензия | Вердикт | Почему |
+|---|---|---|---|
+| `Youpeoples/ACScripts` | MIT | **Частично взят** | `extend_paladin_buffs` → `lua_scripts/30_PaladinBlessings.lua` (QoL, продление баффов паладина до 60 мин; коммит `027d008`). Прочее (gold_to_guild, faster_mounts, freeze, trial-gate, dbc_spells_sql) — не берём: не нужно для нас или конфликтует с балансом (faster_mounts/SetSpeed), дублирует БД (dbc). |
+| `Youpeoples/Black-Market-Auction-House` | GPL-3.0 | **Референс/не ставить** | Идея аукциона хороша, но «как есть» нельзя: второй AIO-UI-канал конкурирует с нашим магазином (`Store_*.lua`), entry `2069430` вне 70xxx, только золото (не Жетоны Эха), en-тексты, молод (8 коммитов). Механику при желании перенести как сервис AIO-магазина — отдельным этапом. |
+| `Youpeoples/Prestige-and-Draft-Mode` | MIT | **Референс/не ставить** | Престиж-сброс стирает спеллы/таланты → ломает Classless (`27_Classless.lua`) и Parangon (`29_Parangon.lua`). Макс-уровень 70 vs наш 80, en-тексты, требует DBC/MPQ. Брать только после явного решения о сосуществовании с Classless/Parangon (крупный этап). |
+| `Youpeoples/Ultimate-Full-Loot-Pvp` | MIT | **Интегрирован** | Порт в `lua_scripts/31_PvpFullLoot.lua` + сундук 700020 (`0032_pvp_full_loot.sql`), коммит `027d008`. Адаптация под реалм: команды через `ON_CHAT(18)`, MMR/webhook выключены, ru/en. |
+| `55Honey/Acore_eventScripts` | AGPL-3.0 | **Референс, не устанавливать** | Зрелый (237 коммитов), но модель «GM-вручную ивенты/боссы»; entry `1112xxx` вне 70xxx; команды `.startevent/.bonusbuff/.fun`; частично пересекается с нашими `10_EventSystem`/`22_SanctuaryPvP`. Полезен как референс логики custom-боссов с фазами и bonusbuff. |
+
+**Кандидат на будущий этап (по желанию):** перенос механики Black-Market AH как категории AIO-магазина; адаптация `customWorldboss` из Acore_eventScripts под entry-диапазон 70xxx и автоматику реалма.
+
+---
+
 ## ⚠️ Не входит в этот план / Out of scope (осознанно отложено)
 
 - Вариант B PermaDeath (Hardcore) — отложен. / PermaDeath variant B — deferred.
