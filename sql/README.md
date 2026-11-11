@@ -29,7 +29,8 @@
 | `world/0018_eluna_scripts_tier_a.sql` | Контент Tier A (eluna-scripts): НПС «Рунный Обжиг» (70172, зачарователь), «Хранитель Золота» (70173), шаблоны «Разлом Пустоты» (70190) и «Иссушенный из Разлома» (70191), item 70008 «Осколок Пустоты», спелл 70050 «Пустотная порча» (spell_dbc, требует DBC-патча клиента); таблица `realm_gold_storage` (**acore_characters**) | 0001, 0008 |
 | `world/0019_challenge_modes.sql` | GO «Алтарь Испытаний» (705605) + 9 спавнов у кладбищ стартовых зон (guid 7005601–7005609) — режимы испытаний `echo-challenge-modes` | — |
 | `world/0020_store_system.sql` | Таблицы AIO-магазина `realm_store_*` (категории/услуги/валюты/связи/журнал) + демо-контент: валюты золото + Жетон Эха, услуги реалма (Пегас 70010, титул 48, баффы, смена имени) | 0009 (жетоны) |
-| `world/0021_public_scripts.sql` | Системы public-scripts (JadaDev): таблицы наград за наигранное время `realm_played_time_rewards{,_claimed}` (**acore_characters**) + НПС «Страж Перемен» (70174, Даларан, guid 7000174) — смена фракции за Жетоны Эха (**acore_world**) | 0009 |
+| `world/0021_public_scripts.sql` | Системы public-scripts (JadaDev): таблицы наград за наигранное время `realm_played_time_rewards{,_claimed}` (**acore_characters**) + НПС «Страж Перемен» (70174, Даларан, guid 7000174) — смена фракции за Жетоны Эха (**acore_world**). ⚠️ Часть acore_world написана по схеме WotLK (`modelid1`, `dmgschool`, `spawndist`, `creature.id`) — на AzerothCore упадёт; рабочий НПС создаёт `0022` | 0009 |
+| `world/0022_fix_release_blockers.sql` | Релизные фиксы: НПС «Страж Перемен» (70174) по схеме AC + модель 15279 + спавн 7000174; идемпотентный досозд спавна PvP-шопа 70170 (**acore_world**) | 0010, 0021 |
 
 ---
 
@@ -73,6 +74,8 @@ mysql -u <user> -p acore_world < sql/world/0020_store_system.sql
 #       НПС 70174 «Страж Перемен» → acore_world:
 mysql -u <user> -p acore_characters < sql/world/0021_public_scripts.sql
 mysql -u <user> -p acore_world < sql/world/0021_public_scripts.sql
+# 0022: фикс схемы НПС 70174 + досозд спавна 70170 → acore_world:
+mysql -u <user> -p acore_world < sql/world/0022_fix_release_blockers.sql
 ```
 
 После применения выполните в консоли `worldserver`:

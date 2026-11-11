@@ -1,36 +1,36 @@
 {
   "realm": "Эхо Пустоты",
-  "version": 2,
+  "version": 4,
   "realmlist": "127.0.0.1",
   "files": [
     {
       "path": "patch-x.mpq",
       "destination": "Data/patch-x.mpq",
-      "sha256": "509b12c179735c3660a4a1b24f87b008e425c84c0d70e5b1d8925c13ba204420",
-      "size": 4105898,
+      "sha256": "0193cd8c2050f9ac80ef03bac8e75e09bc27dd581c3239a90e235574355245a9",
+      "size": 126124,
       "required": true,
-      "description": "DBC-патч: титул «Хранитель Эха» (ID 48), маунт «Бездна-Пегас» (спелл 70010). Собрать по docs/client-patch.md ч. 1–4 (база: waloriaold Patch-T.MPQ.rar). НЕ включать Map.dbc — его полностью перекрывает patch-Z"
+      "description": "Клиентский патч реалма: аддон AIO (Interface/AddOns/AIO) + Map.dbc с записью карты 5000 (Морза, Долина Предательства). MPQ v1, без сжатия. НЕ требует patch-Z для записи карты, но ADT-тайлы карты 5000 живут в patch-Z — ставить оба. Титул 48 и спелл 70010 в этот патч НЕ включены (см. RELEASE.md)."
     },
     {
       "path": "patch-Z.mpq",
       "destination": "Data/patch-Z.mpq",
-      "sha256": "PLACEHOLDER_REPLACE_AFTER_BUILD",
-      "size": 0,
+      "sha256": "6b963870f28c304cc07c9675388d4ae08089f54de2b0b14373ed72aadf0c2840",
+      "size": 3209747,
       "required": true,
-      "description": "Кастомные карты (карта 5000): Остров Морза, Долина Предательства (референс RStijn/custom-maps, 2015). Берётся готовым из репозитория custom-maps, пересборка не требуется. Требуется для телепортов Портального Стража и работы карты 5000"
+      "description": "Кастомные карты (карта 5000): Остров Морза, Долина Предательства (RStijn/custom-maps, 2015). Готовый файл из репозитория — client/custom maps/patch-Z.MPQ; пересборка не требуется."
     },
     {
       "path": "addons/AzerothEcho.zip",
       "destination": "Interface/AddOns/AzerothEcho.zip",
-      "sha256": "0e0630725312014bea244c2578d652ba6503b96a1ba49710e3b6c1f548e83884",
-      "size": 9217,
+      "sha256": "a0cec30ebe7a6edeca5e34b448bfb2d1b8db5e101b7f1e76e1859d46b2f5bc83",
+      "size": 8991,
       "required": true,
-      "description": "Клиентский аддон реалма (addons/AzerothEcho из репозитория, zip без вложенного каталога)"
+      "description": "Клиентский аддон реалма AzerothEcho v2.1.0 (addons/AzerothEcho, zip без вложенного каталога)."
     }
   ],
   "cacheDirs": [
     "Cache",
     "Cache/WDB"
   ],
-  "notes": "После сборки патчей заполнить sha256 (PowerShell: Get-FileHash -Algorithm SHA256 <файл>) и size (байты). Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 → ... → patch-x → patch-Z (Z последняя — её Map.dbc перекрывает всё)."
+  "notes": "sha256/size заполнены 2026-11-11 по фактическим файлам репозитория. patch-x собран из client/aio-client/AIO + client/custom maps/DBFilesClient/Map-merged-5000.dbc. Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 -> ... -> patch-x -> patch-Z."
 }

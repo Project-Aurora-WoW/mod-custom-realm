@@ -35,25 +35,14 @@ SET NAMES utf8mb4;
 -- ============================================================
 -- ЧАСТЬ 1 (acore_world): NPC-шаблоны
 -- ============================================================
-USE `acore_world`;
-
 -- ------------------------------------------------------------
 -- 1.1. NPC 70172 «Рунный Обжиг» — зачарователь за золото.
 -- Мирный НПС (npcflag 1 = gossip), модель зачарователя.
 -- ------------------------------------------------------------
 DELETE FROM `creature_template` WHERE `entry` = 70172;
 INSERT INTO `creature_template`
-(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`,
- `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `unit_class`, `unit_flags`,
- `unit_flags2`, `type`, `mingold`, `maxgold`, `AIName`, `MovementType`, `InhabitType`,
- `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `DamageModifier`,
- `flags_extra`, `ScriptName`, `VerifiedBuild`)
-VALUES
-(70172, 'Рунный Обжиг', 'Зачарователь Ордена Рассвета', 'Talk', 0, 80, 80,
- 35, 1, 1.0, 1.14286, 0, 2, 33554432,
- 2048, 7, 0, 0, '', 0, 3,
- 1.0, 71.0, 1.0, 1.0, 1.0,
- 2, '', 12340);
+(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `dmgschool`, `DamageModifier`, `unit_class`, `unit_flags`, `unit_flags2`, `family`, `type`, `type_flags`, `mingold`, `maxgold`, `AIName`, `MovementType`, `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `flags_extra`, `ScriptName`, `VerifiedBuild`) VALUES
+(70172, 'Рунный Обжиг', 'Зачарователь Ордена Рассвета', 'Talk', 0, 80, 80, 0, 35, 1, 1.0, 1.14286, 0, 0, 1.0, 2, 33554432, 2048, 0, 7, 0, 0, 0, '', 0, 1.0, 71.0, 1.0, 1.0, 2, '', 0, 12340);
 
 DELETE FROM `creature_template_model` WHERE `CreatureID` = 70172;
 INSERT INTO `creature_template_model`
@@ -63,14 +52,14 @@ VALUES
 
 -- Спавн: Даларан, у штаба Ордена (рядом с Хронистом 70180 и Интендантом 70170)
 -- guid 7000172 — свободен (0010: 7000170; 0011: 7000180)
-DELETE FROM `creature` WHERE `id1` = 70172;
-INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id` = 70172;
+INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
- `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `curpower`,
+ `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)
 VALUES
 (7000172, 70172, 571, 4395, 4395, 1, 1, 0,
- 5796.50, 647.10, 647.75, 4.75, 300, 0, 1000000, 0, 0, 0, 0, 0, 0, 12340);
+ 5796.50, 647.10, 647.75, 4.75, 300, 0, 1000000, 0, 0, 0, 0, 0, 12340);
 
 -- ------------------------------------------------------------
 -- 1.2. NPC 70173 «Хранитель Золота» — банкир золота.
@@ -78,17 +67,12 @@ VALUES
 -- ------------------------------------------------------------
 DELETE FROM `creature_template` WHERE `entry` = 70173;
 INSERT INTO `creature_template`
-(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`,
- `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `unit_class`, `unit_flags`,
- `unit_flags2`, `type`, `mingold`, `maxgold`, `AIName`, `MovementType`, `InhabitType`,
- `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `DamageModifier`,
- `flags_extra`, `ScriptName`, `VerifiedBuild`)
-VALUES
+(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `dmgschool`, `DamageModifier`, `unit_class`, `unit_flags`, `unit_flags2`, `family`, `type`, `type_flags`, `mingold`, `maxgold`, `AIName`, `MovementType`, `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `flags_extra`, `ScriptName`, `VerifiedBuild`) VALUES
 (70173, 'Хранитель Золота', 'Казначей Ордена Рассвета', 'Banker', 0, 80, 80,
  35, 1, 1.0, 1.14286, 0, 2, 33554432,
  2048, 7, 0, 0, '', 0, 3,
  1.0, 71.0, 1.0, 1.0, 1.0,
- 2, '', 12340);
+ 2, '', 0, 12340);
 
 DELETE FROM `creature_template_model` WHERE `CreatureID` = 70173;
 INSERT INTO `creature_template_model`
@@ -98,14 +82,14 @@ VALUES
 
 -- Спавн: Даларан, у штаба Ордена
 -- guid 7000173 — свободен
-DELETE FROM `creature` WHERE `id1` = 70173;
-INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id` = 70173;
+INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
- `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `curpower`,
+ `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)
 VALUES
 (7000173, 70173, 571, 4395, 4395, 1, 1, 0,
- 5798.90, 650.40, 647.75, 4.75, 300, 0, 1000000, 0, 0, 0, 0, 0, 0, 12340);
+ 5798.90, 650.40, 647.75, 4.75, 300, 0, 1000000, 0, 0, 0, 0, 0, 12340);
 
 -- ------------------------------------------------------------
 -- 1.3. NPC 70190 «Разлом Пустоты» — портал ивента «Разломы
@@ -116,17 +100,12 @@ VALUES
 -- ------------------------------------------------------------
 DELETE FROM `creature_template` WHERE `entry` = 70190;
 INSERT INTO `creature_template`
-(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`,
- `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `unit_class`, `unit_flags`,
- `unit_flags2`, `type`, `mingold`, `maxgold`, `AIName`, `MovementType`, `InhabitType`,
- `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `DamageModifier`,
- `flags_extra`, `ScriptName`, `VerifiedBuild`)
-VALUES
+(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `dmgschool`, `DamageModifier`, `unit_class`, `unit_flags`, `unit_flags2`, `family`, `type`, `type_flags`, `mingold`, `maxgold`, `AIName`, `MovementType`, `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `flags_extra`, `ScriptName`, `VerifiedBuild`) VALUES
 (70190, 'Разлом Пустоты', '', '', 0, 80, 80,
  35, 0, 1.0, 1.14286, 0, 2, 33554432,
  2048, 10, 0, 0, '', 0, 3,
  1.0, 1.0, 1.0, 1.0, 1.0,
- 2, '', 12340);
+ 2, '', 0, 12340);
 
 DELETE FROM `creature_template_model` WHERE `CreatureID` = 70190;
 INSERT INTO `creature_template_model`
@@ -141,17 +120,12 @@ VALUES
 -- ------------------------------------------------------------
 DELETE FROM `creature_template` WHERE `entry` = 70191;
 INSERT INTO `creature_template`
-(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`,
- `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `unit_class`, `unit_flags`,
- `unit_flags2`, `type`, `mingold`, `maxgold`, `AIName`, `MovementType`, `InhabitType`,
- `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `DamageModifier`,
- `flags_extra`, `ScriptName`, `VerifiedBuild`)
-VALUES
+(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `dmgschool`, `DamageModifier`, `unit_class`, `unit_flags`, `unit_flags2`, `family`, `type`, `type_flags`, `mingold`, `maxgold`, `AIName`, `MovementType`, `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `flags_extra`, `ScriptName`, `VerifiedBuild`) VALUES
 (70191, 'Иссушенный из Разлома', 'Порождение Пустоты', '', 0, 80, 80,
  14, 0, 1.0, 1.14286, 0, 2, 64,
  2048, 10, 0, 0, '', 1, 3,
  1.0, 1.0, 1.0, 1.0, 1.0,
- 0, '', 12340);
+ 0, '', 0, 12340);
 
 DELETE FROM `creature_template_model` WHERE `CreatureID` = 70191;
 INSERT INTO `creature_template_model`
@@ -201,8 +175,6 @@ VALUES
 -- ============================================================
 -- ЧАСТЬ 3 (acore_characters): таблица казны золота
 -- ============================================================
-USE `acore_characters`;
-
 CREATE TABLE IF NOT EXISTS `realm_gold_storage` (
   `account` INT UNSIGNED NOT NULL,
   `name`    VARCHAR(255) NOT NULL,

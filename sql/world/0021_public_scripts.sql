@@ -20,8 +20,6 @@
 -- ============================================================
 
 -- ================== ЧАСТЬ 1: acore_characters ==================
-USE acore_characters;
-
 -- Таблица наград за наигранное время (seconds → награда)
 CREATE TABLE IF NOT EXISTS `realm_played_time_rewards` (
   `id` int unsigned NOT NULL,
@@ -53,16 +51,11 @@ CREATE TABLE IF NOT EXISTS `realm_played_time_rewards_claimed` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ================== ЧАСТЬ 2: acore_world ==================
-USE acore_world;
-
 -- НПС 70174 «Страж Перемен» (смена фракции за Жетоны Эха)
 -- displayid: маг человека (штатный 15279 — как служебные НПС Ордена)
 DELETE FROM `creature_template` WHERE `entry` = 70174;
 INSERT INTO `creature_template`
-    (`entry`, `modelid1`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`,
-     `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `dmgschool`, `baseattacktime`, `rangeattacktime`,
-     `unit_class`, `unit_flags`, `type`, `AIName`, `ScriptName`, `VerifiedBuild`)
-VALUES
+(`entry`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `dmgschool`, `DamageModifier`, `unit_class`, `unit_flags`, `unit_flags2`, `family`, `type`, `type_flags`, `mingold`, `maxgold`, `AIName`, `MovementType`, `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `flags_extra`, `ScriptName`, `VerifiedBuild`) VALUES
     (70174, 15279, 'Страж Перемен', 'Услуги Ордена Рассвета', 'Speak', 0, 80, 80,
      35, 1, 1.0, 1.14286, 0, 0, 2000, 2000,
      2, 2, 7, '', '', 0);

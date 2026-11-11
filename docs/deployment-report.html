@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Эхо Пустоты — отчёт о развёртывании</title>
+<style>
+ body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;color:#1a1a1a;line-height:1.55}
+ h1{font-size:1.8rem;margin-bottom:.2rem}
+ .sub{color:#666;margin-bottom:2rem}
+ h2{margin-top:2.2rem;border-bottom:2px solid #eee;padding-bottom:.3rem}
+ table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.92rem}
+ th,td{border:1px solid #ddd;padding:.45rem .6rem;text-align:left;vertical-align:top}
+ th{background:#f7f7f7;font-weight:600}
+ tr:nth-child(even) td{background:#fcfcfc}
+ code{background:#f2f2f2;padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+ .ok{color:#1e7d32;font-weight:600}
+ .fail{color:#c62828;font-weight:600}
+ .warn{color:#b26a00;font-weight:600}
+ .card{border-left:4px solid #8e44ad;background:#faf6fd;padding:.8rem 1rem;margin:1rem 0}
+ .card.red{border-color:#c62828;background:#fdf6f6}
+ .card.green{border-color:#1e7d32;background:#f5faf6}
+ ul{padding-left:1.4rem}
+ .mono{font-family:Consolas,monospace;font-size:.85rem;word-break:break-all}
+</style>
+</head>
+<body>
+<h1>Эхо Пустоты — отчёт о развёртывании</h1>
+<div class="sub">Состояние на 11.11.2026 · рабочая БД: <code>echo_world</code>, <code>echo_characters</code>, <code>echo_auth</code></div>
+
+<div class="card green">
+<strong>Итог коротко:</strong> бэкапы сняты, схема изучена, 7 миграций из 22 проходят на реальной схеме.
+Развёртывание приостановлено: массовая перезаливка контента затронет 42 шаблона и 48 спавнов, которые уже работают.
+</div>
+
+<h2>1. Что сделано</h2>
+<table>
+<tr><th>Шаг</th><th>Результат</th><th>Файлы</th></tr>
+<tr><td>Подключение к MySQL</td><td><span class="ok">есть</span> — root@localhost</td><td>—</td></tr>
+<tr><td>Определение рабочих баз</td><td><span class="ok">echo_world / echo_characters / echo_auth</span></td><td>—</td></tr>
+<tr><td>Бэкап echo_world</td><td><span class="ok">551 МБ</span></td><td><span class="mono">%TEMP%\gigatool\dbbackup\echo_world-*.sql</span></td></tr>
+<tr><td>Бэкап echo_characters</td><td><span class="ok">988 КБ</span></td><td><span class="mono">%TEMP%\gigatool\dbbackup\echo_characters-*.sql</span></td></tr>
+<tr><td>Песочница для проверки</td><td><span class="ok">sand_world</span> с реальным DDL</td><td>—</td></tr>
+<tr><td>Клиентский патч</td><td><span class="ok">patch-x.mpq собран</span>, 126 124 Б</td><td><span class="mono">client\patch-x.mpq</span></td></tr>
+<tr><td>Манифест клиента</td><td><span class="ok">v4, все хеши сверены</span></td><td><span class="mono">client\manifest.json</span></td></tr>
+</table>
+
+<h2>2. Фактическая схема echo_*</h2>
+<p>Сервер собран не на чистом AzerothCore — наборы колонок отличаются:</p>
+<table>
+<tr><th>Таблица</th><th>Особенность</th></tr>
+<tr><td><code>creature</code></td><td>колонка <code>id</code> (не <code>id1</code>), нет <code>curpower</code></td></tr>
+<tr><td><code>creature_template</code></td><td>55 колонок; нет <code>minhealth/maxhealth</code>, <code>InhabitType</code>, <code>modelid1</code></td></tr>
+<tr><td><code>creature_template_model</code></td><td>модели НПС лежат отдельно</td></tr>
+<tr><td><code>item_template</code></td><td>138 колонок; нет <code>StatsCount</code>; 10 стат-пар вместо 3</td></tr>
+</table>
+
+<h2>3. Результат прогона в песочнице</h2>
+<table>
+<tr><th>Миграция</th><th>Статус</th><th>Примечание</th></tr>
+<tr><td>0001 baseline</td><td class="ok">проходит</td><td>переписана под схему echo</td></tr>
+<tr><td>0002 campaign_progress</td><td class="ok">проходит</td><td><code>CREATE INDEX IF NOT EXISTS</code> заменён на проверку information_schema</td></tr>
+<tr><td>0003 cult_npcs</td><td class="ok">проходит</td><td>—</td></tr>
+<tr><td>0004 reward_item</td><td class="ok">проходит</td><td>INSERT пересобран на 83 колонки</td></tr>
+<tr><td>0005 campaign2</td><td class="fail">не проходит</td><td>файл в старой схеме WotLK; переписать целиком</td></tr>
+<tr><td>0006–0012, 0014, 0018, 0021, 0022</td><td class="fail">не проходят</td><td>та же причина: схемы WotLK</td></tr>
+<tr><td>0007, 0008, 0013, 0015–0017, 0019, 0020</td><td class="ok">проходят</td><td>—</td></tr>
+</table>
+
+<h2>4. Почему остановлено</h2>
+<div class="card red">
+Старые миграции построены на схеме WotLK. Их применение к <code>echo_*</code> требует переписать 11 файлов целиком.
+При этом в базе уже работают 42 кастомных шаблона, 48 спавнов и 14 предметов — а миграции используют
+<code>DELETE + INSERT</code> по тем же entry. Массовая перезаливка заменит рабочий контент.
+</div>
+
+<h2>5. Что предлагаю вместо этого</h2>
+<p>Одна новая миграция <code>0023_echo_schema_alignment.sql</code>, которая:</p>
+<ul>
+<li>добавляет только <strong>отсутствующие</strong> сущности: предмет 70001 «Слеза Рассвета», 70005 «Жетон Эха»;</li>
+<li>не трогает существующие 42 шаблона и 48 спавнов;</li>
+<li>пишется сразу под фактическую схему <code>echo_*</code>;</li>
+<li>проверяется в песочнице одним прогоном, затем применяется к живой базе.</li>
+</ul>
+<p>Старые файлы 0001–0022 остаются как архив: они документируют исходную схему, но не применяются к <code>echo_*</code>.</p>
+
+<h2>6. Открытые вопросы</h2>
+<ul>
+<li>Нужно ли переносить весь контент кампаний заново (перезаливка), или достаточно добрать отсутствующие предметы?</li>
+<li>Какой из клиентских <code>patch-Z.mpq</code> в <code>Data\</code> считать актуальным — рабочий из репозитория 3,2 МБ или лежащий в клиенте 2,5 МБ?</li>
+</ul>
+
+</body>
+</html>
