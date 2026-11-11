@@ -30,12 +30,14 @@ local MIN_LEVEL = REG.meta.min_level
 
 --- Записать действие в журнал кампаний.
 -- action: start/chapter/complete/reward/reset/tokens/gm_*
+-- Защита от SQL-инъекций: action/detail содержат имена игроков и
+-- свободный текст — экранируем через REG.escape (см. реестр).
 local function LogAction(guid, campId, chapter, action, detail)
     CharDBQuery(string.format(
         "INSERT INTO %s (guid, campaign_id, chapter, action, detail) VALUES (%d, %d, %d, '%s', '%s')",
         LOG_TABLE, guid, campId or 0, chapter or 0,
-        tostring(action or "unknown"),
-        string.sub(tostring(detail or ""), 1, 250)
+        REG.escape(tostring(action or "unknown")),
+        string.sub(REG.escape(detail or ""), 1, 250)
     ))
 end
 

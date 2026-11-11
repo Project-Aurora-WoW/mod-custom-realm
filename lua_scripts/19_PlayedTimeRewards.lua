@@ -29,8 +29,14 @@ local function LoadRewards()
     REWARDS = {}
     CLAIMED = {}
 
-    local q = CharDBQuery("SELECT id, played_time, reward_tokens, reward_gold, message_ru, message_en FROM realm_played_time_rewards ORDER BY played_time ASC")
-    if q then
+    -- Таблицы создаёт миграция 0021 (realm_played_time_rewards{,_claimed},
+    -- acore_characters). По конвенции реалма таблицы в скриптах НЕ
+    -- создаются; здесь — только безопасная загрузка: если таблиц ещё
+    -- нет (миграция не применена), скрипт молча выключается вместо
+    -- SQL-ошибки в консоли.
+    local ok, q = pcall(CharDBQuery,
+        "SELECT id, played_time, reward_tokens, reward_gold, message_ru, message_en FROM realm_played_time_rewards ORDER BY played_time ASC")
+    if ok and q then
         repeat
             table.insert(REWARDS, {
                 id = q:GetUInt32(0),
@@ -43,8 +49,9 @@ local function LoadRewards()
         until not q:NextRow()
     end
 
-    local q2 = CharDBQuery("SELECT guid, reward_id FROM realm_played_time_rewards_claimed")
-    if q2 then
+    local ok2, q2 = pcall(CharDBQuery,
+        "SELECT guid, reward_id FROM realm_played_time_rewards_claimed")
+    if ok2 and q2 then
         repeat
             local guid = q2:GetUInt32(0)
             CLAIMED[guid] = CLAIMED[guid] or {}

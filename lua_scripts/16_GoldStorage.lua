@@ -114,7 +114,7 @@ local function StoreGold(player, amountGold, loc)
         INSERT INTO `%s` (account, name, gold)
         VALUES (%d, '%s', %d)
         ON DUPLICATE KEY UPDATE gold = gold + %d, name = VALUES(name)
-    ]], GS.db_table, accountId, player:GetName(), amountGold, amountGold))
+    ]], GS.db_table, accountId, REG.escape(player:GetName()), amountGold, amountGold))
 
     player:ModifyMoney(-copper)
     player:SendAreaTriggerMessage(TAG .. " "
