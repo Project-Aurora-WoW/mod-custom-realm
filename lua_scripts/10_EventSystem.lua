@@ -165,7 +165,7 @@ RegisterPlayerEvent(7, OnEventMobDeath) -- PLAYER_EVENT_ON_CREATURE_KILL
 -- ============================================================
 
 local function IsGM(player)
-    local rank = player:GetGmRank and player:GetGmRank() or ""
+    local rank = (player.GetGmRank and player:GetGmRank()) or ""
     return rank ~= "" and rank ~= "player" and rank ~= "0"
 end
 
