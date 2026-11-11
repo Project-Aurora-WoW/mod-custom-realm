@@ -2,178 +2,191 @@
 -- Azeroth: Эхо Пустоты (Azeroth Custom Realm)
 -- LoreArchive.lua
 -- Назначение: НПС «Хронист Ордена» (entry 70180, Даларан) —
--- игровой лор-архив реалма. Воплощает документ docs/lore/universe.md:
---   1. Хроника таймлайна (события 0–17, включая кампании 1–4)
---   2. Ключевые фигуры (Орден, Культ, Стражи)
---   3. Бестиарий Пустоты
---   4. Артефакты и валюта
---   5. Правила вселенной
---   6. Словарь терминов
+-- игровой лор-архив реалма.
+--
+-- ЛОР НЕ ХРАНИТСЯ ЗДЕСЬ. Все тексты берутся из 00_LoreRegistry.ext
+-- (AzerothEchoLore). Архив группирует секции по категориям и
+-- скрывает те, что ещё не открыты на стадии истории игрока.
+--
 -- Требуется модуль mod-ale (ALE).
 -- ============================================================
 
 local ARCHIVIST_ENTRY = 70180
 
-local TAG = AzerothEchoCampaigns.meta.tag
-local VOID_COLOR  = AzerothEchoCampaigns.meta.colors.void
-local ORDER_COLOR = AzerothEchoCampaigns.meta.colors.order
-local CULT_COLOR  = AzerothEchoCampaigns.meta.colors.cult
+local Lore = AzerothEchoLore
+local TAG = Lore.meta.tag
+local VOID_COLOR = Lore.meta.colors.void
+local ORDER_COLOR = Lore.meta.colors.order
+
+-- Группировка секций реестра по разделам архива.
+-- Секции, не попавшие ни в одну группу, выводятся в «Прочее».
+local CATEGORIES = {
+    {
+        key = "world",
+        title = "Мир и Пустота",
+        ids = { "prologue", "whisper", "void_nature", "gesalt", "locations", "dragonblight" },
+    },
+    {
+        key = "powers",
+        title = "Силы: Орден, Культ, Стражи",
+        ids = { "order", "cult", "warders" },
+    },
+    {
+        key = "story",
+        title = "Хроника кампаний",
+        ids = { "camp1", "camp2", "camp3", "camp4" },
+    },
+    {
+        key = "creatures",
+        title = "Фигуры и порождения",
+        ids = { "figures", "bestiary", "issush" },
+    },
+    {
+        key = "codes",
+        title = "Правила, артефакты, словарь",
+        ids = { "rules", "artifacts", "events", "glossary" },
+    },
+}
 
 -- ID пунктов меню
-local MENU_ROOT     = 1
-local MENU_CHRON    = 2   -- Хроника
-local MENU_FIGURES  = 3   -- Ключевые фигуры
-local MENU_BESTIARY = 4   -- Бестиарий
-local MENU_ARTIFACTS = 5  -- Артефакты
-local MENU_RULES    = 6   -- Правила вселенной
-local MENU_GLOSSARY = 7   -- Словарь
+local MENU_CATEGORY_BASE = 20   -- 20..20+N — категории
+local MENU_SECTION_BASE = 100   -- 100.. — конкретные секции
+local MENU_ROOT = 1
 
--- ------------------------------------------------------------
--- 1. Хроника (таймлайн + кампании 1–4)
--- ------------------------------------------------------------
-local CHRONICLE = {
-    ORDER_COLOR .. "== До прихода героев ==",
-    "0. Падение Короля-лича. Артас пал, Ледяная Корона разрушена.",
-    "1. Осколок Трона упал в " .. CULT_COLOR .. "Драконий Погост|r и пропитался Пустотой.",
-    "2. Шёпот. Маги мира слышат зов осколка, начинаются сны-видения.",
-    "3. " .. VOID_COLOR .. "Культ Усмешки Бездны|r объединяет одержимых.",
-    "4. Из разломов выходят порождения: Ахерон-Пустотники, Иссушенные, Хоры Шёпота.",
-    "5. Точка старта: пропажа магов, первый зов Стражей Пустоты.",
-    ORDER_COLOR .. "== Кампания 1 «Эхо Шёпота» ==",
-    "6. Зов Даларана — Орден собирает агентов.",
-    "7. Первый разлом — разведка Драконьего Погоста.",
-    "8. Спасение мага Талвина у Осколка Трона.",
-    ORDER_COLOR .. "== Кампания 2 «Пепел Зул'Драка» ==",
-    "9. Осада Зул'Драка — Культ захватил город троллей.",
-    "10. Хора Шёпота пала в Храме Шёпота.",
-    "11. Пророк Нал'кур оказался иллюзией шёпота.",
-    "12. Алтари Культа сожжены, Зул'Драк освобождён.",
-    "13. Слово Дракона — Стражи Пустоты признали Орден союзником.",
-    ORDER_COLOR .. "== Кампания 3 «Пробуждение» ==",
-    "14. Последний совет — Альянс и Орда встали плечом к плечу.",
-    "15. Прорыв в эпицентр разлома.",
-    "16. Очаги ритуала погашены.",
-    "17. Эхо умолкает — Усмешка Бездны развеяна.",
-    ORDER_COLOR .. "== Кампания 4 «Второе Эхо» ==",
-    "18. Пепел не остыл — разломы открылись по всему Нордсколу.",
-    "19. Осколки развеянной Усмешки собирает новый архонт.",
-    "20. Нехал'тхар низвергнут. Второе Эхо затихло... пока что.",
-}
-
--- ------------------------------------------------------------
--- 2. Ключевые фигуры
--- ------------------------------------------------------------
-local FIGURES = {
-    ORDER_COLOR .. "== Орден Рассвета ==",
-    ORDER_COLOR .. "Архимаг Элианна|r (70120) — глава разведки Ордена. Первая поверила агенту и вела осаду Зул'Драка.",
-    ORDER_COLOR .. "Маг Талвин|r (70110) — спасённый из плена чародей. Единственный, кто видел Усмешку изнутри осколка.",
-    ORDER_COLOR .. "Командир Валирия|r (70150) — ветеран обеих армий. «Пустота не различает знамён».",
-    ORDER_COLOR .. "Советник Мортега|r (70160) — дипломат Последнего совета, собрал Альянс и Орду у разлома.",
-    ORDER_COLOR .. "Хронист Ордена|r (70180) — хранит этот архив. Если вы это читаете — он сделал свою работу.",
-    ORDER_COLOR .. "Хранительница Аэрис|r (70210) — sentinel Стражей Пустоты. Первая заметила Второе Эхо.",
-    CULT_COLOR .. "== Культ Усмешки Бездны ==",
-    VOID_COLOR .. "Пророк Нал'кур|r (70130) — голос шёпота. Иллюзия. Но чья?",
-    CULT_COLOR .. "Хора Шёпота|r (70500) — порождение-певчий Храма Шёпота.",
-    VOID_COLOR .. "Архонт Нехал'тхар|r (70520) — собиратель осколков Усмешки. Босс кампании 4.",
-    VOID_COLOR .. "Усмешка Бездны|r (70510) — осколок сознания Старого Бога. Развеяна в Пробуждении.",
-    VOID_COLOR .. "== Стражи Пустоты ==",
-    VOID_COLOR .. "Сквернозор|r (70140) — око драконов-Стражей. Испытание, а не враг.",
-}
-
--- ------------------------------------------------------------
--- 3. Бестиарий
--- ------------------------------------------------------------
-local BESTIARY = {
-    VOID_COLOR .. "Ахерон-Пустотники|r (70100) — пехота разлома. Тела воинов, «иссушенных» первыми.",
-    CULT_COLOR .. "Культисты|r (70101) — смертные адепты. Усиливаются шёпотом при Кровавой Луне.",
-    VOID_COLOR .. "Осколочные Фантомы|r (70201) — обрывки сознания Усмешки. Носители осколков.",
-    VOID_COLOR .. "Иссушенные Легионеры|r (70202) — элита архонта: целые отряды, ставшие одним телом.",
-    VOID_COLOR .. "Пустотные Стражи|r (70105) — гвардия эпицентра. Пробиваются только отрядом.",
-    CULT_COLOR .. "Ритуальные алтари|r (70103) — очаги Культа в Зул'Драке. Сожжены в кампании 2.",
-    VOID_COLOR .. "Очаги Ритуала|r (70106) — три очага пробуждения. Погашены в кампании 3.",
-}
-
--- ------------------------------------------------------------
--- 4. Артефакты и валюта
--- ------------------------------------------------------------
-local ARTIFACTS = {
-    ORDER_COLOR .. "Слеза Рассвета|r (70001) — реликвия К1. Пропуск в Зул'Драк.",
-    ORDER_COLOR .. "Клеймо Стражей Пустоты|r (70004) — награда К2. Право призыва дракона.",
-    VOID_COLOR .. "Печать Хранителя Эха|r (70002) — награда К3. Титул «Хранитель Эха».",
-    VOID_COLOR .. "Бездна-Пегас|r (70003) — маунт К3. Теневой скакун из разлома.",
-    VOID_COLOR .. "Сердце Второго Эха|r (70006) — награда К4. Молчит... пока.",
-    VOID_COLOR .. "Венец Пустоты|r (70007) — косметика К4 для Хранителей.",
-    VOID_COLOR .. "Жетон Эха|r (70005) — валюта ивентов и PvP-зоны. Интендант Ордена (70170) принимает.",
-}
-
--- ------------------------------------------------------------
--- 5. Правила вселенной
--- ------------------------------------------------------------
-local RULES = {
-    "Правило первое: Пустота не убивает — она " .. VOID_COLOR .. "иссушает|r.",
-    "Правило второе: рядом с разломом шёпот громче — " .. VOID_COLOR .. "Эхо Шёпота|r замедляет и мучит галлюцинациями.",
-    "Правило третье: Старые Боги спят. Усмешка Бездны — лишь осколок сознания.",
-    "Правило четвёртое: вблизи разлома магия слабеет и работает иначе.",
-    "Правило пятое, новое: развеянное Эхо не исчезает. Оно " .. VOID_COLOR .. "дробится|r.",
-}
-
--- ------------------------------------------------------------
--- 6. Словарь
--- ------------------------------------------------------------
-local GLOSSARY = {
-    VOID_COLOR .. "Эхо Пустоты|r — имя всей временной линии.",
-    VOID_COLOR .. "Осколок Трона|r — обломок Ледяной Короны, эпицентр аномалии.",
-    VOID_COLOR .. "Шёпот|r — голос осколка. Зов для одних, болезнь для других.",
-    VOID_COLOR .. "Усмешка Бездны|r — спящий осколок сознания Старого Бога.",
-    VOID_COLOR .. "Иссушенные|r — тела без воли, помнящие свои жизни.",
-    VOID_COLOR .. "Разлом|r — дыра между миром и глубинами.",
-    VOID_COLOR .. "Дробление|r — развеянное Эхо распадается на осколки-семена.",
-    VOID_COLOR .. "Жетон Эха|r — валюта реалма.",
-}
-
--- ------------------------------------------------------------
--- Gossip
--- ------------------------------------------------------------
-
-local function ShowTextPage(event, player, creature, lines)
-    player:GossipClearMenu()
-    for _, line in ipairs(lines) do
-        player:GossipMenuAddItem(0, line, 0, MENU_ROOT)
+--- Секции реестра, видимые на стадии (id -> section).
+local function VisibleMap(stage)
+    local map = {}
+    for _, s in ipairs(Lore.VisibleSections(stage)) do
+        map[s.id] = s
     end
-    player:GossipMenuAddItem(0, "|cff555555[Назад к архиву]|r", 0, MENU_ROOT)
+    return map
+end
+
+--- Секции категории, видимые на стадии.
+local function CategorySections(category, stage)
+    local visible = VisibleMap(stage)
+    local out = {}
+    for _, id in ipairs(category.ids) do
+        if visible[id] then
+            out[#out + 1] = visible[id]
+        end
+    end
+    return out
+end
+
+--- Количество видимых секций категории (для скрытия пустых пунктов).
+local function CategoryCount(category, stage)
+    return #CategorySections(category, stage)
+end
+
+--- Итоговый список видимых секций по всем категориям (для индексов меню).
+local function AllVisible(stage)
+    local out = {}
+    for _, cat in ipairs(CATEGORIES) do
+        for _, s in ipairs(CategorySections(cat, stage)) do
+            out[#out + 1] = s
+        end
+    end
+    return out
+end
+
+--- Главное меню архива.
+local function ShowArchiveMenu(event, player, creature)
+    local stage = Lore.Stage(player)
+    player:GossipClearMenu()
+
+    player:GossipMenuAddItem(0,
+        ORDER_COLOR .. "Покажи каталог разделов.|r", 0, MENU_CATEGORY_BASE)
+
+    for i, cat in ipairs(CATEGORIES) do
+        local count = CategoryCount(cat, stage)
+        if count > 0 then
+            player:GossipMenuAddItem(0,
+                "  " .. cat.title .. " (" .. count .. ")", 0, MENU_CATEGORY_BASE + i)
+        end
+    end
+
     player:GossipSendMenu(1, creature)
 end
 
-local function ShowArchiveMenu(event, player, creature)
+--- Меню одной категории.
+local function ShowCategoryMenu(event, player, creature, categoryIndex)
+    local cat = CATEGORIES[categoryIndex]
+    local stage = Lore.Stage(player)
+    if not cat then
+        ShowArchiveMenu(event, player, creature)
+        return
+    end
+
+    local sections = CategorySections(cat, stage)
+    local allVisible = AllVisible(stage)
+
     player:GossipClearMenu()
-    player:GossipMenuAddItem(0, "Открой хронику временной линии.", 0, MENU_CHRON)
-    player:GossipMenuAddItem(0, "Расскажи о ключевых фигурах.", 0, MENU_FIGURES)
-    player:GossipMenuAddItem(0, "Опиши порождения Пустоты.", 0, MENU_BESTIARY)
-    player:GossipMenuAddItem(0, "Какие артефакты остались после Эха?", 0, MENU_ARTIFACTS)
-    player:GossipMenuAddItem(0, "Каковы правила Пустоты?", 0, MENU_RULES)
-    player:GossipMenuAddItem(0, "Что означают эти слова?", 0, MENU_GLOSSARY)
+    for _, section in ipairs(sections) do
+        local idx = 0
+        for i, s in ipairs(allVisible) do
+            if s.id == section.id then
+                idx = i
+                break
+            end
+        end
+        if idx > 0 then
+            player:GossipMenuAddItem(0, "  " .. section.title, 0, MENU_SECTION_BASE + idx)
+        end
+    end
+    player:GossipMenuAddItem(0, ORDER_COLOR .. "[К каталогу]|r", 0, MENU_ROOT)
+    player:GossipSendMenu(1, creature)
+end
+
+--- Страница отдельной секции.
+local function ShowSectionPage(event, player, creature, index)
+    local stage = Lore.Stage(player)
+    local allVisible = AllVisible(stage)
+    local section = allVisible[index]
+    if not section then
+        ShowArchiveMenu(event, player, creature)
+        return
+    end
+
+    player:GossipClearMenu()
+    for _, line in ipairs(Lore.PageLines(section)) do
+        player:GossipMenuAddItem(0, line, 0, MENU_ROOT)
+    end
+    player:GossipMenuAddItem(0, ORDER_COLOR .. "[К каталогу]|r", 0, MENU_ROOT)
     player:GossipSendMenu(1, creature)
 end
 
 local function OnGossipSelect(event, player, creature, sender, intid, code)
-    if     intid == MENU_CHRON     then ShowTextPage(event, player, creature, CHRONICLE)
-    elseif intid == MENU_FIGURES   then ShowTextPage(event, player, creature, FIGURES)
-    elseif intid == MENU_BESTIARY  then ShowTextPage(event, player, creature, BESTIARY)
-    elseif intid == MENU_ARTIFACTS then ShowTextPage(event, player, creature, ARTIFACTS)
-    elseif intid == MENU_RULES     then ShowTextPage(event, player, creature, RULES)
-    elseif intid == MENU_GLOSSARY  then ShowTextPage(event, player, creature, GLOSSARY)
-    else ShowArchiveMenu(event, player, creature) end
+    -- Конкретная секция
+    if intid > MENU_SECTION_BASE then
+        ShowSectionPage(event, player, creature, intid - MENU_SECTION_BASE)
+        return
+    end
+
+    -- Категория
+    if intid > MENU_CATEGORY_BASE then
+        ShowCategoryMenu(event, player, creature, intid - MENU_CATEGORY_BASE)
+        return
+    end
+
+    ShowArchiveMenu(event, player, creature)
 end
 
 local function OnGossipHello(event, player, creature)
     if creature:GetEntry() ~= ARCHIVIST_ENTRY then
         return
     end
-    player:SendBroadcastMessage(TAG .. ORDER_COLOR .. " Хронист:|r «Каждое событие записано. Вопрос лишь в том, что будет следующей строкой.»")
+
+    local stage = Lore.Stage(player)
+    local line = Lore.NpcLine("archivist", stage)
+    if line ~= "" then
+        player:SendBroadcastMessage(TAG .. ORDER_COLOR .. " Хронист:|r " .. line)
+    end
+
     ShowArchiveMenu(event, player, creature)
 end
 
 RegisterCreatureGossipEvent(ARCHIVIST_ENTRY, 1, OnGossipHello)
 RegisterCreatureGossipEvent(ARCHIVIST_ENTRY, 2, OnGossipSelect)
 
-print("[EchoOfTheVoid] LoreArchive.lua загружен (НПС " .. ARCHIVIST_ENTRY .. ", архив лора: 6 разделов).")
+print("[EchoOfTheVoid] LoreArchive.lua загружен (НПС " .. ARCHIVIST_ENTRY .. ", архив из 00_LoreRegistry).")

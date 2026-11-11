@@ -100,6 +100,10 @@ function AE_SendProgress(player)
     -- PvP-статистика отдельным префиксом (таблица может отсутствовать
     -- до первого PvP-килла — шлём нули, аддон отобразит корректно)
     SendAddonMessage("AECHOPVP", BuildPvpPayload(player), "WHISPER", player)
+    -- Лор-каталог по стадии истории (00_LoreRegistry.ext)
+    if AzerothEchoLore and AzerothEchoLore.Serialize then
+        SendAddonMessage("AECHOLORE", AzerothEchoLore.Serialize(AzerothEchoLore.Stage(player)), "WHISPER", player)
+    end
 end
 
 --- Обработка аддон-сообщений клиент -> сервер ("hello").

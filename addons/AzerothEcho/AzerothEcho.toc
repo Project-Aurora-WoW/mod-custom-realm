@@ -8,5 +8,6 @@
 
 Core.lua
 Panel.lua
+Lore.lua
 RiftMap.lua
 AzerothEcho.lua

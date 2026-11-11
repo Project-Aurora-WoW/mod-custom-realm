@@ -44,6 +44,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             if message == "show" then
                 AE.ShowRiftMap()
             end
+        elseif prefix == "AECHOLORE" then
+            if AE.ParseLore then
+                AE.ParseLore(message)
+            end
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Запрос данных у сервера
