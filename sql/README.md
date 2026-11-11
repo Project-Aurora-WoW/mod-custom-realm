@@ -31,6 +31,8 @@
 | `world/0020_store_system.sql` | Таблицы AIO-магазина `realm_store_*` (категории/услуги/валюты/связи/журнал) + демо-контент: валюты золото + Жетон Эха, услуги реалма (Пегас 70010, титул 48, баффы, смена имени) | 0009 (жетоны) |
 | `world/0021_public_scripts.sql` | Системы public-scripts (JadaDev): таблицы наград за наигранное время `realm_played_time_rewards{,_claimed}` (**acore_characters**) + НПС «Страж Перемен» (70174, Даларан, guid 7000174) — смена фракции за Жетоны Эха (**acore_world**). ⚠️ Часть acore_world написана по схеме WotLK (`modelid1`, `dmgschool`, `spawndist`, `creature.id`) — на AzerothCore упадёт; рабочий НПС создаёт `0022` | 0009 |
 | `world/0022_fix_release_blockers.sql` | Релизные фиксы: НПС «Страж Перемен» (70174) по схеме AC + модель 15279 + спавн 7000174; идемпотентный досозд спавна PvP-шопа 70170 (**acore_world**) | 0010, 0021 |
+| `world/0024_tier_b.sql` | Tier B (eluna-scripts): НПС 70175 «Рунный Оружейник» (Weapon Master), 70176 «Хранитель Тиражей» (Lottery), 70177 «Вестник Забвения» (Skip DK Starter), 70178 «Алтарь Ордена» (Prayer) + таблицы `realm_lottery{,_tickets}` (**acore_characters**); гаиды 7000175–7000178 | 0009 (жетоны), 0022 (схема НПС) |
+| `world/0025_classless.sql` | Classless-арка К5 (минимальный порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; скрипт `27_Classless.lua` | — |
 
 ---
 
@@ -77,6 +79,8 @@ mysql -u <user> -p acore_characters < sql/world/0021_public_scripts.sql
 mysql -u <user> -p acore_world < sql/world/0021_public_scripts.sql
 # 0022: фикс схемы НПС 70174 + досозд спавна 70170 → acore_world:
 mysql -u <user> -p acore_world < sql/world/0022_fix_release_blockers.sql
+# 0025: character_classless → acore_characters (Classless арка К5):
+mysql -u <user> -p acore_characters < sql/world/0025_classless.sql
 ```
 
 После применения выполните в консоли `worldserver`:
