@@ -1,0 +1,293 @@
+# ============================================================
+# core-build.yml — эмуляция мастер-сборки AzerothCore с модулями реалма
+#
+# Проект "mod-custom-realm" — моно-репозиторий: C++-модули лежат в
+# modules/echo-* и подключаются к мастер-копии azerothcore-wotlk
+# (https://github.com/azerothcore/azerothcore-wotlk.git, ветка master).
+#
+# Что делает этот workflow:
+#   1. Подготавливает дерево (composite action .github/actions/setup-tree):
+#        - клонирует мастер-ядро AC (submodules recursive);
+#        - встраивает все кастомные модули echo-* в <core>/modules/;
+#        - монтирует mod-ale (обязательный Lua-движок ALE);
+#        - прокидывает lua_scripts/ для dry-run.
+#   2. Собирает ядро на Linux (clang, ccache, SCRIPTS=static, MODULES=static)
+#      И на Windows (MSVC, via ./acore.sh compiler build).
+#
+# Trigger: push и PR на main/master. Официальная практика AC — запускать
+# дорогую сборку на push/master и PR (см. windows_build.yml мастер-ядра).
+#
+# == Самостоятельный workflow, а не azerothcore/reusable-workflows ==
+# Официальный reusable-workflow (core_build_modules.yml) рассчитан на ОДИН
+# модуль в корне репозитория. Здесь модулей семь (modules/echo-*),
+# поэтому сборка повторяет шаги мастер-ядра AC напрямую.
+# ============================================================
+
+name: core-build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: core-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: linux (ubuntu-26.04 / clang)
+    runs-on: ubuntu-26.04
+    env:
+      CC: clang-20
+      CXX: clang++-20
+    steps:
+      # ---- Подготовка дерева (общий composite action) ----
+      - name: Setup tree (core + realm modules + mod-ale)
+        uses: ./.github/actions/setup-tree
+
+      # ---- Кэш ccache (по компилятору/ветке/sha, как у AC) ----
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: azerothcore-wotlk/var/ccache
+          key: ccache:${{ env.CC }}:linux:${{ github.ref_name }}:${{ github.sha }}
+          restore-keys: |
+            ccache:${{ env.CC }}:linux:${{ github.ref_name }}
+            ccache:${{ env.CC }}:linux
+
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          sudo apt update
+          sudo apt remove -y needrestart || true
+          sudo apt-get -y install ccache clang cmake curl make unzip build-essential \
+            cmake-data libboost-all-dev libbz2-dev libmysql++-dev libreadline6-dev \
+            libssl-dev libtool openssl zlib1g-dev
+          # Ubuntu 26.04: clang линкуется с набором GCC 16
+          sudo apt-get -y install libgoogle-perftools-dev default-libmysqlclient-dev \
+            libstdc++-16-dev || true
+
+      - name: Setup ccache
+        shell: bash
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/azerothcore-wotlk/var/ccache
+        run: |
+          mkdir -p "$CCACHE_DIR"
+          {
+            echo "CCACHE_BASEDIR=${{ github.workspace }}/azerothcore-wotlk"
+            echo "CCACHE_DIR=$CCACHE_DIR"
+            echo "CCACHE_HASHDIR=1"
+            echo "CCACHE_MAXSIZE=5G"
+            echo "CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime"
+            echo "CCACHE_COMPRESS=1"
+            echo "CCACHE_COMPRESSLEVEL=3"
+            echo "CCACHE_COMPILERCHECK=content"
+            echo "CC=${{ env.CC }}"
+            echo "CXX=${{ env.CXX }}"
+          } >> "$GITHUB_ENV"
+
+      - name: Process pending sql
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: bash apps/ci/ci-pending-sql.sh
+
+      # ---- CMake (SCRIPTS=static, MODULES=static, Werror) ----
+      - name: Configure
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: |
+          set -x
+          mkdir -p build
+          cd build
+          cmake .. \
+            -DCMAKE_C_COMPILER="${{ env.CC }}" \
+            -DCMAKE_CXX_COMPILER="${{ env.CXX }}" \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/azerothcore-wotlk/env/dist" \
+            -DAPPS_BUILD="all" \
+            -DTOOLS_BUILD="none" \
+            -DSCRIPTS="static" \
+            -DMODULES="static" \
+            -DWITH_WARNINGS="ON" \
+            -DCMAKE_BUILD_TYPE="Release" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER="ccache" \
+            -DCMAKE_C_COMPILER_LAUNCHER="ccache" \
+            -DCMAKE_C_FLAGS="-Werror -ferror-limit=1 -fdebug-prefix-map=${GITHUB_WORKSPACE}=." \
+            -DCMAKE_CXX_FLAGS="-Werror -ferror-limit=1 -fdebug-prefix-map=${GITHUB_WORKSPACE}=." \
+            -DBUILD_TESTING="ON"
+
+      - name: Build
+        working-directory: azerothcore-wotlk/build
+        shell: bash
+        run: cmake --build . --config "Release" -j "$(($(nproc) + 2))"
+
+      - name: Install
+        working-directory: azerothcore-wotlk/build
+        shell: bash
+        run: cmake --install . --config "Release"
+
+      # ---- Сухой запуск серверов (детект ошибок старта) ----
+      - name: Setup config
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: |
+          ls -1 env/dist/etc/*.conf.dist | while read -r dist; do
+            config_name="${dist%.dist}"
+            cp -v "$dist" "$config_name"
+          done
+          {
+            echo "AC_LOGIN_DATABASE_INFO=localhost;3306;root;root;acore_auth"
+            echo "AC_CHARACTER_DATABASE_INFO=localhost;3306;root;root;acore_characters"
+            echo "AC_WORLD_DATABASE_INFO=localhost;3306;root;root;acore_world"
+            echo "AC_DATA_DIR=$GITHUB_WORKSPACE/azerothcore-wotlk/env/dist/data"
+            echo "AC_LOGS_DIR=$GITHUB_WORKSPACE/azerothcore-wotlk/env/dist/logs"
+          } >> "$GITHUB_ENV"
+
+      - name: Get DBC files
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: git clone --depth 1 --branch master --single-branch https://github.com/ac-data/ac-data.git "$AC_DATA_DIR"
+
+      - name: Start MySQL container
+        shell: bash
+        run: sudo systemctl start mysql.service
+
+      - name: Dry run authserver
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: timeout 5m env/dist/bin/authserver --dry-run
+
+      - name: Dry run worldserver
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: timeout 5m env/dist/bin/worldserver --dry-run
+
+      - name: Check startup errors
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: |
+          error_log="$AC_LOGS_DIR/Errors.log"
+          if [[ ! -s "$error_log" ]]; then
+            echo "No startup errors."
+            exit 0
+          fi
+          echo "Errors.log contains startup errors:"
+          cat "$error_log"
+          exit 1
+
+      - name: Run unit tests
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: |
+          if [[ -f build/src/test/unit_tests ]]; then
+            build/src/test/unit_tests
+          else
+            exit 0
+          fi
+
+  # ------------------------------------------------------------
+  # Windows build (по образцу официального master windows_build.yml):
+  # windows-latest уже содержит CMake, MSVC, OpenSSL. Докидываем Boost и
+  # MySQL клиент (кэшируются). Сборка — через ./acore.sh compiler build.
+  # ------------------------------------------------------------
+  windows:
+    name: windows (windows-latest / MSVC)
+    runs-on: windows-latest
+    env:
+      BOOST_ROOT: C:\local\boost_1_87_0
+    steps:
+      # ---- Подготовка дерева (общий composite action) ----
+      - name: Setup tree (core + realm modules + mod-ale)
+        uses: ./.github/actions/setup-tree
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.13
+
+      # Кэш Boost + MySQL (~350 MB), чтобы не качать каждый запуск.
+      - name: Cache Boost & MySQL
+        uses: actions/cache@v6
+        with:
+          path: |
+            C:\local\boost_1_87_0
+            C:\tools\mysql\current
+          key: winbuild-deps:boost-1.87.0:mysql-8.4.9
+
+      - name: Configure OS (Boost + MySQL client + OpenSSL detection)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # --- Boost 1.87.0 (msvc-14.3, 64-bit) -> C:\local\boost_1_87_0 (BOOST_ROOT) ---
+          if (-not (Test-Path 'C:\local\boost_1_87_0\boost'))
+          {
+              $boostExe = Join-Path $env:RUNNER_TEMP 'boost.exe'
+              $boostUrl = 'https://downloads.sourceforge.net/project/boost/boost-binaries/' +
+                  '1.87.0/boost_1_87_0-msvc-14.3-64.exe'
+              $boostRequest = @{
+                  Uri                      = $boostUrl
+                  OutFile                  = $boostExe
+                  UserAgent                = 'azerothcore-ci'
+                  ConnectionTimeoutSeconds = 60
+                  OperationTimeoutSeconds  = 60
+              }
+              $boostAttempts = 3
+              for ($attempt = 1; $attempt -le $boostAttempts; $attempt++)
+              {
+                  try
+                  {
+                      Invoke-WebRequest @boostRequest
+                      $boostMB = (Get-Item $boostExe).Length / 1MB
+                      if ($boostMB -lt 50) { throw "got $([int]$boostMB) MB, likely an HTML page." }
+                      break
+                  }
+                  catch
+                  {
+                      Write-Host "Boost download attempt $attempt failed: $($_.Exception.Message)"
+                      if ($attempt -eq $boostAttempts) { throw }
+                      Start-Sleep -Seconds 15
+                  }
+              }
+              Write-Host ("Downloaded Boost installer: {0:N1} MB" -f $boostMB)
+              $boostProc = Start-Process -FilePath $boostExe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/DIR=C:\local\boost_1_87_0' -Wait -PassThru
+              if ($boostProc.ExitCode -ne 0) { throw "Boost installer failed with exit code $($boostProc.ExitCode)." }
+              if (-not (Test-Path 'C:\local\boost_1_87_0\boost\version.hpp')) { throw 'Boost install missing headers at C:\local\boost_1_87_0\boost.' }
+              if (-not (Test-Path 'C:\local\boost_1_87_0\lib64-msvc-14.3')) { throw 'Boost install missing prebuilt libs at C:\local\boost_1_87_0\lib64-msvc-14.3.' }
+          }
+
+          # --- MySQL 8.4 client headers + libs -> C:\tools\mysql\current ---
+          if (-not (Test-Path 'C:\tools\mysql\current\lib\mysqlclient.lib'))
+          {
+              $mysqlZip = Join-Path $env:RUNNER_TEMP 'mysql.zip'
+              Invoke-WebRequest -Uri 'https://cdn.mysql.com/archives/mysql-8.4/mysql-8.4.9-winx64.zip' -OutFile $mysqlZip -UserAgent 'Mozilla/5.0'
+              $mysqlMB = (Get-Item $mysqlZip).Length / 1MB
+              if ($mysqlMB -lt 50) { throw "MySQL zip download looks wrong ($([int]$mysqlMB) MB)." }
+              New-Item -ItemType Directory -Force -Path 'C:\tools\mysql' | Out-Null
+              Expand-Archive -Path $mysqlZip -DestinationPath 'C:\tools\mysql' -Force
+              if (Test-Path 'C:\tools\mysql\current') { Remove-Item -Recurse -Force 'C:\tools\mysql\current' }
+              Rename-Item 'C:\tools\mysql\mysql-8.4.9-winx64' 'C:\tools\mysql\current'
+              if (-not (Test-Path 'C:\tools\mysql\current\lib\mysqlclient.lib')) { throw 'MySQL client import library missing at C:\tools\mysql\current\lib\mysqlclient.lib.' }
+          }
+
+          # --- OpenSSL: используем установленный на раннере ---
+          $opensslRoot = @($env:OPENSSL_ROOT_DIR, 'C:\Program Files\OpenSSL', 'C:\Program Files\OpenSSL-Win64') |
+              Where-Object { $_ -and (Test-Path (Join-Path $_ 'include\openssl\opensslv.h')) } |
+              Select-Object -First 1
+          if (-not $opensslRoot)
+          {
+              throw 'No OpenSSL development install found on the runner image.'
+          }
+          "OPENSSL_ROOT_DIR=$opensslRoot" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Using OpenSSL at $opensslRoot"
+
+      # ---- Сборка через официальную обёртку AC (MSVC, Release) ----
+      - name: Build
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: |
+          export CTOOLS_BUILD=all
+          ./acore.sh compiler build

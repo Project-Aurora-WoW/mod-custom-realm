@@ -1,0 +1,77 @@
+# ============================================================
+# setup-tree/action.yml — composite action: подготовка дерева сборки
+#
+# Используется обоими job'ами (linux, windows) workflow core-build.
+# Клонирует мастер-ядро AzerothCore и встраивает в него модули реалма:
+#   • modules/echo-*            — кастомные C++-модули реалма (7 шт.)
+#   • mod-ale                   — обязательный Lua-движок ALE
+#   • lua_scripts/              — копируются в env/dist/bin/lua_scripts
+#                                (для dry-run; ALE читает их оттуда)
+#
+# Выходы:
+#   core-dir:   путь к клонированному ядру (${{ github.workspace }}/azerothcore-wotlk)
+# ============================================================
+name: setup-tree
+description: Checkout AzerothCore master and install realm modules
+
+outputs:
+  core-dir:
+    description: Path to the cloned AzerothCore tree
+    value: ${{ steps.out.val }}
+
+runs:
+  using: composite
+  steps:
+    # ---- Ядро (внешний репозиторий) ----
+    - name: Checkout AzerothCore master
+      uses: actions/checkout@v4
+      with:
+        repository: azerothcore/azerothcore-wotlk
+        ref: master
+        submodules: recursive
+        path: azerothcore-wotlk
+
+    # ---- Репозиторий реалма (этот) ----
+    - name: Checkout realm repo
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        path: realm
+
+    # ---- Встройка кастомных модулей echo-* ----
+    - name: Install realm modules into the core
+      shell: bash
+      run: |
+        set -euo pipefail
+        for mod in echo-balance echo-challenge-modes echo-campaigns echo-economy \
+                   echo-pve echo-pvp echo-startup; do
+          if [ -d "realm/modules/$mod" ]; then
+            rm -rf "azerothcore-wotlk/modules/$mod"
+            cp -R "realm/modules/$mod" "azerothcore-wotlk/modules/$mod"
+          fi
+        done
+        echo "Installed realm modules:"
+        ls -1 azerothcore-wotlk/modules/ | grep '^echo-'
+
+    # ---- mod-ale (обязательный Lua-движок ALE) ----
+    # Ядро без mod-ale собирается, но lua_scripts/ не загружаются вовсе.
+    - name: Checkout mod-ale (Lua engine ALE)
+      uses: actions/checkout@v4
+      with:
+        repository: azerothcore/mod-ale
+        ref: master
+        submodules: recursive
+        path: azerothcore-wotlk/modules/mod-ale
+
+    # ---- Прокинуть lua_scripts в данные ядра (dry-run) ----
+    - name: Stage lua_scripts for dry-run
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p azerothcore-wotlk/env/dist/bin/lua_scripts
+        cp -R realm/lua_scripts/. azerothcore-wotlk/env/dist/bin/lua_scripts/
+
+    - name: Set output
+      id: out
+      shell: bash
+      run: echo "val=${{ github.workspace }}/azerothcore-wotlk" >> "$GITHUB_OUTPUT"

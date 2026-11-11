@@ -1,0 +1,234 @@
+# ============================================================
+# windows-release.yml — Windows-сборка ядра с модулями реалма,
+# генерация релиз-артефакта и публикация в GitHub Releases
+#
+# Проект "mod-custom-realm" — моно-репозиторий: кастомные C++-модули
+# echo-* подключаются к мастер-копии azerothcore-wotlk. Этот workflow
+# собирает ядро С модулями на Windows (MSVC) и публикует готовый
+# дистрибутив сервера как релиз.
+#
+# Примени, когда нужен бинарный релиз Windows:
+#   • вручную: Actions → windows-release → Run workflow (можно задать тег);
+#   • по тегу: push тега вида v* (например v1.0.0) запускает релиз.
+#
+# Артефакт: azerothcore-wotlk/env/dist/ — стандартная установочная
+# раскладка AC (bin/, etc/, data/, lib/), дополненная lua_scripts/
+# и модульными конфигами. Упаковывается в .zip и публикуется в Release.
+#
+# Entre структуры используется composite action .github/actions/setup-tree
+# (общий с core-build.yml): checkout мастер-ядра + модули echo-* + mod-ale.
+# ============================================================
+
+name: windows-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0). Empty = commit SHA will be used.'
+        required: false
+        type: string
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: windows-release (windows-latest / MSVC)
+    runs-on: windows-latest
+    env:
+      BOOST_ROOT: C:\local\boost_1_87_0
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      assets: ${{ steps.assets.outputs.path }}
+    steps:
+      # ---- Подготовка дерева (общий composite action) ----
+      - name: Setup tree (core + realm modules + mod-ale)
+        uses: ./.github/actions/setup-tree
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.13
+
+      # Кэш Boost + MySQL (~350 MB) между запусками.
+      - name: Cache Boost & MySQL
+        uses: actions/cache@v6
+        with:
+          path: |
+            C:\local\boost_1_87_0
+            C:\tools\mysql\current
+          key: winbuild-deps:boost-1.87.0:mysql-8.4.9
+
+      - name: Configure OS (Boost + MySQL client + OpenSSL detection)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # --- Boost 1.87.0 (msvc-14.3, 64-bit) -> C:\local\boost_1_87_0 (BOOST_ROOT) ---
+          if (-not (Test-Path 'C:\local\boost_1_87_0\boost'))
+          {
+              $boostExe = Join-Path $env:RUNNER_TEMP 'boost.exe'
+              $boostUrl = 'https://downloads.sourceforge.net/project/boost/boost-binaries/' +
+                  '1.87.0/boost_1_87_0-msvc-14.3-64.exe'
+              $boostRequest = @{
+                  Uri                      = $boostUrl
+                  OutFile                  = $boostExe
+                  UserAgent                = 'azerothcore-ci'
+                  ConnectionTimeoutSeconds = 60
+                  OperationTimeoutSeconds  = 60
+              }
+              $boostAttempts = 3
+              for ($attempt = 1; $attempt -le $boostAttempts; $attempt++)
+              {
+                  try
+                  {
+                      Invoke-WebRequest @boostRequest
+                      $boostMB = (Get-Item $boostExe).Length / 1MB
+                      if ($boostMB -lt 50) { throw "got $([int]$boostMB) MB, likely an HTML page." }
+                      break
+                  }
+                  catch
+                  {
+                      Write-Host "Boost download attempt $attempt failed: $($_.Exception.Message)"
+                      if ($attempt -eq $boostAttempts) { throw }
+                      Start-Sleep -Seconds 15
+                  }
+              }
+              Write-Host ("Downloaded Boost installer: {0:N1} MB" -f $boostMB)
+              $boostProc = Start-Process -FilePath $boostExe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/DIR=C:\local\boost_1_87_0' -Wait -PassThru
+              if ($boostProc.ExitCode -ne 0) { throw "Boost installer failed with exit code $($boostProc.ExitCode)." }
+              if (-not (Test-Path 'C:\local\boost_1_87_0\boost\version.hpp')) { throw 'Boost install missing headers at C:\local\boost_1_87_0\boost.' }
+              if (-not (Test-Path 'C:\local\boost_1_87_0\lib64-msvc-14.3')) { throw 'Boost install missing prebuilt libs at C:\local\boost_1_87_0\lib64-msvc-14.3.' }
+          }
+
+          # --- MySQL 8.4 client headers + libs -> C:\tools\mysql\current ---
+          if (-not (Test-Path 'C:\tools\mysql\current\lib\mysqlclient.lib'))
+          {
+              $mysqlZip = Join-Path $env:RUNNER_TEMP 'mysql.zip'
+              Invoke-WebRequest -Uri 'https://cdn.mysql.com/archives/mysql-8.4/mysql-8.4.9-winx64.zip' -OutFile $mysqlZip -UserAgent 'Mozilla/5.0'
+              $mysqlMB = (Get-Item $mysqlZip).Length / 1MB
+              if ($mysqlMB -lt 50) { throw "MySQL zip download looks wrong ($([int]$mysqlMB) MB)." }
+              New-Item -ItemType Directory -Force -Path 'C:\tools\mysql' | Out-Null
+              Expand-Archive -Path $mysqlZip -DestinationPath 'C:\tools\mysql' -Force
+              if (Test-Path 'C:\tools\mysql\current') { Remove-Item -Recurse -Force 'C:\tools\mysql\current' }
+              Rename-Item 'C:\tools\mysql\mysql-8.4.9-winx64' 'C:\tools\mysql\current'
+              if (-not (Test-Path 'C:\tools\mysql\current\lib\mysqlclient.lib')) { throw 'MySQL client import library missing at C:\tools\mysql\current\lib\mysqlclient.lib.' }
+          }
+
+          # --- OpenSSL: используем установленный на раннере ---
+          $opensslRoot = @($env:OPENSSL_ROOT_DIR, 'C:\Program Files\OpenSSL', 'C:\Program Files\OpenSSL-Win64') |
+              Where-Object { $_ -and (Test-Path (Join-Path $_ 'include\openssl\opensslv.h')) } |
+              Select-Object -First 1
+          if (-not $opensslRoot)
+          {
+              throw 'No OpenSSL development install found on the runner image.'
+          }
+          "OPENSSL_ROOT_DIR=$opensslRoot" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Using OpenSSL at $opensslRoot"
+
+      - name: Process pending sql
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: bash apps/ci/ci-pending-sql.sh
+
+      # ---- CMake (Release, SCRIPTS=static, MODULES=static) ----
+      - name: Configure
+        working-directory: azerothcore-wotlk
+        shell: bash
+        run: |
+          set -x
+          mkdir -p build
+          cd build
+          cmake .. \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/azerothcore-wotlk/env/dist" \
+            -DAPPS_BUILD="all" \
+            -DTOOLS_BUILD="none" \
+            -DSCRIPTS="static" \
+            -DMODULES="static" \
+            -DWITH_WARNINGS="ON" \
+            -DCMAKE_BUILD_TYPE="Release"
+
+      - name: Build
+        working-directory: azerothcore-wotlk/build
+        shell: bash
+        run: cmake --build . --config "Release" -j "$(($(nproc) + 2))"
+
+      - name: Install
+        working-directory: azerothcore-wotlk/build
+        shell: bash
+        run: cmake --install . --config "Release"
+
+      # Прокинуть lua_scripts и модульные конфиги в установочную раскладку.
+      - name: Stage lua_scripts and module configs into dist
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p azerothcore-wotlk/env/dist/bin/lua_scripts
+          cp -R azerothcore-wotlk/modules/mod-ale/LuaEngine/extensions/. \
+                azerothcore-wotlk/env/dist/bin/lua_scripts/extensions/ 2>/dev/null || true
+          cp -R realm/lua_scripts/. azerothcore-wotlk/env/dist/bin/lua_scripts/
+
+      # ---- Определить тег релиза ----
+      - name: Determine release tag
+        id: tag
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.tag }}" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${{ github.ref_name }}-windows" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ---- Упаковать дистрибутив в .zip ----
+      - name: Package dist as zip
+        id: assets
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.tag.outputs.tag }}"
+          $zipPath = Join-Path $env:RUNNER_TEMP "azerothcore-$tag.zip"
+          Compress-Archive -Path 'azerothcore-wotlk/env/dist/*' -DestinationPath $zipPath -CompressionLevel Optimal
+          Write-Host "Packed: $zipPath ($([math]::Round((Get-Item $zipPath).Length/1MB,1)) MB)"
+          "path=$zipPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "name=azerothcore-$tag.zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      # ---- Публикация Release в GitHub ----
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "Azeroth: Echo of the Void — Windows build ${{ steps.tag.outputs.tag }}"
+          body: |
+            ## Azeroth: Эхо Пустоты — сборка ядра (Windows)
+
+            Автоматически собранный дистрибутив `azerothcore-wotlk` с модулями реалма
+            (`modules/echo-*`) и Lua-движком ALE (`mod-ale`). Готов к развёртыванию.
+
+            **Содержимое архива (env/dist):**
+            - `bin/` — `authserver.exe`, `worldserver.exe` + `lua_scripts/`
+            - `etc/` — конфиги сервера (в т.ч. `modules/*.conf.dist`)
+            - `data/`, `lib/` — данные и библиотеки
+
+            **Установка:** распаковать в каталог сервера, скопировать
+            `etc/*.conf.dist` → `*.conf`, применить `sql/world/*.sql`
+            (порядок по `sql/README.md`), запустить `authserver` и `worldserver`.
+
+            ---
+            ## Azeroth: Echo of the Void — core build (Windows)
+
+            Auto-built `azerothcore-wotlk` distribution with the realm modules
+            (`modules/echo-*`) and the ALE Lua engine (`mod-ale`). Ready to deploy.
+
+            **Archive contents (env/dist):** `bin/` (authserver.exe, worldserver.exe +
+            lua_scripts/), `etc/` (server configs incl. `modules/*.conf.dist`), `data/`, `lib/`.
+
+            **Install:** unpack into a server dir, copy `etc/*.conf.dist` → `*.conf`,
+            apply `sql/world/*.sql` (order per `sql/README.md`), run `authserver` & `worldserver`.
+          draft: true
+          prerelease: false
+          files: |
+            ${{ steps.assets.outputs.path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
