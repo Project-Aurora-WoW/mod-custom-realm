@@ -206,6 +206,7 @@
 |---|---|---|---|
 | `BlackWolfsDen/Eluna-Grumboz_VIP_System-Complete` | — (нет в README) | **Референс-идея → реализовано частично** | Eluna VIP-система (VIP-ранг в `auth.account.vip`, MG-валюта, 20+ фич). Код не берём (лицензия неясна, `auth.account`, чужой MG). Совместимые фичи реализованы как `34_VipSystem.lua` + `0035_vip.sql` (realm_vip, #vip/#vipbuff/#vipself/#viprepair) — без auth.account/MG. |
 | `BlackWolfsDen/Grumboz_Big_Ben` | — (нет в README) | **Референс-идея** | C#-плагин «BigBen — тайминг-планировщик» (глобальные события по часу дня HH:MM и датам MM/DD, из BigBen.json). Код не переносим (C#-плагин, другая экосистема, лицензии нет). Идею «расписателя событий по часу/дате» реализовать в ALE через тик мира (паттерн `24_Lottery`) для ивентов/кампаний. |
+| `BlackWolfsDen/CPP-grumboz_HyperDynamic_Capture_the_Flag` | — (нет в README) | **Отклонён** | C++-скрипт «World Capture the Flag» (вер. 1.0c 2016) для TrinityCore/MaNGOS-style ядер; не модуль AzerothCore, без лицензии, требует правок worldserver.conf + 3 GO + свои таблицы. PvP-режим (мировой флаг) вне роадмапа — у нас уже есть `22_SanctuaryPvP`, `31_PvpFullLoot`, PvP-шоп. Не портировать. |
 
 **Кандидат на будущий этап (по желанию):** перенос механики Black-Market AH как категории AIO-магазина; адаптация `customWorldboss` из Acore_eventScripts под entry-диапазон 70xxx и автоматику реалма.
 
