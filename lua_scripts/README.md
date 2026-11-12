@@ -66,6 +66,7 @@
 | `29_Parangon.lua` | **Parangon** (Фаза 3, Lua-only): псевдо-уровни на аккаунт за опыт PvE/PvP + стаки штатных аур 7464/7471/7477/7468 в качестве статов (сила/ловкость/выносливость/интеллект); команда `.parangon` открывает gossip-панель распределения очков; таблицы `account_parangon`/`characters_parangon` (0029) | `PLAYER_EVENT_ON_LOGIN/LOGOUT/KILL`, `ON_CHAT`, `PLAYER_GOSSIP_EVENT_ON_SELECT` |
 | `30_PaladinBlessings.lua` | **Продление благословений паладина** (порт ACScripts/extend_paladin_buffs, MIT): Blessing of Might/Wisdom/Kings/Sanctuary и Greater-варианты автоматически продлеваются до 60 мин; QoL, без БД/пересборки | `PLAYER_EVENT_ON_LOGIN` (3) / `ON_LOGOUT` (4), `player:RegisterEvent` |
 | `31_PvpFullLoot.lua` | **Full-Loot PvP** (порт Ultimate-Full-Loot-Pvp, MIT): при PvP-килле в открытом мире предметы/золото жертвы (по фильтрам CFG) выпадают в FFA-сундуки у трупа; сундук «Добыча войны» 700020 (0032); команды `.pvpfull` / `.pvpfull risk`; MMR/webhook выключены (ALE/BД), анти-фарм встроен | `PLAYER_EVENT_ON_KILL_PLAYER` (6), `ON_CHAT` (18), `CreateLuaEvent`, событие gameobject сундука |
+| `32_TreasureChest.lua` | **Сундуки Пустоты** (порт zyggy123/Treasure-Chest-System, AGPL-3.0): GM создаёт сундук (700021, 0033) с лут/золото/подсказкой, игроки находят и лутают, world-анонс находки; кастомные таблицы `custom_treasure_chest_{loot,config,spawn}`; команды `#chest spawn/list/add/gold/clear/cleanup/addhint`, `#chest hint` — всем; локализация ru/en | `ON_CHAT` (18), `GAMEOBJECT_EVENT_ON_USE` (14) сундука |
 | `LoreArchive.lua` | **Лор-архив**: НПС «Хронист Ордена» (70180, Даларан) — игровой архив вселенной: хроника таймлайна, ключевые фигуры, бестиарий, артефакты, правила, словарь | `GOSSIP_EVENT_ON_HELLO` / `ON_SELECT` |
 | `Campaign4.lua` | Кампания 4 «Второе Эхо» (главы 1–5, босс Архонт Нехал'тхар 70520 с 3 фазами), требуется Печать Хранителя (item 70002) | События игроков + gossip НПС 70210, 70204; `CREATURE_EVENT_ON_DAMAGE_TAKEN` для фаз босса |
 | `gpt_npc_config.lua` | **GPT-НПС — конфиг** (Фаза 4): allowlist entry НПС, rate-limit, канал ответа, таблица очереди; отдельный файл для правки без изменения скрипта | (только конфиг; глобальная `GPT_NPC_CONFIG`) |
@@ -134,6 +135,7 @@ Store_DataStruct.lua → Store_Server.lua → Store_Client.lua → AIO-мага�
 29_Parangon.lua                                 → Parangon-уровни и стаки аур (0029)
 30_PaladinBlessings.lua                          → продление благословений паладина (QoL)
 31_PvpFullLoot.lua                               → Full-Loot PvP: сундук «Добыча войны» (0032)
+32_TreasureChest.lua                             → Сундуки Пустоты: GM-сундуки с лут/подсказкой (0033)
 gpt_npc_config.lua / gpt_npc.lua                → GPT-НПС: allowlist + очередь (0031) → внешний service/gpt_npc.py
 AddonBridge.lua → Campaign1–4.lua → CampaignManager.lua
 LoreArchive.lua → PortalGuardian.lua → WelcomeSystem.lua
