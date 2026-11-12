@@ -240,4 +240,4 @@
 - **AIO framework**: Rochet2/AIO v1.74 в `AIO.lua` / `extensions/`.
 - **echo-* C++ modules**: `modules/echo-balance|challenge-modes|economy|pve|pvp|startup|campaigns`.
 - **ObjectVariables.ext / GossipSetText**: ALE-расширения для Parangon.
-- **Референсы / References**: `azerothcore-content`, `elunamod-gpt-npcs`, `lua-parangon`, `azerothcore-classless-solo`, `mod-ah-bot`, `mod-transmog`, `mod-cfbg`, `mod-duel-reset`, `mod-solocraft`, `vasautobalance`, `eluna-aio-storesystem`.
+- **Референсы / References**: `azerothcore-content`, `elunamod-gpt-npcs`, `lua-parangon`, `azerothcore-classless-solo`, `mod-ah-bot`, `mod-transmog`, `mod-cfbg`, `mod-duel-reset`, `mod-solocraft`, `vasautobalance`, `eluna-aio-storesystem`, `Helias/reusable-workflows` (официальные reusable-workflows AC; наш CI самописный — composite `setup-tree` + core-build/windows-release, ориентир/проверка практики сборки).
