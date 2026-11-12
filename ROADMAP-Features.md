@@ -185,6 +185,12 @@
 | `stevemcqueenz/awesome_wotlk` | License | **Отклонён** | Клиентский DLL-патчер/инъекция в `Wow.exe` (Detours). Нарушает «без клиентских модификаций/DLL». |
 | `stevemcqueenz/ConsoleXP` | MIT | **Отклонён** | Клиентский DLL-inject + патч `Wow.exe` (MinHook). Автор предупреждает: риск Warden/бана и несовместимость на приватных серверах. |
 
+### Helias (мейнтейнер AC)
+
+| Репозиторий | Лицензия | Вердикт | Почему |
+|---|---|---|---|
+| `Helias/BG-Queue-Abuser-Viewer` | — (нет в README) | **Отклонён** | Angular 14 **web-приложение** (src/, package.json, angular.json) — «просмотр злоупотребления очереди BG». Не серверный Lua/ALE-модуль; требует отдельный веб-сервер/API-доступ к БД вне ядра. Наша PvP-логика и анти-абуз решаются на сервере (`31_PvpFullLoot`, `realm_pvp_stats`, `22_SanctuaryPvP`), а не отдельным фронтендом. Не вписывается в `lua_scripts/`/`modules/`. |
+
 **Кандидат на будущий этап (по желанию):** перенос механики Black-Market AH как категории AIO-магазина; адаптация `customWorldboss` из Acore_eventScripts под entry-диапазон 70xxx и автоматику реалма.
 
 ### Кандидат Фазы 5 (требует пересборки ядра): mod_weather_vibe
