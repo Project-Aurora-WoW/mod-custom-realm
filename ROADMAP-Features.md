@@ -76,15 +76,15 @@
 
 ### 3.2 Classless — полная версия / Classless full version
 **Источник / Source:** TODO Backlog `Classless — полная версия`.
-**Где / Where:** `lua_scripts/27_Classless.lua` + `27_ClasslessClient.lua` (AIO-UI) + `sql/world/0030_classless_full.sql` (колонка `talents`).
-**Что / What:** таланты + AIO-UI + (C++) класс Hero + мобильный кастинг.
-**Статус / Status:** ✅ Таланты реализованы (Lua): качаются из `talent_dbc`+`talenttab_dbc` через `.aeclassless learn talent`, снятие/сброс чисто через `RemoveSpell`-производную логику; AIO-UI (`27_ClasslessClient.lua`) показывает таланты/очки. ⏭ **Возможный C++-этап (отдельно)**: класс Hero и мобильный кастинг — требуют C++-класс талантов из референс-ядра `azerothcore-classless-solo` и пересборку ядра; вне Lua-контура.
-**Зависимости / Deps:** AIO-UI (готов); C++-класс талантов — только для Hero/мобильного кастинга (пересборка).
+**Где / Where:** `lua_scripts/27_Classless.lua` + `27_ClasslessClient.lua` (AIO-UI) + `sql/world/0030_classless_full.sql` (колонка `talents`) + `0039_classless_hero.sql` (колонка `hero`).
+**Что / What:** таланты + AIO-UI + класс Hero + мобильный кастинг.
+**Статус / Status:** ✅ таланты (Lua: `talent_dbc`+`talenttab_dbc`, `.aeclassless learn talent`, честное снятие); ✅ AIO-UI показывает таланты/очки; ✅ **класс Hero реализован в Lua** (`27_Classless.lua`: `.aeclassless hero`, аур-стаки силы/ловкости + Fortitude, миграция 0039). ⏭ **Мобильный кастинг — C++-этап**: ядро AC/ALE не имеют серверного флага «каст при движении» (CastWhileMoving); реализуемо только C++-модулем ядра (пересборка), вне Lua.
+**Зависимости / Deps:** AIO-UI (готов); мобильный кастинг — C++-модуль (пересборка).
 **Проверка / Verify:**
 - [x] Таланты снимаются/применяются чисто через `RemoveSpell`/талант-класс (Lua-версия).
 - [x] AIO-UI показывает очки талантов и изученные таланты.
-- [ ] Класс Hero — отдельный C++-этап (пересборка).
-- [ ] Мобильный кастинг — отдельный C++-этап (пересборка).
+- [x] Класс Hero реализован (`.aeclassless hero`, аур-бонусы, 0039).
+- [ ] Мобильный кастинг — отдельный C++-этап (пересборка ядра).
 
 ---
 

@@ -45,6 +45,16 @@ local CFG = {
     talent_points_rate = 1.0,         -- очков талантов Classless за уровень (полная версия)
     reset_costs = { 10000, 50000, 100000, 150000, 200000, 350000 }, -- медь; стоимость сброса, растёт
     max_reset_cost_index = 6,         -- число градаций цены сброса
+
+    -- ---- Класс Hero (режим; миграция 0039 добавляет колонку `hero`) ----
+    -- Hero — «пробуждённый» Classless: усиленные статы через штатные
+    -- ауры-стаки (паттерн Parangon: AddAura + SetStackAmount). Включается
+    -- командой `.aeclassless hero`, требует минимум очков талантов.
+    hero_aura        = 48161,         -- Power Word: Fortitude (здоровье)
+    hero_stat_agi    = { aura = 7471, stacks = 0 }, -- заполняется из очков
+    hero_stat_str    = { aura = 7464, stacks = 0 },
+    hero_min_talent_points = 5,       -- очков талантов ВСЕГО для доступа к Hero
+    hero_cost        = 100000,        -- медь (10 зол.) — «инициация»
 }
 
 -- ============================================================
@@ -273,12 +283,13 @@ end
 -- БД (character_classless, acore_characters; DDL — миграция 0025)
 -- ============================================================
 local function DBLoad(guid)
-    local data = { spells = {}, glyphs = {}, talents = {} }
-    local ok, q = pcall(CharDBQuery, "SELECT spells, glyphs, talents FROM character_classless WHERE guid = " .. guid)
+    local data = { spells = {}, glyphs = {}, talents = {}, hero = 0 }
+    local ok, q = pcall(CharDBQuery, "SELECT spells, glyphs, talents, hero FROM character_classless WHERE guid = " .. guid)
     if ok and q then
         local spellsCSV = q:GetString(0)
         local glyphsCSV = q:GetString(1)
         local talentsCSV = q:GetString(2)
+        data.hero = q:GetUInt32(3) or 0
         for sid in string.gmatch(spellsCSV or "", "([^,]+)") do
             local id = tonumber(sid)
             if id then data.spells[id] = true end
@@ -321,8 +332,8 @@ local function DBSave(guid, data)
         first = false
     end
     pcall(CharDBExecute,
-        "REPLACE INTO character_classless (guid, spells, glyphs, talents) VALUES (" .. guid ..
-        ", '" .. spellsCSV .. "', '" .. glyphsCSV .. "', '" .. talentsCSV .. "')")
+        "REPLACE INTO character_classless (guid, spells, glyphs, talents, hero) VALUES (" .. guid ..
+        ", '" .. spellsCSV .. "', '" .. glyphsCSV .. "', '" .. talentsCSV .. "', " .. (data.hero or 0) .. ")")
 end
 
 -- ============================================================
@@ -554,6 +565,71 @@ local function FindLearnedTalent(data, talentID)
     return nil
 end
 
+-- ------------------------------------------------------------------
+-- КЛАСС HERO (режим; колонка `hero` — миграция 0039)
+-- «Пробуждённый» Classless: усиленные статы через штатные ауры-стаки.
+--
+-- Примечание по «мобильному кастингу»: в ядре AzerothCore 3.3.5a и ALE
+-- НЕТ серверного флага «каст при движении» (CastWhileMoving) — это
+-- клиентская механика. Реализуемо только C++-модулем ядра (пересборка),
+-- поэтому вынесено в отдельный C++-этап (см. ROADMAP 3.2), а не в Lua.
+-- ------------------------------------------------------------------
+
+-- Применить/снять аур-стаки Hero (паттерн Parangon: AddAura+SetStackAmount)
+local HERO_STAT_AURAS = { 7464, 7471 }  -- сила, ловкость
+local function ApplyHeroAuras(player, stacks)
+    for _, auraId in ipairs(HERO_STAT_AURAS) do
+        player:RemoveAura(auraId)
+        if stacks > 0 then
+            player:AddAura(auraId, player)
+            local aura = player:GetAura(auraId)
+            if aura then aura:SetStackAmount(stacks) end
+        end
+    end
+    -- базовый аур-«иммунитет к слабости» (Fortitude — здоровье)
+    player:RemoveAura(CFG.hero_aura)
+    if stacks > 0 then
+        player:AddAura(CFG.hero_aura, player)
+        local aura = player:GetAura(CFG.hero_aura)
+        if aura then aura:SetStackAmount(1) end
+    end
+end
+
+-- Сумма рангов всех изученных талантов (для требования Hero)
+local function TotalTalentsSpent(data)
+    local sum = 0
+    for _, t in pairs(data.talents or {}) do sum = sum + (t.rank or 0) end
+    return sum
+end
+
+-- Тумблер Hero (`.aeclassless hero`). Возвращает err | nil.
+local function ToggleHero(player)
+    local guid = player:GetGUIDLow()
+    local data = playerData[guid]
+    if not data then return "система недоступна (миграция 0025 не применена)" end
+
+    if (data.hero or 0) == 0 then
+        -- включение
+        if TotalTalentsSpent(data) < CFG.hero_min_talent_points then
+            return "Для Hero нужно минимум " .. CFG.hero_min_talent_points .. " очков талантов Classless."
+        end
+        if player:GetCoinage() < CFG.hero_cost then
+            return "Недостаточно золота (нужно " .. Currency(CFG.hero_cost) .. ")."
+        end
+        player:ModifyMoney(-CFG.hero_cost)
+        data.hero = 1
+        ApplyHeroAuras(player, 1)
+        player:SendBroadcastMessage(TAG .. " " .. VOID .. "Класс Hero пробуждён: сила и ловкость Бездны влиты в тело!|r")
+    else
+        -- выключение
+        data.hero = 0
+        ApplyHeroAuras(player, 0)
+        player:SendBroadcastMessage(TAG .. " " .. VOID .. "Класс Hero израсходован (отключён).|r")
+    end
+    DBSave(guid, data)
+    return nil
+end
+
 local function LearnTalent(player, talentID, rank)
     local guid = player:GetGUIDLow()
     local data = playerData[guid]
@@ -624,6 +700,11 @@ local function DoReset(player, data)
     data.spells = {}
     data.glyphs = {}
     data.talents = {}
+    -- сброс Classless Hero (снять ауры и флаг)
+    if data.hero and data.hero > 0 then
+        data.hero = 0
+        ApplyHeroAuras(player, 0)
+    end
 end
 
 local function CanReset(data)
@@ -648,6 +729,7 @@ local function SendHelp(player)
     player:SendBroadcastMessage("  " .. VOID .. "learn spell <id>|r — изучить чужой спелл")
     player:SendBroadcastMessage("  " .. VOID .. "learn glyph <id>|r — установить чужой глиф")
     player:SendBroadcastMessage("  " .. VOID .. "learn talent <id> [ранг]|r — вкачать чужой талант")
+    player:SendBroadcastMessage("  " .. VOID .. "hero|r — пробудить/отключить класс Hero (требует очков талантов)")
     player:SendBroadcastMessage("  " .. VOID .. "unlearn <spell|glyph|talent> <id>|r — забыть")
     player:SendBroadcastMessage("  " .. VOID .. "reset|r — сбросить всё за золото")
 end
@@ -661,6 +743,7 @@ local function SendStatus(player)
     player:SendBroadcastMessage(TAG .. " " .. VOID .. "Очки спеллов:|r " .. AllocSpellPoints(data) .. " / " .. TotalSpellPoints(player))
     player:SendBroadcastMessage("  " .. VOID .. "Глифы:|r Больш. " .. AllocGlyphMajor(data) .. " / " .. TotalGlyphMajor(player) .. ", Мал. " .. AllocGlyphMinor(data) .. " / " .. TotalGlyphMinor(player))
     player:SendBroadcastMessage("  " .. VOID .. "Очки талантов:|r " .. AllocTalentPoints(data) .. " / " .. TotalTalentPoints(player))
+    player:SendBroadcastMessage("  " .. VOID .. "hero|r — " .. ((data.hero or 0) > 0 and "АКТИВЕН" or "выключен (Classless Hero)"))
     player:SendBroadcastMessage("  " .. VOID .. "Сброс:|r " .. Currency(CFG.reset_costs[1]))
 end
 
@@ -741,6 +824,9 @@ local function OnChat(event, player, msg, lang, typ)
             end
         end
         if err then player:SendBroadcastMessage(TAG .. " " .. err) end
+    elseif cmd == "hero" then
+        local err = ToggleHero(player)
+        if err then player:SendBroadcastMessage(TAG .. " " .. err) end
     elseif cmd == "reset" then
         local guid = player:GetGUIDLow()
         local data = playerData[guid]
@@ -774,6 +860,10 @@ local function OnLogin(event, player)
     local data = DBLoad(guid)
     if data then
         playerData[guid] = data
+        -- применить Hero-ауры при входе (если режим активен)
+        if data.hero and data.hero > 0 then
+            ApplyHeroAuras(player, 1)
+        end
     else
         playerData[guid] = nil
     end
@@ -857,6 +947,7 @@ if AIO and type(AIO.AddHandlers) == "function" then
             spells  = data.spells  or {},
             glyphs  = data.glyphs  or {},
             talents = data.talents or {},   -- [spellID] = { talentID, rank }
+            hero    = data.hero or 0,       -- Classless Hero mode (0/1)
             resetCost = CFG.reset_costs[1],
         })
     end
