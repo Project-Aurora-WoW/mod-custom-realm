@@ -63,6 +63,32 @@ runs:
         submodules: recursive
         path: azerothcore-wotlk/modules/mod-ale
 
+    # ---- Vendor Lua 5.2.4 (обход блокировки www.lua.org на CI-раннерах) ----
+    # mod-ale объявляет Lua через FetchContent (src/lualib/lua/CMakeLists.txt) и
+    # качает lua-5.2.4.tar.gz с www.lua.org, который на GitHub Actions/части сетей
+    # недоступен ("SSL connect/Connection was reset", код 35). Достаём исходники
+    # из GitHub-зеркала lua/lua (tag v5.2.4) и указываем FetchContent готовую
+    # папку, чтобы тот пропустил download/verify. Обе рабочих переменные
+    # (upper/lower) выставляются для совместимости с версиями CMake.
+    - name: Vendor Lua 5.2.4 (FetchContent override, lua.org is blocked)
+      shell: bash
+      run: |
+        set -euo pipefail
+        LUA_SRC="$GITHUB_WORKSPACE/lua-5.2.4"
+        if [ ! -d "$LUA_SRC" ]; then
+          curl -fsSL -o "$GITHUB_WORKSPACE/lua-5.2.4.tar.gz" \
+            https://github.com/lua/lua/archive/refs/tags/v5.2.4.tar.gz
+          mkdir -p "$GITHUB_WORKSPACE/_lua_extract"
+          tar -xzf "$GITHUB_WORKSPACE/lua-5.2.4.tar.gz" -C "$GITHUB_WORKSPACE/_lua_extract"
+          mv "$GITHUB_WORKSPACE/_lua_extract/lua-5.2.4" "$LUA_SRC"
+        fi
+        test -f "$LUA_SRC/src/lua.c" || { echo "missing $LUA_SRC/src/lua.c"; exit 1; }
+        {
+          echo "FETCHCONTENT_SOURCE_DIR_lua52=$LUA_SRC"
+          echo "FETCHCONTENT_SOURCE_DIR_LUA52=$LUA_SRC"
+        } >> "$GITHUB_ENV"
+        echo "Vendored Lua 5.2.4 at $LUA_SRC"
+
     # ---- Прокинуть lua_scripts в данные ядра (dry-run) ----
     - name: Stage lua_scripts for dry-run
       shell: bash
