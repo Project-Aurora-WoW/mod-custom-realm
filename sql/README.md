@@ -41,6 +41,8 @@
 | `world/0032_pvp_full_loot.sql` | Full-Loot PvP: сундук «Добыча войны» (gameobject 700020, type 3 GO_CHEST, displayId 259) — выпадение предметов/золота жертвы при PvP-килле; потребляет `31_PvpFullLoot.lua` | — |
 | `world/0033_treasure_chest.sql` | Сундуки Пустоты: сундук 700021 (GO_CHEST, displayId 8686) + таблицы `custom_treasure_chest_{loot,config,spawn}` — GM-система сундуков-сокровищ (референс zyggy123/Treasure-Chest-System); потребляет `32_TreasureChest.lua` | — |
 | `world/0034_duel_bet.sql` | Ставки на дуэли (Фаза, порт zyggy123/mod-duel-bet): таблицы `duel_bets` (escrow, статусы 0/1/2) и `duel_bet_stats` (**acore_characters**); потребляет `33_DuelBet.lua` | — |
+| `world/0036_band_npcs.sql` | Труппа выступления «Песнь Пустоты» (эпизод лора): НПС-музыканты 70390–70394 + спавны в Дюротаре (**acore_world**); потребляет `35_BandPerformance.lua` | — |
+| `world/0037_band_quest.sql` | Скриптовая ЦК «Песнь Пустоты» (ввод к выступлению, все фракции): НПС «Капельмейстер» 70395 (Орда+Альянс), предметы Струн Пустоты 70115–70117 + Жетон Песни 70118 (**acore_world**), таблица `realm_band_quest` (**acore_characters**); потребляет `36_BandQuest.lua` | 0036 |
 | `world/0035_vip.sql` | VIP-система (адаптация идей BlackWolfsDen/Eluna-Grumboz_VIP_System): таблица `realm_vip` (account_id, vip_rank, vip_expiry, flags) в **acore_characters** — VIP-ранг на аккаунт, НЕ auth.account, без валюты MG; потребляет `34_VipSystem.lua` | — |
 | `world/0025_classless.sql` | Classless-арка К5 (порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; таланты — в 0030; скрипт `27_Classless.lua` | — |
 
@@ -111,6 +113,12 @@ mysql -u <user> -p acore_world < sql/world/0033_treasure_chest.sql
 mysql -u <user> -p acore_characters < sql/world/0034_duel_bet.sql
 # 0035: VIP-система (realm_vip → acore_characters):
 mysql -u <user> -p acore_characters < sql/world/0035_vip.sql
+# 0036: Труппа выступления (НПС 70390–70394 → acore_world):
+mysql -u <user> -p acore_world < sql/world/0036_band_npcs.sql
+# 0037: ЦК «Песнь Пустоты» (НПС 70395 + предметы 70115–70118 → acore_world;
+#       realm_band_quest → acore_characters):
+mysql -u <user> -p acore_world < sql/world/0037_band_quest.sql
+mysql -u <user> -p acore_characters < sql/world/0037_band_quest.sql
 ```
 
 После применения выполните в консоли `worldserver`:
