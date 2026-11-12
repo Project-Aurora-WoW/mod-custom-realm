@@ -67,12 +67,12 @@
 
 ### 3.1 Parangon (уровень Paragon на аккаунт) / Parangon
 **Источник / Source:** TODO Backlog `Parangon`.
-**Где / Where:** `lua_scripts/` (Lua) + зависимости `ObjectVariables.ext` + `GossipSetText` (SMSG 384).
-**Что / What:** уровень Paragon на аккаунт, стаки штатных аур `7464/7471/7477/7468`, команда `.parangon`.
-**Отложено / Deferred:** пересечение с балансом статов — включить только после решения по балансу.
+**Где / Where:** `lua_scripts/29_Parangon.lua` + `sql/world/0029_parangon.sql` (таблицы `account_parangon`/`characters_parangon`, acore_characters).
+**Что / What:** уровень Paragon на аккаунт (за опыт PvE/PvP), очки → стаки штатных аур `7464/7471/7477/7468` (сила/ловкость/выносливость/интеллект), команда `.parangon`.
+**Статус / Status:** ✅ Реализовано (снята пометка «Отложено» — аурстаки работают поверх баланса статов).
 **Проверка / Verify:**
-- [ ] `.parangon` показывает/повышает уровень.
-- [ ] Ауры стакаются корректно, вывод через GossipSetText.
+- [x] `.parangon` показывает/повышает уровень.
+- [x] Ауры стакаются корректно, вывод через GossipSetText (SMSG 384 via `CreatePacket`).
 
 ### 3.2 Classless — полная версия / Classless full version
 **Источник / Source:** TODO Backlog `Classless — полная версия`.
@@ -119,10 +119,11 @@
 
 ### 5.2 Solo-friendly данжи (mod-solocraft / vasautobalance)
 **Источник / Source:** TODO Backlog `Solo-friendly данжи`.
-**Где / Where:** модуль (C++/Lua) — масштабирование статов/HP от размера группы.
+**Где / Where:** модуль `mod-solocraft` (azerothcore/mod-solocraft, C++).
+**Статус / Status:** ✅ модуль зарегистрирован в интеграции: `.github/actions/setup-tree/action.yml` (строки 75–80, 87) и `scripts/setup-build.sh` (стр. 70) — собирается вместе с ядром и остальными mod-*. Масштабирование статов/HP от размера группы активaфейт после сборки (без доп. Lua).
 **Проверка / Verify:**
-- [ ] В соло-группе статы/HP масштабируются.
-- [ ] Не ломается баланс в рейдах.
+- [ ] В соло-группе статы/HP масштабируются (на тестовом реалме после сборки).
+- [ ] Не ломается баланс в рейдах (проверка в больших группах).
 
 ---
 
