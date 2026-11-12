@@ -40,6 +40,10 @@ local REPLY_CHANNEL = CFG.reply_channel or "WHISPER"
 -- последняя отправка на игрока (spam-защита); [guid] = timestamp(ms)
 local lastSent = {}
 
+-- RAM-гейт polling: опрашиваем БД только когда был реальный запрос игрока,
+-- иначе не дёргаем CharDBQuery каждые POLL_MS секунд (перегруз).
+local hasPending = false
+
 -- ------------------------------------------------------------------
 -- Вспомогательные
 -- ------------------------------------------------------------------
@@ -116,6 +120,9 @@ local function PushRequest(player, npcEntry, msg)
         .. ", '" .. EscapeSql(promptRu) .. "', '" .. EscapeSql(promptEn) .. "', "
         .. locale .. ", 0)")
 
+    -- появился новый запрос — разрешаем следующий опрос очереди
+    hasPending = true
+
     lastSent[guid] = now
     return true
 end
@@ -124,6 +131,12 @@ end
 -- Опрос очереди: доставить готовые ответы игрокам онлайн
 -- ------------------------------------------------------------------
 local function PollReplies()
+    -- RAM-гейт: без реально поступившего запроса очередь не трогаем (нет CharDBQuery)
+    if not hasPending then
+        return
+    end
+    hasPending = false
+
     local q = CharDBQuery("SELECT id, guid, npc_entry, reply, locale FROM " .. DB_TABLE
         .. " WHERE status = 1 ORDER BY id ASC LIMIT 20")
     if not q then return end
