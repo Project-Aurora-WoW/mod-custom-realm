@@ -44,7 +44,9 @@
 
 namespace
 {
-    constexpr uint32 ALTAR_ENTRY = 705605;
+    // Примечание: entry самого Алтаря Испытаний (705605) задан в миграции
+    // 0019_challenge_modes.sql (gameobject_template) и привязан к скрипту
+    // 'altar_challenge_modes' ниже; константа здесь не нужна (была unused).
 
     enum ChallengeModeSettings
     {

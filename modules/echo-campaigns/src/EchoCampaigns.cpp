@@ -48,11 +48,6 @@ namespace
         ChatHandler(player->GetSession()).PSendSysMessage("%s", text.c_str());
     }
 
-    bool IsMaster(Player* player)
-    {
-        return player->GetSession()->GetSecurity() >= SEC_MODERATOR;
-    }
-
     // ============================================================
     // Журналирование (realm_campaign_log)
     // ============================================================
