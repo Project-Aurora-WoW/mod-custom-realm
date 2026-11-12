@@ -190,6 +190,8 @@
 | Репозиторий | Лицензия | Вердикт | Почему |
 |---|---|---|---|
 | `Helias/BG-Queue-Abuser-Viewer` | — (нет в README) | **Отклонён** | Angular 14 **web-приложение** (src/, package.json, angular.json) — «просмотр злоупотребления очереди BG». Не серверный Lua/ALE-модуль; требует отдельный веб-сервер/API-доступ к БД вне ядра. Наша PvP-логика и анти-абуз решаются на сервере (`31_PvpFullLoot`, `realm_pvp_stats`, `22_SanctuaryPvP`), а не отдельным фронтендом. Не вписывается в `lua_scripts/`/`modules/`. |
+| `Helias/WDBXEditor` | — (нет в README) | **Отклонён** | **Desktop-программа** (.NET, `WDBXEditor.sln`/AppVeyor, форк WowDevTools): редактор клиентских DBC/DB2/WDB/ADB/DBCache для разработчика. Инструмент вне ядра; мы избегаем клиентских модификаций; не вписывается в `lua_scripts/`/`modules/`. |
+| `Helias/wow-model-viewer` | — (нет LICENSE) | **Отклонён** | **JS/Node web-библиотека** (npm, jQuery 3.x + Wowhead ZamModelViewer, форк Miorey) для рендера 3D-модели персонажа WoW на сайте (сделана под Murloc Village). Клиентский веб-виджет + внешние CDN-зависимости (ZamImg), не серверный Lua/ALE/CI-модуль; не вписывается в наш стек. |
 
 **Кандидат на будущий этап (по желанию):** перенос механики Black-Market AH как категории AIO-магазина; адаптация `customWorldboss` из Acore_eventScripts под entry-диапазон 70xxx и автоматику реалма.
 
