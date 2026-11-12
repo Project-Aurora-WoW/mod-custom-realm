@@ -47,7 +47,7 @@
 
 ## 📦 Бэклог (по приоритету) / Backlog (by priority)
 
-- [ ] **GPT-НПС** (референс `elunamod-gpt-npcs`, Ember-RP, MIT): разговоры с НПС через чат. Открытые вопросы: entry-лист, модель (`gpt-4o-mini`), канал ответа (шёпот), экранирование argv, rate-limit, локализация ru/en. Зависимость: Python3 + openai + API-ключ. / **GPT-NPC** (ref. `elunamod-gpt-npcs`): NPC chat conversations. Open questions: entry allowlist, model, response channel, argv escaping, rate-limit, ru/en locale. Deps: Python3 + openai + API key.
+- [x] **GPT-НПС** (референс `elunamod-gpt-npcs`, Ember-RP, MIT): разговоры с НПС через чат. ✅ Allowlist заполнен (70110/70120/70130/70160/70180/70210) в `gpt_npc_config.lua`; модель `gpt-4o-mini`, канал ответа (broadcast от имени НПС), rate-limit, локализация ru/en — реализованы в `gpt_npc.lua`; Python-сервис `service/gpt_npc.py` + очередь `realm_gpt_queue` (0031). Осталось: API-ключ на сервере (вне репо). / **GPT-NPC** (ref. `elunamod-gpt-npcs`): ✅ allowlist filled (70110/70120/70130/70160/70180/70210); model, rate-limit, rg/en, Python service + queue ready. Only server-side API key left.
 - [ ] Заполнить SHA256/size в `client/manifest.json` после выкладки `patch-Z.mpq` и сборки `patch-x.mpq`. / Fill SHA256/size in `client/manifest.json` after shipping `patch-Z.mpq` and building `patch-x.mpq`.
 - [ ] Тестовый прогон кастомных карт — `testing-plan.md` раздел 11. / Test run of custom maps — `testing-plan.md` section 11.
 - [ ] Настройка наград режимов испытаний в `echo-challenge-modes.conf` (титул 48 / item 70001 — примеры). / Configure challenge-mode rewards in `echo-challenge-modes.conf`.
