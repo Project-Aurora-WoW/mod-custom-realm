@@ -40,6 +40,7 @@
 | `world/0031_gpt_npc.sql` | GPT-НПС (Фаза 4): очередь `realm_gpt_queue` (**acore_characters**) для обмена ALE-скрипта `gpt_npc.lua` с внешним Python-сервисом (`service/gpt_npc.py`), который вызывает OpenAI | — |
 | `world/0032_pvp_full_loot.sql` | Full-Loot PvP: сундук «Добыча войны» (gameobject 700020, type 3 GO_CHEST, displayId 259) — выпадение предметов/золота жертвы при PvP-килле; потребляет `31_PvpFullLoot.lua` | — |
 | `world/0033_treasure_chest.sql` | Сундуки Пустоты: сундук 700021 (GO_CHEST, displayId 8686) + таблицы `custom_treasure_chest_{loot,config,spawn}` — GM-система сундуков-сокровищ (референс zyggy123/Treasure-Chest-System); потребляет `32_TreasureChest.lua` | — |
+| `world/0034_duel_bet.sql` | Ставки на дуэли (Фаза, порт zyggy123/mod-duel-bet): таблицы `duel_bets` (escrow, статусы 0/1/2) и `duel_bet_stats` (**acore_characters**); потребляет `33_DuelBet.lua` | — |
 | `world/0025_classless.sql` | Classless-арка К5 (порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; таланты — в 0030; скрипт `27_Classless.lua` | — |
 
 ---
@@ -105,6 +106,8 @@ mysql -u <user> -p acore_characters < sql/world/0031_gpt_npc.sql
 mysql -u <user> -p acore_world < sql/world/0032_pvp_full_loot.sql
 # 0033: Сундуки Пустоты (сундук 700021 + таблицы → acore_world):
 mysql -u <user> -p acore_world < sql/world/0033_treasure_chest.sql
+# 0034: Ставки на дуэли (duel_bets + duel_bet_stats → acore_characters):
+mysql -u <user> -p acore_characters < sql/world/0034_duel_bet.sql
 ```
 
 После применения выполните в консоли `worldserver`:

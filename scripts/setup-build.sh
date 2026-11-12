@@ -67,6 +67,7 @@ MODULES=(
   "mod-transmog|https://github.com/azerothcore/mod-transmog|"
   "mod-cfbg|https://github.com/azerothcore/mod-cfbg|"
   "mod-duel-reset|https://github.com/azerothcore/mod-duel-reset|"
+  "mod-solocraft|https://github.com/azerothcore/mod-solocraft|"
   "mod-individual-xp|https://github.com/azerothcore/mod-individual-xp|"
   "mod-starter-guild|https://github.com/Turor/mod-starter-guild.git|"
   "mod-dungeonmaster|https://github.com/Turor/mod-dungeonmaster.git|"

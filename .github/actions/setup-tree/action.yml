@@ -63,6 +63,28 @@ runs:
         submodules: recursive
         path: azerothcore-wotlk/modules/mod-ale
 
+    # ---- Стандартные модули AC (Фаза 5.1) ----
+    # Параллельно local setup-build.sh (scripts/setup-build.sh). Каждый модуль —
+    # отдельный checkout в azerothcore-wotlk/modules/<name>, чтобы AC собрал его
+    # вместе с ядром и mod-ale. Ветка master + submodules как у остальных.
+    - name: Checkout standard AC modules (Phase 5.1)
+      shell: bash
+      run: |
+        set -euo pipefail
+        declare -A MODS=(
+          [mod-ah-bot]="https://github.com/azerothcore/mod-ah-bot.git"
+          [mod-transmog]="https://github.com/azerothcore/mod-transmog.git"
+          [mod-cfbg]="https://github.com/azerothcore/mod-cfbg.git"
+          [mod-duel-reset]="https://github.com/azerothcore/mod-duel-reset.git"
+          [mod-solocraft]="https://github.com/azerothcore/mod-solocraft.git"
+        )
+        for name in "${!MODS[@]}"; do
+          git clone --depth 1 --branch master --single-branch --recursive \
+            "${MODS[$name]}" "azerothcore-wotlk/modules/$name"
+        done
+        echo "Standard modules installed:"
+        ls -1 azerothcore-wotlk/modules/ | grep -E '^(mod-ah-bot|mod-transmog|mod-cfbg|mod-duel-reset|mod-solocraft)$'
+
     # ---- Vendor Lua 5.2.4 (обход блокировки www.lua.org на CI-раннерах) ----
     # mod-ale объявляет Lua через FetchContent (src/lualib/lua/CMakeLists.txt) и
     # качает lua-5.2.4.tar.gz с www.lua.org, который на GitHub Actions/части сетей

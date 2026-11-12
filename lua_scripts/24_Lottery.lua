@@ -35,7 +35,9 @@ if not CFG or not CFG.enabled then
 end
 
 local NPC_LOTTERY = CFG.npc
-local PRICE = CFG.ticket_price      -- медь за билет
+local PRICE = CFG.ticket_price      -- цена билета (медь при gold, кол-во при token)
+local CURRENCY = CFG.currency or "gold" -- "gold" (золото) / "token" (Жетон Эха 70005)
+local TOKEN_ITEM = REG.meta and REG.meta.token_item or 70005
 local JACKPOT_TICK = CFG.jackpot_tick -- прирост джекпота за билет
 local MAX_TICKETS = CFG.max_tickets_per_player
 local MIN_NUM, MAX_NUM = CFG.number_range[1], CFG.number_range[2]
@@ -52,21 +54,23 @@ local WORLD_UPDATE = 13
 -- ============================================================
 local L = {
     en = {
-        welcome = "Welcome to the Echo Lottery! Buy a ticket for %d gold. Jackpot: %s gold.",
+        welcome = "Welcome to the Echo Lottery! Buy a ticket for %d. Jackpot: %s gold.",
         buy = "Buy lottery ticket (6 numbers 1-%d)",
         tickets = "Your tickets:",
         max_reached = "You have reached the maximum amount of tickets.",
-        no_gold = "You do not have enough gold for a ticket.",
+        no_gold = "You do not have enough for a ticket.",
+        no_tokens = "You do not have enough Echo Tokens for a ticket.",
         bought = "Your ticket is purchased! Good luck!",
         draw = "The Echo Lottery draw has concluded. Winners were rewarded by mail.",
         none = "You have no tickets.",
     },
     ru = {
-        welcome = "Добро пожаловать в Лотерею Эха! Билет за %d зол. Джекпот: %s зол.",
+        welcome = "Добро пожаловать в Лотерею Эха! Билет за %d. Джекпот: %s зол.",
         buy = "Купить билет лотереи (6 чисел 1-%d)",
         tickets = "Ваши билеты:",
         max_reached = "Достигнут максимум билетов на игрока.",
-        no_gold = "У вас недостаточно золота на билет.",
+        no_gold = "У вас недостаточно средств на билет.",
+        no_tokens = "У вас недостаточно Жетонов Эха на билет.",
         bought = "Ваш билет куплен! Удачи!",
         draw = "Розыгрыш Лотереи Эха завершён. Победителей наградили письмом.",
         none = "У вас пока нет билетов.",
@@ -198,7 +202,9 @@ local function OnHello(event, player, creature)
     if CurrentWeek() == 0 then StartWeek() end
     local t = L10n(player)
     local pot = GoldOf(Jackpot())
-    player:GossipSetText(string.format(t.welcome, GoldOf(PRICE), pot))
+    -- Цена в единицах текущей валюты (золото или Жетоны Эха)
+    local price = (CURRENCY == "token") and PRICE or GoldOf(PRICE)
+    player:GossipSetText(string.format(t.welcome, price, pot))
 
     local guid = player:GetGUIDLow()
     local count = 0
@@ -226,14 +232,28 @@ local function OnSelect(event, player, creature, sender, intid, code)
     local t = L10n(player)
     if intid == 1 then
         if CurrentWeek() == 0 then StartWeek() end
-        if player:GetCoinage() < PRICE then
+
+        -- Проверка средства оплаты
+        if CURRENCY == "token" then
+            if not player:HasItem(TOKEN_ITEM, PRICE) then
+                player:GossipComplete()
+                player:SendBroadcastMessage(TAG .. " " .. t.no_tokens)
+                return
+            end
+        elseif player:GetCoinage() < PRICE then
             player:GossipComplete()
             player:SendBroadcastMessage(TAG .. " " .. t.no_gold)
             return
         end
 
-        -- Списание + билет
-        player:ModifyMoney(-PRICE)
+        -- Списание
+        if CURRENCY == "token" then
+            player:RemoveItem(TOKEN_ITEM, PRICE)
+        else
+            player:ModifyMoney(-PRICE)
+        end
+
+        -- Билет
         local numbers = {}
         for i = 1, PICK_COUNT do numbers[i] = math.random(MIN_NUM, MAX_NUM) end
         local week = CurrentWeek()
