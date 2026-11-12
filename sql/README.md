@@ -44,6 +44,7 @@
 | `world/0036_band_npcs.sql` | Труппа выступления «Песнь Пустоты» (эпизод лора): НПС-музыканты 70390–70394 + спавны в Дюротаре (**acore_world**); потребляет `35_BandPerformance.lua` | — |
 | `world/0037_band_quest.sql` | Скриптовая ЦК «Песнь Пустоты» (ввод к выступлению, все фракции): НПС «Капельмейстер» 70395 (Орда+Альянс), предметы Струн Пустоты 70115–70117 + Жетон Песни 70118 (**acore_world**), таблица `realm_band_quest` (**acore_characters**); потребляет `36_BandQuest.lua` | 0036 |
 | `world/0035_vip.sql` | VIP-система (адаптация идей BlackWolfsDen/Eluna-Grumboz_VIP_System): таблица `realm_vip` (account_id, vip_rank, vip_expiry, flags) в **acore_characters** — VIP-ранг на аккаунт, НЕ auth.account, без валюты MG; потребляет `34_VipSystem.lua` | — |
+| `world/0038_store_vip_expansion.sql` | Расширение магазина (Фаза 1.1): VIP-категория id 8 доступна с ранга 1 (не только GM), титул/бафф связаны с VIP, VIP-эксклюзив «Печать Бездны» (услуга 20, спелл 70051) за Жетоны; `Store_Server.lua` отдаёт `accountRank = max(GM, VIP)` для клиентского фильтра `requiredRank` | 0020, 0026, 0035 |
 | `world/0025_classless.sql` | Classless-арка К5 (порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; таланты — в 0030; скрипт `27_Classless.lua` | — |
 
 ---
@@ -119,6 +120,8 @@ mysql -u <user> -p acore_world < sql/world/0036_band_npcs.sql
 #       realm_band_quest → acore_characters):
 mysql -u <user> -p acore_world < sql/world/0037_band_quest.sql
 mysql -u <user> -p acore_characters < sql/world/0037_band_quest.sql
+# 0038: Расширение магазина VIP (realm_store_* → acore_world):
+mysql -u <user> -p acore_world < sql/world/0038_store_vip_expansion.sql
 ```
 
 После применения выполните в консоли `worldserver`:

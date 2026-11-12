@@ -16,6 +16,13 @@ local TOKEN_ITEM = REG.meta.token_item
 
 local NPC_VENDOR = SHOP.npc
 
+-- Guard: НПС-шоп заменён AIO-магазином (категория «Снабжение Ордена», 0027).
+-- Включается только при REG.shop.enabled = true (фолбэк без AIO-клиента).
+if not SHOP.enabled then
+    print("[EchoOfTheVoid] 30_PvpShop.lua: НПС-шоп выключен (REG.shop.enabled = false; ассортимент в AIO-магазине, 0027).")
+    return
+end
+
 -- Пункты gossip-меню: 100+i — покупка i-го товара
 local MENU_ROOT = 1
 

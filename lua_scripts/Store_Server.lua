@@ -80,8 +80,20 @@ local KEYS = GetDataStructKeys();
 
 local StoreHandler = AIO.AddHandlers("STORE_SERVER", {})
 
+local VIP_TBL = "realm_vip"
+
+-- Ранг доступа к магазину = max(GM-ранг, VIP-ранг) (realm_vip, 34_VipSystem).
+local function GetStoreRank(player)
+	local gm = player:GetGMRank() or 0
+	local ok, q = pcall(CharDBQuery, string.format(
+		"SELECT `vip_rank` FROM %s WHERE `account_id` = %d", VIP_TBL, player:GetAccountId()))
+	local vip = 0
+	if ok and q then vip = q:GetUInt32(0) or 0 end
+	return (gm > vip) and gm or vip
+end
+
 function StoreHandler.FrameData(player)
-	AIO.Handle(player, "STORE_CLIENT", "FrameData", GetServiceData(), GetLinkData(), GetNavData(), GetCurrencyData(), player:GetGMRank())
+	AIO.Handle(player, "STORE_CLIENT", "FrameData", GetServiceData(), GetLinkData(), GetNavData(), GetCurrencyData(), GetStoreRank(player))
 end
 
 function StoreHandler.UpdateCurrencies(player)
