@@ -1,0 +1,108 @@
+# ============================================================
+# auto-label.yml — авторазметка GitHub Issues метками area/*, priority/*, status/*
+#
+# Триггеры: issues [opened, edited, reopened].
+#
+# Логика:
+#   1. area/*  — по ключевым словам в заголовке + теле Issue (RU/EN).
+#   2. priority/high — если в тексте встречаются маркеры ошибки/бага.
+#   3. status/todo — ставится на вновь открытый Issue (если ещё нет status/*).
+#   4. Метки не дублируются: before: remove_labels = true РАЗРЕШАЕТ снимать
+#      ЛЮБЫЕ area/*/priority/* на шаге, но дедупликация по конкретной метке
+#      делается явной проверкой набора меток перед добавлением.
+#
+# Права: issues: write — достаточно для чтения Issue и простановки меток.
+# ============================================================
+
+name: auto-label
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write          # чтение/запись меток Issue
+  contents: read
+
+concurrency:
+  group: auto-label-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    steps:
+      # ---- 1. Определяем area/* по ключевым словам (RU/EN) ----
+      - name: Area by keywords
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const hay = ((issue.title || "") + " " + (issue.body || "")).toLowerCase();
+
+            // Карта: area -> массив ключевых слов (RU/EN), по одному совпадению достаточно.
+            const areaRules = [
+              { area: "area/db",         words: ["db", "database", "база данных", "миграц", "migration", "sql", "запрос", "query", "realm_", "таблица", "table"] },
+              { area: "area/dialogue",   words: ["диалог", "dialogue", "диалоги", "gossip", "реплик", "текст нпс", "локализац", "translation", "перевод", "цена"] },
+              { area: "area/event",      words: ["событ", "event", "эвент", "evento", "фан-элемент", "фан", "pvp", "пвп", "игровое событие", "holiday", "праздник"] },
+              { area: "area/lua",        words: ["lua", "скрипт", "script", "ale", "эла", "lua_scripts", "режим", "логика"] },
+              { area: "area/map",        words: ["карт", "map", "минимап", "minimap", "метка на карте", "метка", "точка на карте", "worldmap"] },
+              { area: "area/client",     words: ["клиент", "client", "аддон", "addon", "aio", "интерфейс", "ui", "визуализац", "визуал", "frame", "фрейм"] },
+              { area: "area/npc-position", words: ["нпс", "npc", "в воздухе", "в воздух", "провален", "текстур", "телепорт", "координат", "position", "слип", "сток", "свинья"] },
+              { area: "area/quest",      words: ["квест", "quest", "цепочк", "chain", "наград", "reward", "этап", "stage", "предмет", "item", "струн", "жетон"] },
+              { area: "area/spawn",      words: ["спавн", "spawn", "спавн-лист", "моб", "mob", "гуид", "guid", "появление"] },
+            ];
+
+            const labels = context.payload.issue.labels.map(l => l.name);
+
+            for (const rule of areaRules) {
+              // уже стоит — пропускаем (не дублируем area)
+              if (labels.includes(rule.area)) continue;
+              if (rule.words.some(w => hay.includes(w))) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: [rule.area],
+                });
+              }
+            }
+
+      # ---- 2. priority/high, если найдены маркеры ошибки/бага ----
+      - name: High priority on bug keywords
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const hay = ((issue.title || "") + " " + (issue.body || "")).toLowerCase();
+            const bugWords = ["ошибка", "баг", "error", "bug", "crash", "падение", "exception", "перестал", "слома"];
+            const hasBug = bugWords.some(w => hay.includes(w));
+            if (!hasBug) return;
+
+            const labels = context.payload.issue.labels.map(l => l.name);
+            if (labels.includes("priority/high")) return; // уже есть — не дублируем
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ["priority/high"],
+            });
+
+      # ---- 3. status/todo на вновь открытый Issue (если нет status/*) ----
+      - name: Default status todo
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const event = context.payload.action;
+            // только на открытие; повторно не ставим на edited/reopened
+            if (event !== "opened") return;
+            const issue = context.payload.issue;
+            const labels = context.payload.issue.labels.map(l => l.name);
+            const hasStatus = labels.some(l => l.startsWith("status/"));
+            if (hasStatus) return; // уже есть статус — не дублируем
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: ["status/todo"],
+            });

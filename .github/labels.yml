@@ -86,3 +86,43 @@
 - name: status/duplicate
   color: 7f8c8d          # тёмно-серый — дубликат
   description: Дубликат / duplicate
+- name: status/todo
+  color: 1f618d          # тёмно-синий — очередь/не начато
+  description: В очереди, не начато / to do
+- name: status/done
+  color: 27ae60          # зелёный — выполнено
+  description: Выполнено / done
+
+# ---- Приоритет расширение: medium (существующие high/normal/low) ----
+- name: priority/medium
+  color: e67e22          # оранжевый — средний приоритет
+  description: Средний приоритет / medium priority
+
+# ---- Область Issue / area (по чек-листу аудита) ----
+- name: area/lua
+  color: 16a085          # бирюзовый — Lua-скрипты
+  description: Lua-скрипты / Lua scripts (работа, сопряжение, баги скриптов)
+- name: area/spawn
+  color: 1abc9c          # зеленовато-бирюзовый — спавн-лист
+  description: Спавн-лист / spawn list (НПС, мобы, позиции)
+- name: area/dialogue
+  color: 8e44ad          # фиолетовый — диалоги
+  description: Диалоги / dialogues (gossip, текст НПС, локализация)
+- name: area/map
+  color: 3498db          # синий — карта/минимап
+  description: Карта / map (метки на карте, минимап, клиентская отдача)
+- name: area/quest
+  color: f1c40f          # жёлтый — квесты
+  description: Квесты / quests (цепочки, этапы, награды, предметы)
+- name: area/client
+  color: 27ae60          # зелёный — клиент/визуализация
+  description: Клиент / client (аддоны, AIO, визуализация, интерфейс)
+- name: area/event
+  color: e74c3c          # красный — игровые события
+  description: Игровые события / events (эвенты, фан-элементы, PvP)
+- name: area/db
+  color: 2980b9          # тёмно-синий — база данных
+  description: База данных / DB (миграции, запросы, world/characters)
+- name: area/npc-position
+  color: 9b59b6          # пурпурный — позиции НПС
+  description: Позиции НПС / NPC positions (в воздухе, в текстурах, телепорты)

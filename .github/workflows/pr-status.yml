@@ -1,0 +1,88 @@
+# ============================================================
+# pr-status.yml — автостатус Issue по связанному PR
+#
+# Логика:
+#   - Когда открыт PR, в теле которого упомянут Issue (например "Closes #12"
+#     или просто "refs #12 / для #12 / по #12"), проставляем этому Issue
+#     метку status/in-progress.
+#   - По мержу PR метка status/in-progress меняется на status/done.
+#
+# Основано на: .github/workflows/core-build.yml (репозиторий Project-Aurora-WoW).
+# runner: самодостаточно, не требует внешних actions.
+# ============================================================
+
+name: pr-status
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  issues: write
+  pull-requests: read
+  contents: read
+
+concurrency:
+  group: pr-status-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  pr-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR opened/sync -> status/in-progress
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target' && github.event.action != 'closed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = ((pr.body || "") + " " + (pr.title || "")).toLowerCase();
+
+            // Ищем номера Issue, упомянутые как #N (кроме номеров самого PR)
+            const refs = new Set();
+            // "closes #12", "resolves #12", "fixes #12", "refs #12", "для #12"
+            for (const m of body.matchAll(/#(\d{1,6})/g)) {
+              const n = Number(m[1]);
+              if (n && n !== pr.number) refs.add(n);
+            }
+            const list = [...refs];
+            if (!list.length) { console.log("Нет ссылок на Issue в описании PR."); return; }
+
+            for (const n of list) {
+              const lbls = await github.rest.issues.listLabelsOnIssue({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: n,
+              });
+              const has = lbls.data.some(l => l.name === "status/in-progress");
+              if (has) continue; // не дублируем
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: n,
+                labels: ["status/in-progress"],
+              });
+              console.log(`PR#${pr.number} -> Issue#${n}: status/in-progress`);
+            }
+
+      - name: PR merged -> status/done
+        if: github.event_name == 'pull_request_target' && github.event.pull_request.merged == true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = ((pr.body || "") + " " + (pr.title || "")).toLowerCase();
+            const refs = new Set();
+            for (const m of body.matchAll(/#(\d{1,6})/g)) {
+              const n = Number(m[1]);
+              if (n && n !== pr.number) refs.add(n);
+            }
+            for (const n of [...refs]) {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: n,
+                name: "status/in-progress",
+              }).catch(() => {});
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner, repo: context.repo.repo, issue_number: n,
+                labels: ["status/done"],
+              });
+              console.log(`PR#${pr.number} merged -> Issue#${n}: status/done`);
+            }

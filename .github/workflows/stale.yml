@@ -1,0 +1,78 @@
+# ============================================================
+# stale.yml — раз в сутки помечает неактивные Issues
+#
+# Логика:
+#   - Раз в сутки (cron) для открытых Issues со статусом НЕ done и НЕ closed
+#     проверяем последнее обновление (updated_at).
+#   - Если > STALE_DAYS (14) дней нет активности — добавляем/обновляем
+#     comment + ставим метку status/blocked (работа застопорилась/нет ответа).
+#   - Issue, уже помеченное status/blocked, повторно не трогаем.
+#   - Автозакрытие НЕ делаем (только метка).
+#
+# lock: опционально. Здесь оставлен false, чтобы не запирать обсуждение.
+# ============================================================
+
+name: stale
+
+on:
+  schedule:
+    - cron: "15 3 * * *"   # каждые сутки в 03:15 UTC
+  workflow_dispatch:       # ручной запуск
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: stale
+  cancel-in-progress: false
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark inactive issues as blocked
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const STALE_DAYS = 14;
+            const now = Date.now();
+            const cutoff = now - STALE_DAYS * 24 * 3600 * 1000;
+
+            // Будем итерировать по open issues.
+            let page = 1;
+            const candidates = [];
+            while (true) {
+              const res = await github.rest.issues.listForRepo({
+                owner: context.repo.owner, repo: context.repo.repo,
+                state: "open", per_page: 100, page,
+              });
+              candidates.push(...res.data.filter(i => !i.pull_request));
+              if (res.data.length < 100) break;
+              page++;
+            }
+
+            let processed = 0;
+            for (const issue of candidates) {
+              const labels = issue.labels.map(l => l.name);
+              // уже заблокировано или закрыто — пропускаем
+              if (labels.includes("status/blocked")) continue;
+              if (labels.includes("status/done")) continue;
+              // updated у открытого issue часто "пингуется" событиями;
+              // для стабильности берём updated_at (последний касание)
+              const updated = new Date(issue.updated_at).getTime();
+              if (isNaN(updated) || updated > cutoff) continue;
+
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issue.number, labels: ["status/blocked"],
+              });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `⏸ Нет активности более ${STALE_DAYS} дней — Issue помечен как status/blocked.\n\n` +
+                      `/No activity for more than ${STALE_DAYS} days — marked as status/blocked.`,
+              });
+              processed++;
+            }
+            console.log(`Помечено status/blocked: ${processed}`);
