@@ -766,7 +766,7 @@ function SHOP_UI.CurrencyBadges_OnData()
 	local shownCount = 0
 	for k, v in pairs(SHOP_UI["Data"].currencies) do
 		if index > 4 then
-			break;
+			break
 		end
 
 		local button = SHOP_UI["CURRENCY_BUTTONS"][index]
