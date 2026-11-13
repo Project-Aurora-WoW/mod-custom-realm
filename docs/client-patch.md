@@ -374,6 +374,47 @@ patch-x.mpq
 
 ---
 
+## Часть 7b. Archaeology (wow-mod-archaeology) — клиентский контур
+
+> Аддон `ArchaeologyUI` распространяется в `Interface/AddOns/ArchaeologyUI`
+> (см. [`../addons/ArchaeologyUI/`](../addons/README.md)). В отличие от Journal,
+> Археология — **новое вторичное умение (SkillLine 794)**, которого нет в
+> стоковом 3.3.5 клиенте, поэтому требует существенного клиентского DBC-патча.
+
+Клиентский контур собирается инструментом модуля `tools/build_patch.py`
+(из клона `mod-archaeology`), который добавляет в реалмовые MPQ-патчи и пишет
+те же строки в серверные `mod_archaeology_world_dbc.sql` /
+`mod_archaeology_world_z_rewards_dbc.sql`:
+
+- **SkillLine.dbc 794** «Archaeology» + SkillRaceClassInfo (показ в Skills) и
+  спеллы 90500-90505 (Apprentice → Grand Master), 90506 Survey,
+  90507-90521 (трейты реликвии), 90522 (косметическая лопата над головой) —
+  с SkillLineAbility. Числовые значения задаёт сервер.
+- **Achievement.dbc 9240-9245** + Achievement_Criteria 19240 (достижения реликвии).
+- **Item.dbc + ItemDisplayInfo.dbc**: иконки кейстоунов/артефактов (9504010-9504499),
+  реликвия 9505000-9505999 (813 предметов), облики 950900-950921 (Legion-артефакты).
+- **GameObjectDisplayInfo 10101-10103** + модели survey-телескопа (конвертация
+  retail via wow-mod-retail-creatures; `RETAIL_CREATURES`).
+- `Interface\Archeology\` арт (45 файлов Cataclysm) для collection-вью.
+
+Пример вызова (на машине с клиентом и исходниками модуля):
+```bash
+python3 tools/build_patch.py --patch <spell/item patch>.MPQ \
+    --skill-patch <patch с SkillRaceClassInfo>.MPQ --client <WoW> --out <folder> \
+    --sql data/sql/db-world/mod_archaeology_world_dbc.sql \
+    --rewards-sql data/sql/db-world/mod_archaeology_world_z_rewards_dbc.sql
+```
+Патч встраивается в существующий `patch-x.mpq` (правило владения DBC — см. ч. 6:
+не дублировать DBC между патчами). До выхода патча модуль работает через
+`.arch`-команды (survey-телескоп не виден; в конфиге — `Archaeology.Telescope.*`
+на запасные баннеры).
+
+Данные `tools/cata-data` (Cataclysm 4.4.2/wago.tools + SkyFire) **не коммитятся** —
+для готового патча нужны только сгенерированные `mod_archaeology_world_*.sql`
+(уже в репо модуля). Пересборка данных из исходников требует этих экспортов.
+
+---
+
 ## Часть 8. Клиентский аддон AIO_Client
 
 > Серверная часть AIO (v1.74, Rochet2 — референс dwrath-eluna-3-3-5a)

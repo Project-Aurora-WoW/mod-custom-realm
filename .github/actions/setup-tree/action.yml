@@ -82,13 +82,14 @@ runs:
           [mod-hunger-thirst]="https://github.com/Phanty78/mod-hunger-thirst.git"
           [mod-warband-camp]="https://github.com/Ildourol/mod-warband-camp.git"
           [mod-forever-journal]="https://github.com/buildthehomelab/wow-mod-forever-journal.git"
+          [mod-archaeology]="https://github.com/buildthehomelab/wow-mod-archaeology.git"
         )
         for name in "${!MODS[@]}"; do
           git clone --depth 1 --branch master --single-branch --recursive \
             "${MODS[$name]}" "azerothcore-wotlk/modules/$name"
         done
         echo "Standard modules installed:"
-        ls -1 azerothcore-wotlk/modules/ | grep -E '^(mod-ah-bot|mod-ah-bot-plus|mod-transmog|mod-cfbg|mod-duel-reset|mod-solocraft|mod-firstlogin-aio|mod-hunger-thirst|mod-warband-camp|mod-forever-journal)$'
+        ls -1 azerothcore-wotlk/modules/ | grep -E '^(mod-ah-bot|mod-ah-bot-plus|mod-transmog|mod-cfbg|mod-duel-reset|mod-solocraft|mod-firstlogin-aio|mod-hunger-thirst|mod-warband-camp|mod-forever-journal|mod-archaeology)$'
 
     # ---- Vendor Lua 5.2.4 (обход блокировки www.lua.org на CI-раннерах) ----
     # mod-ale объявляет Lua через FetchContent (src/lualib/lua/CMakeLists.txt) и
