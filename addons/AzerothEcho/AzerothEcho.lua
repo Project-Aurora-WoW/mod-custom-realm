@@ -40,6 +40,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             if tab then
                 AE.ShowTab(tonumber(tab))
             end
+            -- Принудительное окно выбора кампании (40_CampaignWindow.lua)
+            if message == "campaign:show" and AE.ShowCampaignSelector then
+                AE.ShowCampaignSelector()
+            end
         elseif prefix == "AECHORIFTS" then
             if message == "show" then
                 AE.ShowRiftMap()
@@ -108,6 +112,8 @@ SlashCmdList["AZEROTHECHO"] = function(msg)
         AE.ShowTab(2)   -- вкладка Ивенты
     elseif msg == "campaigns" or msg == "camp" then
         AE.ShowTab(1)   -- вкладка Кампании
+    elseif msg == "choose" or msg == "window" or msg == "select" then
+        if AE.ShowCampaignSelector then AE.ShowCampaignSelector() end
     elseif msg == "help" then
         DEFAULT_CHAT_FRAME:AddMessage(AE.TAG .. " Команды: /ae — панель; /ae rifts — карта разломов;")
         DEFAULT_CHAT_FRAME:AddMessage(AE.TAG .. " /ae campaigns — кампании; /ae events — ивенты; /ae pvp — статистика.")

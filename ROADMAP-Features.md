@@ -65,6 +65,11 @@
 
 ## 🎁 Фаза 3 — Специальные модули (пересборка ядра) / Phase 3 — Special modules (core rebuild)
 
+### 3.0 Стартовое окно выбора кампаний / Campaign Select Window
+**Где / Where:** `lua_scripts/40_CampaignWindow.lua` (сервер), `addons/AzerothEcho/CampaignWindow.lua` (клиент), `sql/world/0042_campaign_profile.sql`, `docs/qa-campaign-window.md`.
+**Что / What:** принудительное окно выбора кампании при создании/первом входе и пока кампания не выбрана (`realm_campaign_profile.force_show_window=1` или `campaign_id IS NULL`). Сервер блокирует управление (`SetPlayerLock`), шлёт `AECHOUI campaign:show`; клиент показывает модальное окно (блокировка ESC/кликов), график событий, подтверждение `AECHOSEL campaign:<id>` → сброс флага + запись кампании. Команда повторного открытия `/ae choose|window|select`.
+**Статус / Status:** 🔧 Разработано (сервер+клиент+миграция+QA-чеклист). Требует тестового прогона (см. docs/qa-campaign-window.md) и пересборки ядра (модули).
+
 ### 3.1 Parangon (уровень Paragon на аккаунт) / Parangon
 **Источник / Source:** TODO Backlog `Parangon`.
 **Где / Where:** `lua_scripts/29_Parangon.lua` + `sql/world/0029_parangon.sql` (таблицы `account_parangon`/`characters_parangon`, acore_characters).
