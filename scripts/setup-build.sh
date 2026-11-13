@@ -74,6 +74,7 @@ MODULES=(
   "mod-dungeonmaster|https://github.com/Turor/mod-dungeonmaster.git|"
   "mod-ah-bot-plus|https://github.com/NathanHandley/mod-ah-bot-plus.git|"
   "mod-hunger-thirst|https://github.com/Phanty78/mod-hunger-thirst.git|"
+  "mod-warband-camp|https://github.com/Ildourol/mod-warband-camp.git|"
 )
 mkdir -p "$CORE_DIR/modules"
 for entry in "${MODULES[@]}"; do
@@ -97,6 +98,30 @@ for entry in "${MODULES[@]}"; do
     fi
   fi
 done
+
+# ---- mod-warband-camp: лор-адаптация (чёрные зоны) ----
+# Лагеря нельзя разбивать в ключевых лор/PvP-локациях реалма, чтобы не
+# засорять квестовые/эвентные места. Наш кастомный контент живёт в фазе 1,
+# лагеря добавляют биты 1-31 поверх PHASEMASK_NORMAL — конфликта фаз нет,
+# нужен лишь чёрный список зон (как в конфиге модуля BlacklistedZones).
+# 4080 = Драконий Погост (главная PvP/event-зона Эха Пустоты).
+if [ -d "$CORE_DIR/modules/mod-warband-camp" ]; then
+  conf_dir="$CORE_DIR/env/dist/etc/modules"
+  mkdir -p "$conf_dir"
+  CONF_WB="$conf_dir/mod_warband_camp.conf"
+  if [ ! -f "$CONF_WB" ]; then
+    cp "$CORE_DIR/modules/mod-warband-camp/conf/mod_warband_camp.conf.dist" "$CONF_WB"
+    cat >> "$CONF_WB" <<'WBCONF'
+
+# ---- Лор-адаптация реалма «Эхо Пустоты» ----
+# Запрет лагерей в зонах кампаний/PvP/лор.
+WarbandCamp.BlacklistedZones = 4080
+WBCONF
+    log "mod-warband-camp: конфиг адаптирован (чёрный список зон 4080)."
+  else
+    log "mod-warband-camp: конфиг уже существует — не трогаю (правьте вручную)."
+  fi
+fi
 
 # Кастомные C++-модули реалма (modules/echo-*) копируются в ядро —
 # модульная система AC соберёт их вместе с ядром и mod-ale.
