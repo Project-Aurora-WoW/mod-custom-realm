@@ -14,6 +14,16 @@
 
 local GUARDIAN_ENTRY = 70001
 
+-- Локализация системных сообщений (лор-тексты — из 00_LoreRegistry.ext)
+local L = {
+    ru = { portal = "Портал открыт. Пусть Эхо не услышит твоего имени." },
+    en = { portal = "The portal opens. May the Echo never hear your name." },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+
 local Lore = AzerothEchoLore
 local TAG = Lore.meta.tag
 local VOID_COLOR = Lore.meta.colors.void
@@ -84,7 +94,7 @@ local function OnGossipSelect(event, player, creature, sender, intid, code)
     -- Телепорты: intid 101..100+N
     if intid >= 101 and intid <= 100 + #TELEPORTS then
         local tp = TELEPORTS[intid - 100]
-        player:SendBroadcastMessage(TAG .. " Портал открыт. Пусть Эхо не услышит твоего имени.")
+        player:SendBroadcastMessage(TAG .. " " .. (IsRu(player) and L.ru.portal or L.en.portal))
         player:Teleport(tp.map, tp.x, tp.y, tp.z, tp.o)
         player:GossipComplete()
         return

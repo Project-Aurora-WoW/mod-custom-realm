@@ -29,8 +29,8 @@
 | `world/0018_eluna_scripts_tier_a.sql` | Контент Tier A (eluna-scripts): НПС «Рунный Обжиг» (70172, зачарователь), «Хранитель Золота» (70173), шаблоны «Разлом Пустоты» (70190) и «Иссушенный из Разлома» (70191), item 70008 «Осколок Пустоты», спелл 70050 «Пустотная порча» (spell_dbc, требует DBC-патча клиента); таблица `realm_gold_storage` (**acore_characters**) | 0001, 0008 |
 | `world/0019_challenge_modes.sql` | GO «Алтарь Испытаний» (705605) + 9 спавнов у кладбищ стартовых зон (guid 7005601–7005609) — режимы испытаний `echo-challenge-modes` | — |
 | `world/0020_store_system.sql` | Таблицы AIO-магазина `realm_store_*` (категории/услуги/валюты/связи/журнал) + демо-контент: валюты золото + Жетон Эха, услуги реалма (Пегас 70010, титул 48, баффы, смена имени) | 0009 (жетоны) |
-| `world/0021_public_scripts.sql` | Системы public-scripts (JadaDev): таблицы наград за наигранное время `realm_played_time_rewards{,_claimed}` (**acore_characters**) + НПС «Страж Перемен» (70174, Даларан, guid 7000174) — смена фракции за Жетоны Эха (**acore_world**). ⚠️ Часть acore_world написана по схеме WotLK (`modelid1`, `dmgschool`, `spawndist`, `creature.id`) — на AzerothCore упадёт; рабочий НПС создаёт `0022` | 0009 |
-| `world/0022_fix_release_blockers.sql` | Релизные фиксы: НПС «Страж Перемен» (70174) по схеме AC + модель 15279 + спавн 7000174; идемпотентный досозд спавна PvP-шопа 70170 (**acore_world**) | 0010, 0021 |
+| `archive/0021_public_scripts.sql` | 🔒 **Заархивирована** (не применяется): системы public-scripts (JadaDev), таблицы `realm_played_time_rewards{,_claimed}` (**acore_characters**) + НПС «Страж Перемен» 70174. Часть acore_world писана по схеме WotLK (`spawndist` и др.) и падала на AC; рабочий НПС создаёт `0022` | ⚠️ устарела |
+| `world/0022_fix_release_blockers.sql` | Релизные фиксы: НПС «Страж Перемен» (70174) по схеме AC + модель 15279 + спавн 7000174; идемпотентный досозд спавна PvP-шопа 70170 (**acore_world**) | 0010 |
 | `world/0024_tier_b.sql` | Tier B (eluna-scripts): НПС 70175 «Рунный Оружейник» (Weapon Master), 70176 «Хранитель Тиражей» (Lottery), 70177 «Вестник Забвения» (Skip DK Starter), 70178 «Алтарь Ордена» (Prayer) + таблицы `realm_lottery{,_tickets}` (**acore_characters**); гаиды 7000175–7000178 | 0009 (жетоны), 0022 (схема НПС) |
 | `world/0026_store_expansion.sql` | Расширение AIO-магазина: валюта id 3 «Очки Возмездия» (SERVER_HANDLED, из `realm_pvp_stats.tokens_earned`), VIP-категория id 9 (`requiredRank=4`), маунты за жетоны (услуги 10–12); потребляет `Store_Server.lua` (SERVER_HANDLED) | 0020, 0009, 0015/0021 |
 | `world/0027_pvp_store.sql` | Перенос PvP-шопа в AIO-магазин: категория id 10 «Снабжение Ордена» + услуги 20–25 (тип 1, за Жетоны Эха); НПС-шоп (`30_PvpShop.lua`) остаётся fallback | 0020, 0009 |
@@ -87,10 +87,9 @@ mysql -u <user> -p acore_characters < sql/world/0018_eluna_scripts_tier_a.sql
 mysql -u <user> -p acore_world < sql/world/0019_challenge_modes.sql
 # 0020: таблицы магазина realm_store_* → acore_world:
 mysql -u <user> -p acore_world < sql/world/0020_store_system.sql
-# 0021: realm_played_time_rewards{,_claimed} → acore_characters,
-#       НПС 70174 «Страж Перемен» → acore_world:
-mysql -u <user> -p acore_characters < sql/world/0021_public_scripts.sql
-mysql -u <user> -p acore_world < sql/world/0021_public_scripts.sql
+# 0021 — ЗААРХИВИРОВАНА в sql/archive/0021_public_scripts.sql (использовала
+#       колонку spawndist, отсутствующую в схеме AC; рабочий НПС 70174 и
+#       досозд спавна 70170 делает 0022). НЕ применять из archive/.
 # 0022: фикс схемы НПС 70174 + досозд спавна 70170 → acore_world:
 mysql -u <user> -p acore_world < sql/world/0022_fix_release_blockers.sql
 # 0025: character_classless → acore_characters (Classless арка К5):
@@ -161,12 +160,12 @@ mysql -u <user> -p acore_characters < sql/world/0039_classless_hero.sql
 | Кастомные НПС-сервисы | |
 | ├─ 70172 | «Рунный Обжиг» (зачарователь, 0018) |
 | ├─ 70173 | «Хранитель Золота» (казначей, 0018) |
-| ├─ 70174 | «Страж Перемен» (смена фракции, 0021) |
+| ├─ 70174 | «Страж Перемен» (смена фракции, 0022) |
 | ├─ 70190 | «Разлом Пустоты» (портал ивента, 0018; только шаблон) |
 | └─ 70191 | «Иссушенный из Разлома» (моб ивента, 0018; только шаблон) |
 | Кастомные спеллы (spell_dbc) | |
 | └─ 70050 | «Пустотная порча» (стакающийся маркер Corruption, 0018; требует DBC-патча) |
-| Кастомные guid спавнов | 7000000+ (0011: 7000120; 0012: 7000121, 7000130–7000160; 0018: 7000172/7000173; 0019: 7005601–7005609; 0021: 7000174) |
+| Кастомные guid спавнов | 7000000+ (0011: 7000120; 0012: 7000121, 7000130–7000160; 0018: 7000172/7000173; 0019: 7005601–7005609; 0022: 7000174) |
 | Gossip menu id | 70000+ (при добавлении в БД) |
 | Обратная совместимость | все миграции идемпотентны (`DELETE`+`INSERT` или `IF NOT EXISTS`) |
 

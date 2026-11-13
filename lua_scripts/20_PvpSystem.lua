@@ -26,6 +26,46 @@ local STREAK_ANNOUNCE = REG.pvp.streak_announce
 local ZONE_TOKEN_KILL = REG.pvp.zone_token_kill
 
 -- ============================================================
+-- Локализация ru/en (DbcLocale 8 = ruRU, как в остальных скриптах)
+-- ============================================================
+local L = {
+    ru = {
+        killDiff      = "Килл не засчитан (разница уровней > %d).",
+        killFarm      = "Килл не засчитан (фарм-защита: %d мин до следующего зачёта этой жертвы).",
+        killToken     = "+%d %sЖетон Эха|r — килл в PvP-зоне Драконьего Погоста!",
+        killVictim    = "Ваша серия прервана. Статистика: %d киллов.",
+        topTitle      = "== PvP-Топ-10 реалма ==",
+        topRow        = "%d. %s — киллы: %d, лучшая серия: %d, в зоне: %d",
+        topEmpty      = "Пока никого. Иди заработай славу в Драконьем Погосте!",
+        meRow         = "Ваша статистика: киллы %d | смерти %d | серия %d (лучшая %d) | в PvP-зоне %d | жетонов заработано %d",
+        meEmpty       = "Статистика пуста. Первая кровь ждёт в Драконьем Погосте!",
+        streak        = "(серия: %d)",
+    },
+    en = {
+        killDiff      = "Kill not counted (level difference > %d).",
+        killFarm      = "Kill not counted (farm-protection: %d min until this victim counts again).",
+        killToken     = "+%d %sEcho Token|r — kill in Dragonblight PvP zone!",
+        killVictim    = "Your streak is over. Stats: %d kills.",
+        topTitle      = "== Realm PvP Top-10 ==",
+        topRow        = "%d. %s — kills: %d, best streak: %d, in zone: %d",
+        topEmpty      = "No one yet. Go earn glory in Dragonblight!",
+        meRow         = "Your stats: kills %d | deaths %d | streak %d (best %d) | in PvP zone %d | tokens earned %d",
+        meEmpty       = "No stats yet. First blood awaits in Dragonblight!",
+        streak        = "(streak: %d)",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function loc(player, key, ...)
+    local t = IsRu(player) and L.ru or L.en
+    local s = t[key] or key
+    if select('#', ...) > 0 then return string.format(s, ...) end
+    return s
+end
+
+-- ============================================================
 -- Работа со статистикой (realm_pvp_stats)
 -- ============================================================
 
@@ -82,7 +122,7 @@ local function OnPvpKill(event, killer, killed)
 
     -- Анти-абюз 1: разница уровней
     if math.abs(killer:GetLevel() - killed:GetLevel()) > MIN_LEVEL_DIFF then
-        killer:SendBroadcastMessage(TAG .. " Килл не засчитан (разница уровней > " .. MIN_LEVEL_DIFF .. ").")
+        killer:SendBroadcastMessage(TAG .. " " .. loc(killer, "killDiff", MIN_LEVEL_DIFF))
         return
     end
 
@@ -90,7 +130,8 @@ local function OnPvpKill(event, killer, killed)
     local stats = GetStats(killerGuid)
     if stats and stats.last_victim == victimGuid and stats.last_kill_time
        and (os.time() - stats.last_kill_time) < FARM_COOLDOWN then
-        killer:SendBroadcastMessage(TAG .. " Килл не засчитан (фарм-защита: " .. math.ceil((FARM_COOLDOWN - (os.time() - stats.last_kill_time)) / 60) .. " мин до следующего зачёта этой жертвы).")
+        local mins = math.ceil((FARM_COOLDOWN - (os.time() - stats.last_kill_time)) / 60)
+        killer:SendBroadcastMessage(TAG .. " " .. loc(killer, "killFarm", mins))
         return
     end
 
@@ -111,7 +152,7 @@ local function OnPvpKill(event, killer, killed)
     -- Жетон за килл в PvP-зоне
     if inZone then
         killer:AddItem(TOKEN_ITEM, ZONE_TOKEN_KILL)
-        killer:SendBroadcastMessage(TAG .. " +" .. ZONE_TOKEN_KILL .. " " .. VOID_COLOR .. "Жетон Эха|r — килл в PvP-зоне Драконьего Погоста!")
+        killer:SendBroadcastMessage(TAG .. " " .. loc(killer, "killToken", ZONE_TOKEN_KILL, VOID_COLOR))
     end
 
     -- Killstreak-объявления (пороги из реестра)
@@ -123,7 +164,7 @@ local function OnPvpKill(event, killer, killed)
     -- Смерть жертвы: deaths++, streak сброс
     UpdateStats(victimGuid, "deaths = deaths + 1, streak = 0")
     local deathMsg = GetStats(victimGuid)
-    killed:SendBroadcastMessage(TAG .. " Ваша серия прервана. Статистика: " .. (deathMsg and deathMsg.kills or 0) .. " киллов.")
+    killed:SendBroadcastMessage(TAG .. " " .. loc(killed, "killVictim", deathMsg and deathMsg.kills or 0))
 end
 
 RegisterPlayerEvent(6, OnPvpKill) -- PLAYER_EVENT_ON_KILL_PLAYER = 6 (не 21: 21 = GUILD_CHAT)
@@ -161,18 +202,16 @@ local function OnPvpChat(event, player, msg, lang, typ)
             "JOIN characters c ON c.guid = s.guid " ..
             "WHERE s.kills > 0 ORDER BY s.kills DESC LIMIT 10"
         )
-        player:SendBroadcastMessage(TAG .. " == PvP-Топ-10 реалма ==")
+        player:SendBroadcastMessage(TAG .. " " .. loc(player, "topTitle"))
         if q then
             local rank = 1
             repeat
-                player:SendBroadcastMessage(string.format(
-                    TAG .. " %d. %s — киллы: %d, лучшая серия: %d, в зоне: %d",
-                    rank, q:GetString(0), q:GetUInt32(1), q:GetUInt32(2), q:GetUInt32(3)
-                ))
+                player:SendBroadcastMessage(
+                    TAG .. " " .. loc(player, "topRow", rank, q:GetString(0), q:GetUInt32(1), q:GetUInt32(2), q:GetUInt32(3)))
                 rank = rank + 1
             until not q:NextRow()
         else
-            player:SendBroadcastMessage(TAG .. " Пока никого. Иди заработай славу в Драконьем Погосте!")
+            player:SendBroadcastMessage(TAG .. " " .. loc(player, "topEmpty"))
         end
         return false
     end
@@ -180,12 +219,10 @@ local function OnPvpChat(event, player, msg, lang, typ)
     if cmd == "me" then
         local stats = GetStats(player:GetGUIDLow())
         if stats and stats.kills > 0 then
-            player:SendBroadcastMessage(string.format(
-                TAG .. " Ваша статистика: киллы %d | смерти %d | серия %d (лучшая %d) | в PvP-зоне %d | жетонов заработано %d",
-                stats.kills, stats.deaths, stats.streak, stats.best_streak, stats.zone_kills, stats.tokens_earned
-            ))
+            player:SendBroadcastMessage(
+                TAG .. " " .. loc(player, "meRow", stats.kills, stats.deaths, stats.streak, stats.best_streak, stats.zone_kills, stats.tokens_earned))
         else
-            player:SendBroadcastMessage(TAG .. " Статистика пуста. Первая кровь ждёт в Драконьем Погосте!")
+            player:SendBroadcastMessage(TAG .. " " .. loc(player, "meEmpty"))
         end
         return false
     end
