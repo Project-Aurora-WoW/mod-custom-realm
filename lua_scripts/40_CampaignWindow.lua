@@ -69,6 +69,16 @@ local function OpenCampaignWindow(player)
     end
 end
 
+-- ---- При создании персонажа ----
+-- Бриф: «при создании сервер устанавливает флаг в true». Создаём
+-- профиль с force_show_window=1 (окно откроется при первом входе).
+local function OnPlayerCreate(event, player)
+    if not player then return end
+    local guid = player:GetGUIDLow()
+    SetProfile(guid, true, 0) -- 0 трактуем как невыбранную кампанию
+end
+RegisterPlayerEvent(1, OnPlayerCreate) -- PLAYER_EVENT_ON_CHARACTER_CREATE
+
 -- ---- При входе игрока ----
 local function OnPlayerLogin(event, player)
     if not player then return end
