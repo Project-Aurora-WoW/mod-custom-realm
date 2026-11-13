@@ -61,31 +61,22 @@ runs:
     # качает lua-5.2.4.tar.gz с www.lua.org, который на GitHub Actions/части сетей
     # недоступен ("SSL connect/Connection was reset", код 35). Достаём исходники
     # из GitHub-зеркала LuaDist/lua (tag 5.2.4; lua/lua такой тег не публикует)
-    # и указываем FetchContent готовую папку, чтобы тот пропустил download/verify.
-    # Обе рабочие переменные (upper/lower) выставляются для совместимости с CMake.
-    - name: Vendor Lua 5.2.4 (FetchContent override, lua.org is blocked)
+    # нативным actions/checkout (без shell/curl/heredoc — они ломали шаг на
+    # Windows-раннере: here-document delimited by end-of-file) и указываем
+    # FetchContent готовую папку, чтобы тот пропустил download/verify.
+    # Файлы попадают в $GITHUB_WORKSPACE/lua-5.2.4 (содержит src/lua.c).
+    - name: Checkout Lua 5.2.4 (FetchContent override, lua.org is blocked)
+      uses: actions/checkout@v4
+      with:
+        repository: LuaDist/lua
+        ref: 5.2.4
+        path: lua-5.2.4
+
+    - name: Point FetchContent at vendored Lua 5.2.4
       shell: bash
       run: |
         set -euo pipefail
         LUA_SRC="$GITHUB_WORKSPACE/lua-5.2.4"
-        if [ ! -d "$LUA_SRC" ]; then
-          # lua/lua не публикует тег v5.2.4 (теги начинаются с v5.3.3);
-          # используем зеркало LuaDist/lua с тегом 5.2.4 (распаковывается в
-          # lua-5.2.4/ и содержит src/lua.c). www.lua.org заблокирован (код 35).
-          curl -fsSL -o "$GITHUB_WORKSPACE/lua-5.2.4.tar.gz" \
-            https://github.com/LuaDist/lua/archive/refs/tags/5.2.4.tar.gz
-          # Распаковка через Python, а не tar: на Windows-раннере $GITHUB_WORKSPACE
-          # = D:\\a\\... и GNU tar путает "D:" с удалённым узлом
-          # ("Cannot connect to D: resolve failed"). shutil.unpack_archive
-          # кросс-платформенный и не зависит от буквы диска.
-          python - <<'PY'
-          import shutil, os
-          ws = os.environ["GITHUB_WORKSPACE"]
-          shutil.unpack_archive(os.path.join(ws, "lua-5.2.4.tar.gz"), os.path.join(ws, "_lua_extract"))
-          shutil.move(os.path.join(ws, "_lua_extract", "lua-5.2.4"), os.path.join(ws, "lua-5.2.4"))
-          PY
-          rm -rf "$GITHUB_WORKSPACE/_lua_extract"
-        fi
         test -f "$LUA_SRC/src/lua.c" || { echo "missing $LUA_SRC/src/lua.c"; exit 1; }
         {
           echo "FETCHCONTENT_SOURCE_DIR_lua52=$LUA_SRC"
