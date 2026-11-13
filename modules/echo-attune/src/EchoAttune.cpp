@@ -108,12 +108,6 @@ namespace
             if (itM == sCache.end()) return;
             itM->second.erase(it->GetGUID().GetCounter());
         }
-
-        void OnPlayerLogout(Player* player) override
-        {
-            if (!player) return;
-            FlushPlayer(player);
-        }
     };
 
     // Накопление за активный бой: OnSessionUpdate принадлежит SessionScript.

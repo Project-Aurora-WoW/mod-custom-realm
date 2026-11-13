@@ -212,8 +212,9 @@ local function OnKillPlayer(event, player, victim)
 end
 RegisterPlayerEvent(6, OnKillPlayer) -- PLAYER_EVENT_ON_HONORABLE_KILL
 
--- Смерть на высокой угрозе
-local function OnPlayerDeath(event, player, killer)
+-- Смерть на высокой угрозе (PLAYER_EVENT_ON_KILLED_BY_CREATURE = 8)
+local function OnPlayerDeath(event, killer, killed)
+    local player = killed
     if not player then return end
     local guid = player:GetGUIDLow()
     local t = GetThreat(guid)
@@ -225,7 +226,7 @@ local function OnPlayerDeath(event, player, killer)
         player:SendBroadcastMessage(TAG .. " " .. Loc(player).threatDeath)
     end
 end
-RegisterPlayerEvent(5, OnPlayerDeath) -- PLAYER_EVENT_ON_KILLED... (5 = on death)
+RegisterPlayerEvent(8, OnPlayerDeath) -- PLAYER_EVENT_ON_KILLED_BY_CREATURE
 
 -- ============================================================
 -- Gossip: Страж Мировой Души (70601)
