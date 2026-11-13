@@ -226,7 +226,7 @@ EchoEconomyWorldscript* EchoEconomyWorldscriptInstance = new EchoEconomyWorldscr
 EchoEconomyPlayerscript* EchoEconomyPlayerscriptInstance = new EchoEconomyPlayerscript();
 
 // Точка входа для генерируемого загрузчика модулей ядра
-void AddEchoEconomyScripts()
+void Addecho_economyScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }

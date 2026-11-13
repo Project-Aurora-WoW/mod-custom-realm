@@ -277,7 +277,7 @@ EchoPvpPlayerscript* EchoPvpPlayerscriptInstance = new EchoPvpPlayerscript();
 // Точка входа для генерируемого загрузчика модулей ядра
 // (modules/CMakeLists.txt -> ConfigureScriptLoader -> AddEchoPvpScripts()).
 // Модульная система AC требует эту функцию у каждого статического модуля.
-void AddEchoPvpScripts()
+void Addecho_pvpScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }

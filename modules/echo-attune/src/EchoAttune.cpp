@@ -160,7 +160,7 @@ EchoAttunePlayerscript* EchoAttunePlayerscriptInstance = new EchoAttunePlayerscr
 EchoAttuneSessionscript* EchoAttuneSessionscriptInstance = new EchoAttuneSessionscript();
 EchoAttuneWorldscript* EchoAttuneWorldscriptInstance = new EchoAttuneWorldscript();
 
-void AddEchoAttuneScripts()
+void Addecho_attuneScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }

@@ -385,7 +385,7 @@ EchoCampaigns_Worldscript* EchoCampaignsWorldscriptInstance = new EchoCampaigns_
 // Точка входа для генерируемого загрузчика модулей ядра
 // (modules/CMakeLists.txt -> ConfigureScriptLoader -> AddEchoCampaignsScripts()).
 // Модульная система AC требует эту функцию у каждого статического модуля.
-void AddEchoCampaignsScripts()
+void Addecho_campaignsScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }

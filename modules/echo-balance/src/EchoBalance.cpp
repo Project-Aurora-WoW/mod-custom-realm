@@ -143,7 +143,7 @@ EchoBalanceUnitscript*  EchoBalanceUnitscriptInstance  = new EchoBalanceUnitscri
 // Точка входа для генерируемого загрузчика модулей ядра
 // (modules/CMakeLists.txt -> ConfigureScriptLoader -> AddEchoBalanceScripts()).
 // Модульная система AC требует эту функцию у каждого статического модуля.
-void AddEchoBalanceScripts()
+void Addecho_balanceScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }

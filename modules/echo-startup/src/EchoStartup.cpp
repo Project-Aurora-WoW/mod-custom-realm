@@ -132,7 +132,7 @@ EchoStartupWorldscript* EchoStartupWorldscriptInstance = new EchoStartupWorldscr
 EchoStartupPlayerscript* EchoStartupPlayerscriptInstance = new EchoStartupPlayerscript();
 
 // Точка входа для генерируемого загрузчика модулей ядра
-void AddEchoStartupScripts()
+void Addecho_startupScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }

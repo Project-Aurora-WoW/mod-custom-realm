@@ -241,7 +241,7 @@ EchoPvePlayerkillhook* EchoPvePlayerkillhookInstance = new EchoPvePlayerkillhook
 // Точка входа для генерируемого загрузчика модулей ядра
 // (modules/CMakeLists.txt -> ConfigureScriptLoader -> AddEchoPveScripts()).
 // Модульная система AC требует эту функцию у каждого статического модуля.
-void AddEchoPveScripts()
+void Addecho_pveScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }

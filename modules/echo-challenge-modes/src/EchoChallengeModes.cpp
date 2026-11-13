@@ -883,7 +883,7 @@ ChallengeModeIronMan* ChallengeModeIronManInstance = new ChallengeModeIronMan();
 
 // Точка входа для генерируемого загрузчика модулей ядра
 // (modules/CMakeLists.txt -> ConfigureScriptLoader -> AddEchoChallengeModesScripts()).
-void AddEchoChallengeModesScripts()
+void Addecho_challenge_modesScripts()
 {
     // Скрипты зарегистрированы глобальными инстансами выше.
 }
