@@ -85,7 +85,7 @@ runs:
           [mod-archaeology]="https://github.com/buildthehomelab/wow-mod-archaeology.git"
         )
         for name in "${!MODS[@]}"; do
-          git clone --depth 1 --branch master --single-branch --recursive \
+          git clone --depth 1 --single-branch --recursive \
             "${MODS[$name]}" "azerothcore-wotlk/modules/$name"
         done
         echo "Standard modules installed:"
