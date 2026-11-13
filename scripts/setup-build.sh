@@ -78,6 +78,31 @@ MODULES=(
   "mod-forever-journal|https://github.com/buildthehomelab/wow-mod-forever-journal.git|"
   "mod-archaeology|https://github.com/buildthehomelab/wow-mod-archaeology.git|"
 )
+
+# ---- ПИННИНГ ВЕРСИЙ МОДУЛЕЙ (воспроизводимость сборки) ----
+# Каждый внешний модуль зафиксирован на конкретном SHA его ветки по умолчанию.
+# Пин обеспевает: одинаковое дерево модулей при каждой сборке и обновление
+# только осознанным изменением этого коммита (а не незаметным git pull).
+# Обновить модуль: заменить SHA ниже на новый HEAD модуля.
+# mod-ale НЕ пинится намеренно: он клонируется из SourceCraft (m-orlovrus59/mod-ale,
+# приватный реестр авторизацией) с fallback на GitHub — SHA в реестре SourceCraft
+# нестабилен между сессиями и недоступен без доступа к SourceCraft.
+declare -A MOD_PIN=(
+  ["mod-ah-bot"]=c11d8318cbd8714a9980f9464f78e07d3d48a70a
+  ["mod-transmog"]=d309745c9151ff2ea4202204c1efa991848414bf
+  ["mod-cfbg"]=78771c6d0d9d5fcd80206eaeb9668452adcbf4ee
+  ["mod-duel-reset"]=f2c67d4d82b79cefccfc89a4696a428529cf8cfd
+  ["mod-solocraft"]=59588838988d1b74111d26670d99d0e649014b93
+  ["mod-firstlogin-aio"]=9c425d21f2f40629fa140a3634c12cabace8e221
+  ["mod-individual-xp"]=1e7640aac09a62a5ca521456aff71e45fa915155
+  ["mod-starter-guild"]=6012bc460c51f8cfc44344f67802b3efd66bdd5a
+  ["mod-dungeonmaster"]=fd353a9200472dd277935ba9d06c9fec6e53f632
+  ["mod-ah-bot-plus"]=f685832994c825f90aa5a3dc0e1620aa568e875b
+  ["mod-hunger-thirst"]=0a7e95fe581726e4d0a255532a9a302a75c7fb07
+  ["mod-warband-camp"]=02d7c3568ce09539b9ed4c45e1c19b2ba1bd0d0e
+  ["mod-forever-journal"]=36d0f1d4c12f96259bd30ec0681feac2fac73058
+  ["mod-archaeology"]=5cc73856029bfe4dc010ec3bc19061e328052265
+)
 mkdir -p "$CORE_DIR/modules"
 for entry in "${MODULES[@]}"; do
   name="${entry%%|*}"
@@ -98,6 +123,11 @@ for entry in "${MODULES[@]}"; do
     else
       fail "Модуль $name: клонирование не удалось ($url)"
     fi
+  fi
+  pin="${MOD_PIN[$name]:-}"
+  if [ -n "$pin" ]; then
+    log "Модуль $name: пиним на $pin"
+    git -C "$dest" checkout -q "$pin" || fail "Модуль $name: не удалось переключиться на $pin"
   fi
 done
 

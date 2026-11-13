@@ -84,9 +84,29 @@ runs:
           [mod-forever-journal]="https://github.com/buildthehomelab/wow-mod-forever-journal.git"
           [mod-archaeology]="https://github.com/buildthehomelab/wow-mod-archaeology.git"
         )
+        # Версии зафиксированы на тех же SHA, что и в scripts/setup-build.sh
+        # (MOD_PIN). Полный клон + checkout SHA: надёжно переживает смещение
+        # ветки апстрима и не требует shallow-запросов к старым коммитам.
+        declare -A MOD_PIN=(
+          [mod-ah-bot]=c11d8318cbd8714a9980f9464f78e07d3d48a70a
+          [mod-ah-bot-plus]=f685832994c825f90aa5a3dc0e1620aa568e875b
+          [mod-transmog]=d309745c9151ff2ea4202204c1efa991848414bf
+          [mod-cfbg]=78771c6d0d9d5fcd80206eaeb9668452adcbf4ee
+          [mod-duel-reset]=f2c67d4d82b79cefccfc89a4696a428529cf8cfd
+          [mod-solocraft]=59588838988d1b74111d26670d99d0e649014b93
+          [mod-firstlogin-aio]=9c425d21f2f40629fa140a3634c12cabace8e221
+          [mod-hunger-thirst]=0a7e95fe581726e4d0a255532a9a302a75c7fb07
+          [mod-warband-camp]=02d7c3568ce09539b9ed4c45e1c19b2ba1bd0d0e
+          [mod-forever-journal]=36d0f1d4c12f96259bd30ec0681feac2fac73058
+          [mod-archaeology]=5cc73856029bfe4dc010ec3bc19061e328052265
+        )
         for name in "${!MODS[@]}"; do
-          git clone --depth 1 --single-branch --recursive \
+          git clone --single-branch --recursive \
             "${MODS[$name]}" "azerothcore-wotlk/modules/$name"
+          pin="${MOD_PIN[$name]:-}"
+          if [ -n "$pin" ]; then
+            git -C "azerothcore-wotlk/modules/$name" checkout -q "$pin"
+          fi
         done
         echo "Standard modules installed:"
         ls -1 azerothcore-wotlk/modules/ | grep -E '^(mod-ah-bot|mod-ah-bot-plus|mod-transmog|mod-cfbg|mod-duel-reset|mod-solocraft|mod-firstlogin-aio|mod-hunger-thirst|mod-warband-camp|mod-forever-journal|mod-archaeology)$'
