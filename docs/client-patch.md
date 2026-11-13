@@ -357,6 +357,23 @@ patch-x.mpq
 
 ---
 
+## Часть 7a. Journal (wow-mod-forever-journal) — Town Guide spell 90050
+
+> Кастомный аддон `Journal` распространяется в `Interface/AddOns/Journal`
+> (см. [`../addons/Journal/`](../addons/README.md)). Единственный клиентский
+> компонент модуля, требующий DBC-патча, — спелл **Town Guide 90050** в
+> `Spell.dbc` (иконка `INV_MISC_MAP_01`, копия неиспользуемого Dummy Spell
+> 18282; открывает Directory). Его добавит инструмент модуля:
+> ```bash
+> python3 tools/build_town_guide_patch.py --from-mpq patch-P.MPQ --out patch-P.MPQ.new
+> ```
+> Вписать в существующий `Spell.dbc` нашего `patch-x.mpq`. До патча спелл
+> показывается пустым в книге, но `/journal`, `/directory`, `/find` и вкладки
+> работают. Прочее (вкладки, лут, лор, маунты) читается сервером из
+> собственных данных реалма и не требует клиентского патча, кроме аддона.
+
+---
+
 ## Часть 8. Клиентский аддон AIO_Client
 
 > Серверная часть AIO (v1.74, Rochet2 — референс dwrath-eluna-3-3-5a)

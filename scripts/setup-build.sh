@@ -75,6 +75,7 @@ MODULES=(
   "mod-ah-bot-plus|https://github.com/NathanHandley/mod-ah-bot-plus.git|"
   "mod-hunger-thirst|https://github.com/Phanty78/mod-hunger-thirst.git|"
   "mod-warband-camp|https://github.com/Ildourol/mod-warband-camp.git|"
+  "mod-forever-journal|https://github.com/buildthehomelab/wow-mod-forever-journal.git|"
 )
 mkdir -p "$CORE_DIR/modules"
 for entry in "${MODULES[@]}"; do

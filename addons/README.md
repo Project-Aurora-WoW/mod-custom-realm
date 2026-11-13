@@ -17,6 +17,7 @@
 | Каталог / Folder | Тип / Type | Назначение / Purpose |
 |------------------|-----------|----------------------|
 | [`AzerothEcho/`](AzerothEcho/) | Рабочий аддон / Active addon | Панель реалма: кампании, ивенты, PvP, карта разломов, лор |
+| [`Journal/`](Journal/) | Рабочий аддон / Active addon | Retail-style Journal (wow-mod-forever-journal): данжи/боссы/лут/квесты, Directory, Lore, Mounts/Pets/Toys |
 | [`aio-client/`](aio-client/) | Референс / Reference | Клиентская часть AIO-фреймворка (Rochet2/AIO) — нужна для магазина и AIO-систем |
 | [`store-ui/`](store-ui/) | Референс / Reference | Клиентский UI магазина (BLP-текстуры, загружается в `patch-x.mpq`) |
 
