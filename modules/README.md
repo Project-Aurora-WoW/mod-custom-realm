@@ -1,40 +1,40 @@
 # 📦 Модули AzerothCore
 
-## Структура каталогов (вариант B: ядро — внешний клон)
+## Структура каталогов (вариант B: ядро — внешний клон, модули — вендорены)
 
 Ядро AzerothCore **не хранится в этом репозитории** — клонируется отдельно,
-**рядом** с репозиторием контента реалма:
+**рядом** с репозиторием контента реалма. Все **модули** (наши `echo-*`,
+вендоренный `mod-ale` и внешние `mod-*`) хранятся здесь, в `modules/`, как
+снапшоты без `.git`:
 
 ```
 <рабочий каталог>/
-├── azeroth-custom-realm/   # ЭТОТ репозиторий — только контент реалма
-│   ├── addons/             # клиентский аддон
+├── azeroth-custom-realm/   # ЭТОТ репозиторий — контент реалма + все модули
+│   ├── addons/             # клиентские аддоны
 │   ├── docs/               # документация (деплой, тесты, DBC-патч)
 │   ├── lua_scripts/        # Lua-скрипты ALE → копируются в ядро/bin
-│   ├── modules/README.md   # эта инструкция
-│   └── sql/world/          # миграции 0001–0008
-└── azerothcore-wotlk/      # ВНЕШНИЙ клон ядра (git clone)
-    └── modules/            # модули клонируются сюда
+│   ├── modules/            # ВСЕ модули сборки (echo-*, mod-ale, mod-*)
+│   └── sql/world/          # миграции 0001–0042
+└── azerothcore-wotlk/      # ВНЕШНИЙ клон ядра (git clone) — точка сборки
+    └── modules/            # заполняется копиями из azeroth-custom-realm/modules/
 ```
 
 > Ядро: [azerothcore/azerothcore-wotlk](https://github.com/azerothcore/azerothcore-wotlk.git) —
 > рабочая копия импортирована в SourceCraft:
 > [m-orlovrus59/azerothcore-wotlk](https://sourcecraft.dev/m-orlovrus59/azerothcore-wotlk)
 > (клонировать для сборки лучше из неё).
-> Обязательный модуль mod-ale (Lua-движок ALE, форк Eluna) импортирован
-> в SourceCraft:
-> [m-orlovrus59/mod-ale](https://sourcecraft.dev/m-orlovrus59/mod-ale)
-> (клон [azerothcore/mod-ale](https://github.com/azerothcore/mod-ale);
-> `setup-build.sh` использует клон с fallback на GitHub).
 > Клиент — WoW 3.3.5a (12340).
-> Модули клонируются в `azerothcore-wotlk/modules/` и включаются при сборке
-> через CMake.
+> Модули **не клонируются**: они вендорены в `modules/` этого репозитория.
+> При сборке [`scripts/setup-build.sh`](../scripts/setup-build.sh) копирует
+> каждый каталог из `modules/` в `azerothcore-wotlk/modules/`, где их
+> подхватывает CMake.
 > Обновление ядра: `cd azerothcore-wotlk && git pull` — репозиторий реалма
-> при этом не затрагивается.
+> при этом не затрагивается. Обновление модуля = заменить его каталог в
+> `modules/` свежим снапшотом и закоммитить.
 >
 > Быстрая сборка «всё в одном» — скрипт
-> [`scripts/setup-build.sh`](../scripts/setup-build.sh): клонирует ядро и
-> модули, собирает и раскладывает Lua-скрипты:
+> [`scripts/setup-build.sh`](../scripts/setup-build.sh): раскладывает модули
+> из `modules/` в ядро, собирает и раскладывает Lua-скрипты:
 > ```bash
 > ./scripts/setup-build.sh
 > ```
@@ -45,7 +45,7 @@
 
 | Модуль | Назначение | Обязателен для проекта? |
 |--------|------------|--------------------------|
-| [mod-ale](https://github.com/azerothcore/mod-ale) — клон: [m-orlovrus59/mod-ale](https://sourcecraft.dev/m-orlovrus59/mod-ale) | Lua-движок ALE (AzerothCore Lua Engine, форк Eluna) — **без него не работают скрипты из `lua_scripts/`** | ✅ Обязателен |
+| [mod-ale](https://github.com/azerothcore/mod-ale) — вендорен в `modules/mod-ale` | Lua-движок ALE (AzerothCore Lua Engine, форк Eluna) — **без него не работают скрипты из `lua_scripts/`** | ✅ Обязателен |
 | [mod-ah-bot](https://github.com/azerothcore/mod-ah-bot) | Бот аукциона — наполняет Аукционный дом | 🔶 Рекомендуется |
 | [mod-transmog](https://github.com/azerothcore/mod-transmog) | Система трансмогрификации | 🔶 Рекомендуется |
 | [mod-cfbg](https://github.com/azerothcore/mod-cfbg) | Кросс-фракционные поля боя | 🔶 Рекомендуется |
@@ -59,25 +59,40 @@
 
 ## Порядок подключения
 
+> **С 2026-11-13 все модули вендорены в `modules/` этого репозитория**
+> (снапшоты без `.git`). Ядро здесь **не источник** модулей — оно лишь
+> точка сборки. Поэтому шаги «клонировать модули» больше не нужны:
+> `scripts/setup-build.sh` сам копирует **все** каталоги из `modules/`
+> в ядро при сборке (`for mod in "$REALM_DIR"/modules/*/`).
+
 1. Находясь в родительском каталоге, клонировать ядро **рядом** с репозиторием
-   реалма (не внутрь!):
+   реалма (не внутрь!) — это точка сборки, его модульная директория
+   будет заполнена копиями из нашего `modules/`:
    ```bash
    git clone https://github.com/azerothcore/azerothcore-wotlk.git
    cd azerothcore-wotlk
    ```
 
-2. Клонировать модули в каталог `modules/`. Для mod-ale используется
-   клон SourceCraft (m-orlovrus59/mod-ale) с fallback на GitHub
-   — тот же механизм, что в [`scripts/setup-build.sh`](../scripts/setup-build.sh):
+2. НЕ клонировать модули вручную — они уже в `modules/` этого репозитория
+   (каталоги `echo-*`, `mod-ale`, `mod-ah-bot`, `mod-transmog`, …).
+   Вендоринг означает: версия модулей фиксируется содержимым `modules/`
+   этого git-репозитория, а не `git clone`/SHA из upstream.
+   Обновить модуль = заменить его каталог в `modules/` свежим снапшотом
+   и закоммитить. Сборку запускать через
+   [`scripts/setup-build.sh`](../scripts/setup-build.sh):
    ```bash
-   # mod-ale: сначала клон SourceCraft, при недоступности — GitHub
-   git clone https://git.sourcecraft.dev/m-orlovrus59/mod-ale.git modules/mod-ale \
-     || git clone https://github.com/azerothcore/mod-ale.git modules/mod-ale
-   git clone https://github.com/azerothcore/mod-ah-bot.git modules/mod-ah-bot
-   git clone https://github.com/azerothcore/mod-transmog.git modules/mod-transmog
-   git clone https://github.com/azerothcore/mod-cfbg.git modules/mod-cfbg
-   git clone https://github.com/azerothcore/mod-duel-reset.git modules/mod-duel-reset
-   git clone https://github.com/azerothcore/mod-individual-xp.git modules/mod-individual-xp
+   ./scripts/setup-build.sh
+   # или без пересборки ядра (только разложить модули/Lua в существующее ядро):
+   ./scripts/setup-build.sh --no-core --no-build
+   ```
+   Ручные альтернативы (если собираете вручную):
+   ```bash
+   # скопировать ВСЕ вендоренные модули из репо в ядро
+   for d in ../azeroth-custom-realm/modules/*/; do
+     name="$(basename "$d")"
+     rm -rf "modules/$name"
+     cp -R "$d" "modules/$name"
+   done
    ```
 
 3. Применить SQL-миграции этого репозитория:
@@ -156,8 +171,8 @@ AzerothCore инициализирует модули **в алфавитном 
 
 Важные следствия:
 - **mod-ale обязателен и должен быть в наборе всегда** — без него
-  `lua_scripts/` не загрузятся вовсе (модуль включён в
-  [`scripts/setup-build.sh`](../scripts/setup-build.sh) первым в списке);
+  `lua_scripts/` не загрузятся вовсе (модуль вендорен в `modules/`
+  и копируется в ядро вместе со всеми остальными из репо);
 - C++-модули (`echo-balance`, `echo-campaigns`) инициализируются **до**
   ALE — Lua-скрипты могут полагаться на их конфиги, но не наоборот;
 - если в `echo-campaigns.conf` задано `command_source = "core"`, команды

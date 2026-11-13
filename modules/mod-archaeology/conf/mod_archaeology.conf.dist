@@ -1,0 +1,281 @@
+[worldserver]
+
+########################################
+# mod-archaeology
+########################################
+#
+#    Archaeology.Enable
+#        Description: Turn the whole module on or off.
+#        Default:     1
+
+Archaeology.Enable = 1
+
+#
+#    Archaeology.MinLevel
+#        Description: Character level needed to learn Archaeology (Apprentice). Higher ranks
+#                     keep their Cataclysm level requirements (20, 20, 35, 50, 65).
+#        Default:     1
+
+Archaeology.MinLevel = 1
+
+#
+#    Archaeology.SitesPerContinent
+#        Description: Dig sites each character holds per continent (Cataclysm: 4).
+#        Default:     4
+
+Archaeology.SitesPerContinent = 4
+
+#
+#    Archaeology.StarterSites.MaxSkill
+#        Description: Skill up to which the beginner sites (the training digs of the six starter
+#                     zones) can come up. Past it they are retired, one still held included, and
+#                     replaced at the next roll. 0 = always.
+#        Default:     50
+
+Archaeology.StarterSites.MaxSkill = 50
+
+#
+#    Archaeology.FindsPerSite
+#        Description: Finds before a dig site is depleted and a new one is revealed (Cataclysm: 3).
+#                     A depleted site waits until your other sites in its zone are depleted too.
+#        Default:     3
+
+Archaeology.FindsPerSite = 3
+
+#
+#    Archaeology.FragmentsPerFind.Min
+#    Archaeology.FragmentsPerFind.Max
+#        Description: Fragments from one find (Cataclysm 4.3: 5-9).
+#        Default:     5, 9
+
+Archaeology.FragmentsPerFind.Min = 5
+Archaeology.FragmentsPerFind.Max = 9
+
+#
+#    Archaeology.FragmentCap
+#        Description: Most fragments a character can hold per race.
+#        Default:     200
+
+Archaeology.FragmentCap = 200
+
+#
+#    Archaeology.KeystoneChance
+#        Description: Percent chance a find also gives that race's keystone.
+#    Archaeology.KeystoneValue
+#        Description: Fragments one keystone is worth when solving.
+#        Default:     12, 12
+
+Archaeology.KeystoneChance = 12
+Archaeology.KeystoneValue = 12
+
+#
+#    Archaeology.Survey.RedYards
+#    Archaeology.Survey.YellowYards
+#        Description: Distances that make a survey read red (far), yellow, or green (close).
+#    Archaeology.Survey.DigYards
+#        Description: Within this distance a survey uncovers the find (Archaeology.Dig.Shovel = 0)
+#                     or reads it out in yards (Archaeology.Dig.Shovel = 1).
+#    Archaeology.Survey.MinSpotYards
+#        Description: A new find is hidden at least this far from where you first survey.
+#    Archaeology.Survey.CooldownMs
+#        Description: Time between surveys.
+#        Default:     100, 50, 8, 40, 3000
+
+Archaeology.Survey.RedYards = 100
+Archaeology.Survey.YellowYards = 50
+Archaeology.Survey.DigYards = 8
+Archaeology.Survey.MinSpotYards = 40
+Archaeology.Survey.CooldownMs = 3000
+
+#
+#    Archaeology.Dig.Shovel
+#        Description: 1 = a survey near the find no longer uncovers it: it says how many yards
+#                     away it is, and standing on it (a shovel shows above your head) you dig it
+#                     up (ArchaeologyUI's Dig button, or .arch dig). 0 = a survey within
+#                     Archaeology.Survey.DigYards uncovers the find, as before.
+#    Archaeology.Dig.ShovelYards
+#        Description: How close to the find counts as standing on it (the overhead shovel too).
+#    Archaeology.Dig.Ms
+#        Description: How long digging takes. Moving, a fight or mounting stops it. Digging
+#                     while mounted gets you off the mount first; there is no digging or
+#                     surveying in the air (a flight path, a flying mount or form).
+#        Default:     1, 3, 1500
+
+Archaeology.Dig.Shovel = 1
+Archaeology.Dig.ShovelYards = 3
+Archaeology.Dig.Ms = 1500
+
+#
+#    Archaeology.Skill.Max
+#        Description: Highest skill (450 = Grand Master).
+#    Archaeology.Skill.FindsUntil
+#        Description: Each find gives 1 skill until this value; after it only solving raises skill.
+#    Archaeology.Skill.PerCommon
+#    Archaeology.Skill.PerRare
+#        Description: Skill from solving a common or a rare project.
+#    Archaeology.Skill.SkillLine
+#        Description: SkillLine id to mirror the skill to, so it shows in the Skills tab. Needs a
+#                     client patch and skillline_dbc row for that id. 0 = keep the skill in the
+#                     module only (the addon and .arch show it).
+#        Default:     450, 50, 5, 15, 0
+
+Archaeology.Skill.Max = 450
+Archaeology.Skill.FindsUntil = 50
+Archaeology.Skill.PerCommon = 5
+Archaeology.Skill.PerRare = 15
+Archaeology.Skill.SkillLine = 0
+
+#
+#    Archaeology.IndividualProgression.Enable
+#        Description: With mod-individual-progression, Outland and Northrend dig sites only come
+#                     up once the character has reached that era.
+#    Archaeology.IndividualProgression.OutlandState
+#    Archaeology.IndividualProgression.NorthrendState
+#        Description: Progression state needed for each continent.
+#    Archaeology.IndividualProgression.QuestBase
+#    Archaeology.IndividualProgression.MaxState
+#        Description: How the state is read: rewarded quest QuestBase + state.
+#        Default:     0, 8, 13, 66000, 18
+
+Archaeology.IndividualProgression.Enable = 0
+Archaeology.IndividualProgression.OutlandState = 8
+Archaeology.IndividualProgression.NorthrendState = 13
+Archaeology.IndividualProgression.QuestBase = 66000
+Archaeology.IndividualProgression.MaxState = 18
+
+#
+#    Archaeology.Telescope.Green
+#    Archaeology.Telescope.Yellow
+#    Archaeology.Telescope.Red
+#    Archaeology.Telescope.Seconds
+#        Description: Gameobject that points toward the find after a survey (close, closer, far away),
+#                     and how long it stays. 9503500-9503502 are Cataclysm's telescopes and need the
+#                     client patch (GameObjectDisplayInfo 10101-10103); without it set all three to
+#                     9503503, the excavation banner.
+#    Archaeology.Find.Seconds
+#        Description: How long the unearthed artifact stands on the ground to look at. Its
+#                     fragments are yours the moment it comes up; there is nothing to click.
+#        Default:     9503500, 9503501, 9503502, 6, 15
+
+Archaeology.Telescope.Green = 9503500
+Archaeology.Telescope.Yellow = 9503501
+Archaeology.Telescope.Red = 9503502
+Archaeology.Telescope.Seconds = 6
+Archaeology.Find.Seconds = 15
+
+#
+#    Archaeology.Relic.Enable
+#        Description: The Unearthed Relic: at Archaeology.Relic.Skill an archaeology trainer gives
+#                     "A Weapon in Pieces", and the character chooses a form for a weapon (or a pair)
+#                     that ranks up with Relic Power from archaeology.
+#    Archaeology.Relic.Skill
+#        Description: Archaeology skill that opens the relic quest.
+#        Default:     1, 50
+
+Archaeology.Relic.Enable = 1
+Archaeology.Relic.Skill = 50
+
+#
+#    Archaeology.Relic.PowerPerFind
+#    Archaeology.Relic.PowerPerCommon
+#    Archaeology.Relic.PowerPerRare
+#    Archaeology.Relic.PowerFirstSolve
+#        Description: Relic Power per find dug up, per common and rare project solved, and extra for
+#                     a project solved for the first time. Finds count once the character has the
+#                     relic; solves before the relic quest still count.
+#    Archaeology.Relic.CostRate
+#        Description: Multiplies every rank's cost (mod_archaeology_relic_step.cost).
+#        Default:     10, 30, 300, 100, 1.0
+
+Archaeology.Relic.PowerPerFind = 10
+Archaeology.Relic.PowerPerCommon = 30
+Archaeology.Relic.PowerPerRare = 300
+Archaeology.Relic.PowerFirstSolve = 100
+Archaeology.Relic.CostRate = 1.0
+
+#
+#    Archaeology.Relic.StateWithoutProgression
+#        Description: Without Archaeology.IndividualProgression.Enable, the progression state the
+#                     relic assumes for every character (18 = no cap; only rank and level count).
+#                     Below 16 it also hides capstone quests whose raid that state hasn't opened.
+#    Archaeology.Relic.CapstoneQuest.Vanilla
+#    Archaeology.Relic.CapstoneQuest.Outland
+#    Archaeology.Relic.CapstoneQuest.Northrend
+#        Description: Quest a character must have done before the last rank of each era, on top of
+#                     solving every rare of that era's races. 0 = no quest needed. The module's own
+#                     (9503501-9503503, from the trainer once the character has the relic and is
+#                     level 60, 70 or 80, and once the progression state opens the raid: 6, 12, 16,
+#                     fixed to mod-individual-progression's states) ask for Kel'Thuzad (Naxxramas
+#                     at 40 or at 80), Kil'jaeden and the Lich King, slain with the relic equipped. Ranks already earned are kept
+#                     whatever these say; a quest only holds back the next rank.
+#    Archaeology.Relic.AwakenNeedsMaxSkill
+#        Description: Awakening (the last rank, Artifact quality) also needs Archaeology.Skill.Max,
+#                     besides every project of every race solved.
+#        Default:     18, 9503501, 9503502, 9503503, 1
+
+Archaeology.Relic.StateWithoutProgression = 18
+Archaeology.Relic.CapstoneQuest.Vanilla = 9503501
+Archaeology.Relic.CapstoneQuest.Outland = 9503502
+Archaeology.Relic.CapstoneQuest.Northrend = 9503503
+Archaeology.Relic.AwakenNeedsMaxSkill = 1
+
+#
+#    Archaeology.Relic.FormChange.Cost
+#    Archaeology.Relic.FormChange.CostPerRank
+#        Description: Copper to reshape the relic at the trainer: Cost + CostPerRank x rank. The first
+#                     change is free.
+#        Default:     100000 (10 gold), 20000 (2 gold)
+
+Archaeology.Relic.FormChange.Cost = 100000
+Archaeology.Relic.FormChange.CostPerRank = 20000
+
+#
+#    Archaeology.Relic.Traits.Enable
+#        Description: The relic's traits, one per race: auras on a character wearing the relic. What
+#                     each does is in the world table mod_archaeology_relic_trait.
+#    Archaeology.Relic.Traits.WakeCommons
+#        Description: A race's trait wakes when one of its rares is solved, or after this many common
+#                     solves of that race (repeats count). An awake trait stays awake.
+#    Archaeology.Relic.Traits.FirstRankStrength
+#        Description: A trait's strength at the bottom of the relic's ladder, as a share of its full
+#                     strength (reached at the top). It follows the step the relic shows, so level and
+#                     progression hold it back as they hold back the item.
+#    Archaeology.Relic.Traits.RaceCompleteMultiplier
+#        Description: Multiplies a trait once every project of its race is solved. For Val'kyr's
+#                     Mercy it divides the cooldown instead.
+#        Default:     1, 10, 0.4, 2.0
+
+Archaeology.Relic.Traits.Enable = 1
+Archaeology.Relic.Traits.WakeCommons = 10
+Archaeology.Relic.Traits.FirstRankStrength = 0.4
+Archaeology.Relic.Traits.RaceCompleteMultiplier = 2.0
+
+#
+#    Archaeology.DigOrders.Enable
+#        Description: Dig Orders, a daily quest from the archaeology trainer for anyone who knows
+#                     Archaeology. It names one of the character's own dig sites (one not yet dug
+#                     if there is one, on the continent they stand on if there is one); finds dug
+#                     up there count (RequiredNpcOrGoCount1 of quest 9503504, 3), and a site dug
+#                     out fills the orders. The last find uncovers a fragment cache, at most one a
+#                     day. Orders dropped and taken again the same day name the same site. If the
+#                     named site goes away (abandoned), the orders name another.
+#    Archaeology.DigOrders.CacheFragments.Min
+#    Archaeology.DigOrders.CacheFragments.Max
+#        Description: Bonus fragments in the cache, of the dig site's race (up to the fragment cap).
+#    Archaeology.DigOrders.CacheKeystoneChance
+#        Description: Percent chance the cache also holds that race's keystone.
+#    Archaeology.DigOrders.RelicPower
+#        Description: Relic Power for turning the orders in, once the character has the relic.
+#        Default:     1, 15, 25, 50, 50
+
+Archaeology.DigOrders.Enable = 1
+Archaeology.DigOrders.CacheFragments.Min = 15
+Archaeology.DigOrders.CacheFragments.Max = 25
+Archaeology.DigOrders.CacheKeystoneChance = 50
+Archaeology.DigOrders.RelicPower = 50
+
+# Expedition abandonment cooldown, persisted across logins (1..86400 seconds).
+Archaeology.AbandonCooldownSeconds = 1800
+# Prefer sites this many levels below the player; keep at most one near-limit
+# site where enough comfortable alternatives exist (0..5). Does not raise eligibility.
+Archaeology.ChallengeLevels = 3

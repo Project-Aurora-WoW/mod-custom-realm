@@ -1,0 +1,805 @@
+/*
+ * mod-archaeology: ArchaeologyUI addon messages, the .arch command, the trainer and the
+ * player/world hooks that load and drop state.
+ *
+ * Addon wire format, both directions: an addon whisper to yourself, "ARCH\t<COMMAND>[:...]".
+ *   client -> server  HELLO, SITES, RACES, PROJ:<id>, SURVEY, DIG, SOLVE:<race>:<keystones>, COLLECTION, TRAITS, ABANDON:<site>
+ *   server -> client  S:<skill>:<max skill>               skill (0 = not learned)
+ *                     R:<race>,<name>,<fragments>,<cap>,<project>,<cost>,<sockets>,<rare>,<keystones owned>,<unlocked>;...  REND
+ *                     T:<site>,<map>,<race>,<finds left>,<name>;...  TEND   your dig sites
+ *                     G:<site>:<x>,<y>;<x>,<y>;...                    a site's outline (world coordinates)
+ *                     P:<id>:<race>:<rare>:<cost>:<sockets>:<item>:<name>   D:<id>:<text> ...  DEND:<id>
+ *                     V:RED|YELLOW|GREEN:<angle> | V:FOUND | V:NONE   survey result
+ *                     O:1 | O:0                                       you stand on the hidden find (or left it)
+ *                     Q:<ms> | Q:0                                    digging started (for ms) | stopped
+ *                     F:<race>:<gained>:<total>                       fragments looted
+ *                     X:<project>:<item>:<rare>                       project solved
+ *                     LN:<item>:<off item>:<next item level>:<next quality>:<held>:<held level>:<held item level>
+ *                     L:<rank>:<ranks>:<power>:<next cost>:<item level>:<quality>:<form>:<note>   the relic
+ *                       (LN comes first: held 1 = level, 2 = progression keeps the item below its rank)
+ *                     W:<site>:<finds done>:<finds needed>          today's Dig Orders (site 0 = none being worked)
+ *
+ * Released under the MIT License.
+ */
+
+#include "Archaeology.h"
+#include "Chat.h"
+#include "ChatCommand.h"
+#include "Creature.h"
+#include "DatabaseEnv.h"
+#include "GameTime.h"
+#include "Item.h"
+#include "Map.h"
+#include "ObjectMgr.h"
+#include "Player.h"
+#include "QuestDef.h"
+#include "ScriptMgr.h"
+#include "ScriptedGossip.h"
+#include "Tokenize.h"
+#include "WorldPacket.h"
+#include "WorldSession.h"
+#include <algorithm>
+
+using namespace Acore::ChatCommands;
+using namespace Archaeology;
+
+namespace
+{
+    constexpr std::size_t MAX_PAYLOAD = 240;
+    constexpr Milliseconds REQUEST_COOLDOWN = 1s;
+    constexpr uint32 TRAINER_TEXT = 9503500;
+
+    enum Request : uint8 { REQUEST_HELLO, REQUEST_SITES, REQUEST_RACES, REQUEST_PROJ, REQUEST_SOLVE, REQUEST_COLLECTION, REQUEST_TRAITS, REQUEST_ABANDON, REQUEST_COUNT };
+    std::unordered_map<ObjectGuid::LowType, std::array<Milliseconds, REQUEST_COUNT>> lastRequest;
+
+    bool Throttled(Player* player, Request request)
+    {
+        Milliseconds now = GameTime::GetGameTimeMS();
+        Milliseconds& last = lastRequest[player->GetGUID().GetCounter()][request];
+        if (last.count() && now - last < REQUEST_COOLDOWN)
+            return true;
+        last = now;
+        return false;
+    }
+
+    // Names go inside comma and semicolon separated rows.
+    std::string Clean(std::string s)
+    {
+        std::replace(s.begin(), s.end(), ',', ' ');
+        std::replace(s.begin(), s.end(), ';', ' ');
+        std::replace(s.begin(), s.end(), ':', ' ');
+        return s;
+    }
+
+    void SendRows(Player* player, std::string const& header, std::vector<std::string> const& rows, std::string const& end)
+    {
+        std::string line;
+        std::size_t const budget = MAX_PAYLOAD - header.size() - 1;
+        for (std::string const& row : rows)
+        {
+            if (!line.empty() && line.size() + 1 + row.size() > budget)
+            {
+                SendAddon(player, header + ":" + line);
+                line.clear();
+            }
+            if (!line.empty())
+                line += ';';
+            line += row;
+        }
+        if (!line.empty())
+            SendAddon(player, header + ":" + line);
+        if (!end.empty())
+            SendAddon(player, end);
+    }
+
+    // Trainer ranks: max skill granted, skill needed, character level needed (Cataclysm values).
+    struct Rank { uint32 max; uint32 skill; uint32 level; char const* name; };
+    constexpr Rank RANKS[] = {
+        { 75, 0, 0, "Apprentice" }, { 150, 50, 20, "Journeyman" }, { 225, 125, 20, "Expert" },
+        { 300, 200, 35, "Artisan" }, { 375, 275, 50, "Master" }, { 450, 350, 65, "Grand Master" },
+    };
+
+    Rank const* NextRank(Player* player)
+    {
+        CharState* s = GetState(player);
+        uint32 have = s ? s->maxSkill : 0;
+        for (Rank const& r : RANKS)
+            if (r.max > have && r.max <= GetConfig().maxSkill)
+                return &r;
+        return nullptr;
+    }
+
+    bool CanTrain(Player* player, Rank const& rank)
+    {
+        CharState* s = GetState(player);
+        uint32 level = std::max(rank.level, GetConfig().minLevel);
+        return s && (s->skill >= rank.skill || (rank.skill == 0 && !s->skill)) && player->GetLevel() >= level;
+    }
+
+    std::string StatusText(Player* player)
+    {
+        CharState* s = GetState(player);
+        if (!s || !s->skill)
+            return "You don't know Archaeology. Find an archaeology trainer to learn it.";
+        std::string text = Acore::StringFormat("Archaeology {}/{}.", s->skill, s->maxSkill);
+        for (Race const& race : AllRaces())
+        {
+            if (!IsRaceUnlocked(player, race))
+                continue;
+            RaceProgress const& r = s->races[race.id];
+            Project const* p = GetProject(r.project);
+            text += Acore::StringFormat("\n  {}: {} fragments{}", race.name, r.fragments,
+                p ? Acore::StringFormat(", project {}{} ({})", p->name, p->rare ? " [rare]" : "", p->cost) : "");
+        }
+        text += "\nDig sites:";
+        for (uint32 c = 0; c < CONTINENTS.size(); ++c)
+            for (ActiveSite const& a : s->sites[c])
+                if (Site const* site = GetSite(a.site))
+                    text += DugOut(a) ? Acore::StringFormat("\n  {} [site {}] (dug out: waits for your other sites in its zone)", site->name, site->id)
+                        : Acore::StringFormat("\n  {} [site {}, recommended level {}] ({}, {} of {} finds left)", site->name, site->id, site->minLevel, GetRace(site->race)->name,
+                        GetConfig().findsPerSite - a.finds, GetConfig().findsPerSite);
+        if (std::string orders = DigOrdersText(player); !orders.empty())
+            text += "\n" + orders;
+        return text;
+    }
+}
+
+namespace Archaeology
+{
+    void SendAddon(Player* player, std::string const& payload)
+    {
+        std::string full = std::string(PREFIX) + "\t" + payload;
+        WorldPacket data;
+        ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER, LANG_ADDON, player, player, full);
+        player->GetSession()->SendPacket(&data);
+    }
+
+    void Notify(Player* player, std::string const& text)
+    {
+        ChatHandler(player->GetSession()).SendSysMessage(text);
+    }
+
+    void SendState(Player* player)
+    {
+        CharState* s = GetState(player);
+        SendAddon(player, Acore::StringFormat("S:{}:{}", s ? s->skill : 0, s ? s->maxSkill : 0));
+    }
+
+    void SendRaces(Player* player)
+    {
+        CharState* s = GetState(player);
+        if (!s || !s->skill)
+        {
+            SendAddon(player, "REND");
+            return;
+        }
+        std::vector<std::string> rows;
+        for (Race const& race : AllRaces())
+        {
+            RaceProgress const& r = s->races[race.id];
+            Project const* p = GetProject(r.project);
+            rows.push_back(Acore::StringFormat("{},{},{},{},{},{},{},{},{},{}", race.id, Clean(race.name), r.fragments,
+                GetConfig().fragmentCap, p ? p->id : 0, p ? p->cost : 0, p ? p->sockets : 0, p && p->rare ? 1 : 0,
+                race.keystoneItem ? player->GetItemCount(race.keystoneItem) : 0, IsRaceUnlocked(player, race) ? 1 : 0));
+        }
+        SendRows(player, "R", rows, "REND");
+    }
+
+    void SendSites(Player* player)
+    {
+        CharState* s = GetState(player);
+        if (!s || !s->skill)
+        {
+            SendAddon(player, "TEND");
+            return;
+        }
+        std::vector<std::string> rows;
+        std::vector<Site const*> held;
+        for (uint32 c = 0; c < CONTINENTS.size(); ++c)
+            for (ActiveSite const& a : s->sites[c])
+                if (Site const* site = DugOut(a) ? nullptr : GetSite(a.site))
+                {
+                    rows.push_back(Acore::StringFormat("{},{},{},{},{}", site->id, site->map, site->race,
+                        GetConfig().findsPerSite - a.finds, Clean(site->name)));
+                    held.push_back(site);
+                }
+        SendRows(player, "T", rows, "");
+        for (Site const* site : held)
+        {
+            std::vector<std::string> points;
+            for (Point const& p : site->polygon)
+                points.push_back(Acore::StringFormat("{},{}", int32(p.x), int32(p.y)));
+            SendRows(player, Acore::StringFormat("G:{}", site->id), points, "");
+        }
+        SendAddon(player, "TEND");
+        for (Site const* site : held)
+            SendAddon(player, Acore::StringFormat("E:{}:{}:{}", site->id, site->minLevel,
+                site->minLevel > 1 && site->minLevel + GetConfig().challengeLevels > player->GetLevel() ? 1 : 0));
+    }
+
+    void SendCollection(Player* player)
+    {
+        CharState* s = GetState(player);
+        if (!s || !s->skill) return;
+        SendAddon(player, "CBEGIN");
+        for (Race const& race : AllRaces())
+        {
+            uint32 continent = (race.id == 2 || race.id == 6) ? 2 : (race.id == 5 || race.id == 27) ? 3 : 0;
+            uint32 state = GetConfig().ipEnabled ? (continent == 2 ? GetConfig().ipOutlandState : continent == 3 ? GetConfig().ipNorthrendState : 0) : 0;
+            SendAddon(player, Acore::StringFormat("U:{}:{}:{}:{}", race.id, race.unlockSkill, state, CanDigContinent(player, continent) ? 1 : 0));
+            for (uint32 id : ProjectsOfRace(race.id))
+                if (Project const* p = GetProject(id))
+                {
+                    auto it = s->solved.find(id);
+                    SendAddon(player, Acore::StringFormat("C:{}:{}:{}:{}:{}:{}", p->id, p->race, p->rare ? 1 : 0,
+                        p->item, it == s->solved.end() ? 0 : it->second, Clean(p->name).substr(0, 150)));
+                }
+        }
+        SendAddon(player, "CEND");
+    }
+
+    void SendProject(Player* player, uint32 projectId)
+    {
+        Project const* p = GetProject(projectId);
+        if (!p)
+            return;
+        SendAddon(player, Acore::StringFormat("P:{}:{}:{}:{}:{}:{}:{}", p->id, p->race, p->rare ? 1 : 0, p->cost, p->sockets,
+            p->item, Clean(p->name)));
+        std::string const header = Acore::StringFormat("D:{}:", p->id);
+        std::size_t const chunk = MAX_PAYLOAD - header.size();
+        for (std::size_t pos = 0; pos < p->description.size(); pos += chunk)
+            SendAddon(player, header + p->description.substr(pos, chunk));
+        SendAddon(player, Acore::StringFormat("DEND:{}", p->id));
+    }
+}
+
+namespace
+{
+    using namespace Archaeology;
+
+    constexpr uint32 QUEST_SWEEP_MS = 30000;
+
+    // Take a quest back out of the log, as abandoning it does.
+    void TakeBackQuest(Player* player, uint32 questId)
+    {
+        uint16 slot = player->FindQuestSlot(questId);
+        player->RemoveActiveQuest(questId);
+        if (slot < MAX_QUEST_LOG_SIZE)
+            player->SetQuestSlot(slot, 0);
+    }
+
+    // A Weapon in Pieces and Dig Orders are only for archaeologists. Playerbots add quests without
+    // the trainer's list (hundreds of random bots held A Weapon in Pieces, which they can never turn
+    // in), so characters that don't know Archaeology are swept at login and now and then.
+    void DropArchaeologistQuests(Player* player)
+    {
+        CharState* s = GetState(player);
+        if (!s || s->skill || player->IsGameMaster())
+            return;
+        for (uint32 questId : { RELIC_QUEST, DIG_ORDERS_QUEST })
+            if (player->FindQuestSlot(questId) < MAX_QUEST_LOG_SIZE)
+                TakeBackQuest(player, questId);
+    }
+}
+
+class ArchaeologyPlayerScript : public PlayerScript
+{
+public:
+    ArchaeologyPlayerScript() : PlayerScript("ArchaeologyPlayerScript", {
+        PLAYERHOOK_ON_LOGIN, PLAYERHOOK_ON_LOGOUT, PLAYERHOOK_ON_DELETE, PLAYERHOOK_ON_LEVEL_CHANGED,
+        PLAYERHOOK_CAN_PLAYER_USE_PRIVATE_CHAT, PLAYERHOOK_ON_UPDATE, PLAYERHOOK_ON_MAP_CHANGED, PLAYERHOOK_ON_EQUIP,
+        PLAYERHOOK_ON_UNEQUIP_ITEM, PLAYERHOOK_ON_BEFORE_QUEST_COMPLETE, PLAYERHOOK_ON_PLAYER_RESURRECT,
+        PLAYERHOOK_ON_PLAYER_QUEST_ACCEPT, PLAYERHOOK_ON_QUEST_ABANDON, PLAYERHOOK_ON_PLAYER_COMPLETE_QUEST }) { }
+
+    void OnPlayerLogin(Player* player) override
+    {
+        if (!GetConfig().enabled)
+            return;
+        LoadCharacter(player);
+        DropArchaeologistQuests(player);
+    }
+
+    void OnPlayerLogout(Player* player) override
+    {
+        lastRequest.erase(player->GetGUID().GetCounter());
+        ForgetFinds(player);
+        ForgetRelic(player);
+        ForgetTraits(player);
+        if (CharState* s = GetState(player); s && (s->relic.rank || s->relic.earned))
+            SaveRelic(player);
+        UnloadCharacter(player);
+    }
+
+    void OnPlayerDelete(ObjectGuid guid, uint32 /*accountId*/) override
+    {
+        ObjectGuid::LowType low = guid.GetCounter();
+        CharacterDatabase.Execute("DELETE FROM `mod_archaeology_char` WHERE `guid` = {}", low);
+        CharacterDatabase.Execute("DELETE FROM `mod_archaeology_char_site` WHERE `guid` = {}", low);
+        CharacterDatabase.Execute("DELETE FROM `mod_archaeology_char_race` WHERE `guid` = {}", low);
+        CharacterDatabase.Execute("DELETE FROM `mod_archaeology_char_expedition` WHERE `guid` = {}", low);
+        CharacterDatabase.Execute("DELETE FROM `mod_archaeology_char_history` WHERE `guid` = {}", low);
+        CharacterDatabase.Execute("DELETE FROM `mod_archaeology_char_relic` WHERE `guid` = {}", low);
+        CharacterDatabase.Execute("DELETE FROM `mod_archaeology_char_dig_orders` WHERE `guid` = {}", low);
+    }
+
+    // Higher levels open more dig sites, and let the relic grow.
+    void OnPlayerLevelChanged(Player* player, uint8 /*oldLevel*/) override
+    {
+        if (IsLearned(player))
+        {
+            RollSites(player);
+            SendSites(player);
+            QueueRelic(player);
+        }
+    }
+
+    // Progression state rises in raids; look again on the way out.
+    void OnPlayerMapChanged(Player* player) override
+    {
+        QueueRelic(player);
+        if (GetState(player))
+            QueueTraits(player);   // entering an arena takes buffs off
+    }
+
+    // A relic whose last swap found no room may be an older step. Any weapon put on may push the
+    // relic off, so the traits look again either way.
+    void OnPlayerEquip(Player* player, Item* item, uint8 bag, uint8 slot, bool /*update*/) override
+    {
+        if (item && IsRelicItem(item->GetEntry()))
+            QueueRelic(player);
+        if (bag == INVENTORY_SLOT_BAG_0 && (slot == EQUIPMENT_SLOT_MAINHAND || slot == EQUIPMENT_SLOT_OFFHAND || slot == EQUIPMENT_SLOT_RANGED) &&
+            GetState(player))
+            QueueTraits(player);
+    }
+
+    // Traits can't go on a dead character, so a refresh then waits for this.
+    void OnPlayerResurrect(Player* player, float /*restorePercent*/, bool& /*applySickness*/) override
+    {
+        if (GetState(player))
+            QueueTraits(player);
+    }
+
+    void OnPlayerUnequip(Player* player, Item* item) override
+    {
+        if (item && IsRelicItem(item->GetEntry()))
+            QueueTraits(player);
+    }
+
+    void OnPlayerUpdate(Player* player, uint32 diff) override
+    {
+        if (CharState* s = GetState(player); s && !s->skill && (s->questSweepMs += diff) >= QUEST_SWEEP_MS)
+        {
+            s->questSweepMs = 0;
+            DropArchaeologistQuests(player);
+        }
+        UpdateFindShovel(player, diff);
+        UpdateRewardCosmetics(player, diff);
+        UpdateQueuedRelic(player);
+        UpdateQueuedTraits(player);
+    }
+
+    bool OnPlayerBeforeQuestComplete(Player* player, uint32 questId) override
+    {
+        return questId != RELIC_QUEST || CanTakeRelicQuest(player);
+    }
+
+    // The trainer only lists these when they're open, but an accept packet can name any quest the
+    // trainer starts, and bots copy their master's accepts: take back what wasn't on offer.
+    void OnPlayerQuestAccept(Player* player, Quest const* quest) override
+    {
+        uint32 questId = quest->GetQuestId();
+        bool refuse = !player->IsGameMaster() && ((questId == DIG_ORDERS_QUEST && !OffersDigOrders(player)) ||
+            (IsCapstoneQuest(questId) && !CapstoneQuestOpen(player, questId)));
+        if (refuse)
+        {
+            TakeBackQuest(player, questId);
+            Notify(player, questId == DIG_ORDERS_QUEST ? "Dig Orders are for archaeologists." : "That quest isn't open to you yet.");
+            if (CharState* s = GetState(player); s && questId == DIG_ORDERS_QUEST)
+                s->questSweepMs = QUEST_SWEEP_MS;   // playerbots add a refused quest straight back: look again next update
+            return;
+        }
+        if (questId == DIG_ORDERS_QUEST)
+            DigOrdersAccepted(player);
+    }
+
+    void OnPlayerQuestAbandon(Player* player, uint32 questId) override
+    {
+        if (questId == DIG_ORDERS_QUEST)
+            DigOrdersDropped(player);
+    }
+
+    // Individual progression raises its state by rewarding a quest (a raid cleared): the relic's
+    // ceiling and the continents open to dig move with it, without waiting for a zone change.
+    void OnPlayerCompleteQuest(Player* player, Quest const* quest) override
+    {
+        Config const& cfg = GetConfig();
+        uint32 questId = quest->GetQuestId();
+        if (!cfg.ipEnabled || questId <= cfg.ipQuestBase || questId > cfg.ipQuestBase + cfg.ipMaxState)
+            return;
+        QueueRelic(player);
+        if (IsLearned(player))
+        {
+            RollSites(player);
+            SendSites(player);
+        }
+    }
+
+    // CMSG_MESSAGECHAT runs on the world thread.
+    bool OnPlayerCanUseChat(Player* player, uint32 type, uint32 language, std::string& msg, Player* receiver) override
+    {
+        if (type != CHAT_MSG_WHISPER || language != LANG_ADDON || receiver != player)
+            return true;
+        std::string const prefixTab = std::string(PREFIX) + "\t";
+        if (msg.compare(0, prefixTab.size(), prefixTab) != 0)
+            return true;
+        if (!GetConfig().enabled || !GetState(player))
+            return false;
+
+        std::string_view command = std::string_view(msg).substr(prefixTab.size());
+        if (command == "HELLO")
+        {
+            if (!Throttled(player, REQUEST_HELLO))
+            {
+                SendState(player);
+                SendRaces(player);
+                SendSites(player);
+                SendRelic(player);
+                SendDigOrders(player);
+                // A reloaded addon has forgotten it stands on the find: tell it again.
+                if (CharState* state = GetState(player))
+                    state->overFind = false;
+            }
+        }
+        else if (command == "TRAITS")
+        {
+            if (!Throttled(player, REQUEST_TRAITS)) SendTraits(player);
+        }
+        else if (command == "COLLECTION")
+        {
+            if (!Throttled(player, REQUEST_COLLECTION))
+            { SendCollection(player); SendTraits(player); }
+        }
+        else if (command.substr(0, 8) == "ABANDON:")
+        {
+            if (!Throttled(player, REQUEST_ABANDON))
+                if (Optional<uint32> id = Acore::StringTo<uint32>(command.substr(8)))
+                { std::string error; if (!AbandonSite(player, *id, error)) Notify(player, error); }
+        }
+        else if (command == "SITES")
+        {
+            if (!Throttled(player, REQUEST_SITES))
+                SendSites(player);
+        }
+        else if (command == "RACES")
+        {
+            if (!Throttled(player, REQUEST_RACES))
+                SendRaces(player);
+        }
+        else if (command == "SURVEY")
+            Survey(player);   // has its own cooldown
+        else if (command == "DIG")
+            Dig(player);      // one dig at a time
+        else if (command.substr(0, 5) == "PROJ:")
+        {
+            if (!Throttled(player, REQUEST_PROJ))
+                if (Optional<uint32> id = Acore::StringTo<uint32>(command.substr(5)))
+                    SendProject(player, *id);
+        }
+        else if (command.substr(0, 6) == "SOLVE:")
+        {
+            if (Throttled(player, REQUEST_SOLVE))
+                return false;
+            std::vector<std::string_view> parts = Acore::Tokenize(command.substr(6), ':', false);
+            Optional<uint32> race = parts.size() > 0 ? Acore::StringTo<uint32>(parts[0]) : std::nullopt;
+            Optional<uint32> keys = parts.size() > 1 ? Acore::StringTo<uint32>(parts[1]) : std::nullopt;
+            std::string error;
+            if (race && !Solve(player, uint8(*race), keys.value_or(0), error))
+                Notify(player, error);
+        }
+        return false;
+    }
+};
+
+class ArchaeologyWorldScript : public WorldScript
+{
+public:
+    ArchaeologyWorldScript() : WorldScript("ArchaeologyWorldScript", { WORLDHOOK_ON_AFTER_CONFIG_LOAD, WORLDHOOK_ON_STARTUP }) { }
+
+    void OnAfterConfigLoad(bool /*reload*/) override
+    {
+        LoadConfig();
+    }
+
+    void OnStartup() override
+    {
+        LoadWorldData();
+    }
+};
+
+// A capstone boss's death credits the relic quest of everyone who brought the relic to it.
+class ArchaeologyUnitScript : public UnitScript
+{
+public:
+    ArchaeologyUnitScript() : UnitScript("ArchaeologyUnitScript", true, { UNITHOOK_ON_UNIT_DEATH }) { }
+
+    void OnUnitDeath(Unit* unit, Unit* /*killer*/) override
+    {
+        if (Creature* creature = unit->ToCreature(); creature && GetConfig().enabled && creature->GetMap()->IsDungeon())
+            CapstoneBossDied(creature);
+    }
+};
+
+class npc_archaeology_trainer : public CreatureScript
+{
+public:
+    npc_archaeology_trainer() : CreatureScript("npc_archaeology_trainer") { }
+
+    enum Actions : uint32 { ACTION_TRAIN = 1, ACTION_STATUS = 2, ACTION_ORDERS = 3 };   // 10-13: the relic's, ArchaeologyRelic.cpp
+
+    // A Weapon in Pieces waits for skill 50, which the quest system can't see.
+    static bool OffersRelicQuest(Player* player)
+    {
+        return player->GetQuestStatus(RELIC_QUEST) != QUEST_STATUS_NONE || CanTakeRelicQuest(player);
+    }
+
+    // The quest system can't see archaeology skill or progression either: Dig Orders only for
+    // archaeologists, the relic's quests only once the relic quest is open, and a capstone only once
+    // progression reaches its raid. Quests in the log can always be turned in.
+    static bool Offers(Player* player, uint32 questId)
+    {
+        QuestStatus status = player->GetQuestStatus(questId);
+        bool inLog = status == QUEST_STATUS_INCOMPLETE || status == QUEST_STATUS_COMPLETE;
+        if (questId != DIG_ORDERS_QUEST)
+            return OffersRelicQuest(player) && (inLog || CapstoneQuestOpen(player, questId));
+        return inLog || OffersDigOrders(player);
+    }
+
+    static uint32 QuestMark(Player* player, uint32 questId)
+    {
+        Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+        if (!quest || !Offers(player, questId))
+            return DIALOG_STATUS_NONE;
+        switch (player->GetQuestStatus(questId))
+        {
+            case QUEST_STATUS_COMPLETE:   return DIALOG_STATUS_REWARD;
+            case QUEST_STATUS_INCOMPLETE: return DIALOG_STATUS_INCOMPLETE;
+            case QUEST_STATUS_NONE:
+                return player->CanTakeQuest(quest, false) ? (quest->IsDaily() ? DIALOG_STATUS_AVAILABLE_REP : DIALOG_STATUS_AVAILABLE)
+                    : DIALOG_STATUS_NONE;
+            default:                      return DIALOG_STATUS_NONE;
+        }
+    }
+
+    uint32 GetDialogStatus(Player* player, Creature* creature) override
+    {
+        uint32 mark = DIALOG_STATUS_NONE;
+        if (!GetConfig().enabled || !GetState(player))
+            return mark;
+        for (auto bounds : { sObjectMgr->GetCreatureQuestRelationBounds(creature->GetEntry()),
+                sObjectMgr->GetCreatureQuestInvolvedRelationBounds(creature->GetEntry()) })
+            for (auto itr = bounds.first; itr != bounds.second; ++itr)
+                mark = std::max(mark, QuestMark(player, itr->second));
+        return mark;
+    }
+
+    // PrepareQuestMenu lists every quest CanTakeQuest allows; take out the ones not offered yet.
+    static void PrepareQuests(Player* player, Creature* creature)
+    {
+        player->PrepareQuestMenu(creature->GetGUID());
+        QuestMenu& menu = player->PlayerTalkClass->GetQuestMenu();
+        std::vector<QuestMenuItem> keep;
+        for (uint8 i = 0; i < menu.GetMenuItemCount(); ++i)
+            if (Offers(player, menu.GetItem(i).QuestId))
+                keep.push_back(menu.GetItem(i));
+        menu.ClearMenu();
+        for (QuestMenuItem const& item : keep)
+            menu.AddMenuItem(item.QuestId, item.QuestIcon);
+    }
+
+    bool OnQuestReward(Player* player, Creature* creature, Quest const* quest, uint32 /*opt*/) override
+    {
+        if (IsCapstoneQuest(quest->GetQuestId()))
+        {
+            QueueRelic(player);   // the rank it held back can come now
+            return false;
+        }
+        if (quest->GetQuestId() == DIG_ORDERS_QUEST)
+        {
+            DigOrdersRewarded(player);
+            return false;
+        }
+        if (quest->GetQuestId() != RELIC_QUEST)
+            return false;
+        RelicQuestRewarded(player, creature);
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature) override
+    {
+        ClearGossipMenuFor(player);
+        if (GetConfig().enabled && GetState(player))
+        {
+            PrepareQuests(player, creature);
+            if (Rank const* rank = NextRank(player))
+            {
+                if (CanTrain(player, *rank))
+                    AddGossipItemFor(player, GOSSIP_ICON_TRAINER, Acore::StringFormat("Train {} Archaeology (skill up to {}).", rank->name, rank->max),
+                        GOSSIP_SENDER_MAIN, ACTION_TRAIN);
+                else
+                    AddGossipItemFor(player, GOSSIP_ICON_CHAT, Acore::StringFormat("{} Archaeology needs skill {} and level {}.", rank->name, rank->skill,
+                        std::max(rank->level, GetConfig().minLevel)), GOSSIP_SENDER_MAIN, ACTION_STATUS);
+            }
+            if (IsLearned(player))
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Where are my dig sites?", GOSSIP_SENDER_MAIN, ACTION_STATUS);
+            if (player->GetQuestStatus(DIG_ORDERS_QUEST) == QUEST_STATUS_INCOMPLETE)
+                AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Which dig site do my orders name?", GOSSIP_SENDER_MAIN, ACTION_ORDERS);
+            AddRelicGossip(player);
+        }
+        SendGossipMenuFor(player, TRAINER_TEXT, creature->GetGUID());
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 sender, uint32 action) override
+    {
+        if (RelicGossipSelect(player, creature, sender, action))
+            return true;
+        CloseGossipMenuFor(player);
+        if (action == ACTION_TRAIN)
+        {
+            Rank const* rank = NextRank(player);
+            if (rank && CanTrain(player, *rank))
+            {
+                Learn(player, rank->max);
+                creature->Whisper(Acore::StringFormat("You are now a {} archaeologist. Your dig sites are marked on your map.", rank->name),
+                    LANG_UNIVERSAL, player);
+            }
+        }
+        else if (action == ACTION_STATUS)
+            Notify(player, StatusText(player));
+        else if (action == ACTION_ORDERS)
+        {
+            Notify(player, DigOrdersText(player));
+            SendDigOrders(player);
+        }
+        return true;
+    }
+};
+
+class ArchaeologyCommandScript : public CommandScript
+{
+public:
+    ArchaeologyCommandScript() : CommandScript("ArchaeologyCommandScript") { }
+
+    ChatCommandTable GetCommands() const override
+    {
+        static ChatCommandTable relicCommands =
+        {
+            { "",      HandleRelic,      SEC_PLAYER,     Console::No },
+            { "power", HandleRelicPower, SEC_GAMEMASTER, Console::No },
+        };
+        static ChatCommandTable subCommands =
+        {
+            { "relic",  relicCommands },
+            { "",       HandleStatus, SEC_PLAYER,        Console::No },
+            { "abandon", HandleAbandon, SEC_PLAYER, Console::No },
+            { "survey", HandleSurvey, SEC_PLAYER,        Console::No },
+            { "dig",    HandleDig,    SEC_PLAYER,        Console::No },
+            { "solve",  HandleSolve,  SEC_PLAYER,        Console::No },
+            { "skill",  HandleSkill,  SEC_GAMEMASTER,    Console::No },
+            { "reload", HandleReload, SEC_ADMINISTRATOR, Console::Yes },
+        };
+        static ChatCommandTable commandTable =
+        {
+            { "arch", subCommands },
+        };
+        return commandTable;
+    }
+
+    static bool HandleStatus(ChatHandler* handler)
+    {
+        handler->SendSysMessage(StatusText(handler->GetPlayer()));
+        return true;
+    }
+
+    static bool HandleAbandon(ChatHandler* handler, uint32 site)
+    {
+        std::string error;
+        if (!AbandonSite(handler->GetPlayer(), site, error))
+        { handler->SendErrorMessage("{}", error); return false; }
+        return true;
+    }
+
+    static bool HandleSurvey(ChatHandler* handler)
+    {
+        Survey(handler->GetPlayer());
+        return true;
+    }
+
+    static bool HandleDig(ChatHandler* handler)
+    {
+        Dig(handler->GetPlayer());
+        return true;
+    }
+
+    // .arch solve <race name or id> [keystones]
+    static bool HandleSolve(ChatHandler* handler, std::string raceArg, Optional<uint32> keystones)
+    {
+        Race const* race = nullptr;
+        if (Optional<uint32> id = Acore::StringTo<uint32>(raceArg))
+            race = GetRace(uint8(*id));
+        else
+            for (Race const& r : AllRaces())
+                if (StringEqualI(r.name, raceArg) || (r.name.find(' ') != std::string::npos && StringStartsWithI(r.name, raceArg)))
+                    race = &r;
+        if (!race)
+        {
+            handler->SendErrorMessage("Unknown race. Use a name such as Dwarf, Troll or Fossil.");
+            return false;
+        }
+        std::string error;
+        if (!Solve(handler->GetPlayer(), race->id, keystones.value_or(0), error))
+        {
+            handler->SendErrorMessage("{}", error);
+            return false;
+        }
+        return true;
+    }
+
+    // .arch skill <value>: GM sets the selected player's skill (learns the matching rank).
+    static bool HandleSkill(ChatHandler* handler, uint32 value)
+    {
+        Player* target = handler->getSelectedPlayerOrSelf();
+        CharState* s = target ? GetState(target) : nullptr;
+        if (!s)
+            return false;
+        uint32 max = 75;
+        for (Rank const& r : RANKS)
+            if (r.skill <= value)
+                max = r.max;
+        Learn(target, std::min(max, GetConfig().maxSkill));
+        s->skill = std::min(std::max<uint32>(value, 1), s->maxSkill);
+        AddSkill(target, 0);
+        SaveSkill(target);
+        RollSites(target);
+        SendState(target);
+        handler->PSendSysMessage("{} now has Archaeology {}/{}.", target->GetName(), s->skill, s->maxSkill);
+        return true;
+    }
+
+    static bool HandleRelic(ChatHandler* handler)
+    {
+        handler->SendSysMessage(RelicStatusText(handler->GetPlayer()));
+        return true;
+    }
+
+    // .arch relic power <amount>: GM gives the selected player Relic Power.
+    static bool HandleRelicPower(ChatHandler* handler, uint32 amount)
+    {
+        Player* target = handler->getSelectedPlayerOrSelf();
+        if (!target || !IsLearned(target))
+        {
+            handler->SendErrorMessage("That character doesn't know Archaeology.");
+            return false;
+        }
+        AddRelicPower(target, amount);
+        QueueRelic(target);
+        handler->PSendSysMessage("{} gets {} Relic Power.", target->GetName(), amount);
+        return true;
+    }
+
+    static bool HandleReload(ChatHandler* handler)
+    {
+        LoadWorldData();
+        handler->SendSysMessage("Archaeology data reloaded.");
+        return true;
+    }
+};
+
+void AddArchaeologyAddonScripts()
+{
+    new ArchaeologyPlayerScript();
+    new ArchaeologyWorldScript();
+    new ArchaeologyUnitScript();
+    new npc_archaeology_trainer();
+    new ArchaeologyCommandScript();
+}

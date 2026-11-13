@@ -1,0 +1,614 @@
+[worldserver]
+
+########################################################################################################################
+# mod-hunger-thirst
+#
+# Tracks satiety and hydration per character, warns the player as the gauges
+# fall and, in survival mode, applies hunger states from the satiety gauge and
+# thirst states from the hydration gauge. Hunger and thirst cause no
+# exhaustion damage. Cold exposure adds a third gauge and is the only health
+# drain in the module: at 100 cold it removes health down to a 1 % max-health
+# floor, so it can never kill a character on its own.
+#
+# All player-facing messages (chat warnings, login summary, status command)
+# are in English.
+#
+# Two independent switches:
+#   - HungerThirst.Enable is the master switch. When 0 the module tracks
+#     nothing at all: no state is loaded or saved, Tick/CreditConsumable do
+#     nothing, and no login summary is sent. If AddonEnable=1, one synthetic
+#     disabled snapshot (mode=0, loaded=1) is still sent at login so the addon
+#     can display "Disabled". Commands still exist; the status command reports
+#     the module as disabled.
+#   - HungerThirst.Mode selects the simulation. "off" keeps the module loaded
+#     and the state persisted/queryable, but does not decay the gauges, warn,
+#     apply states, blur, or push periodic addon updates (a login snapshot
+#     with mode=0 is still sent when AddonEnable=1). "advisory" decays and
+#     warns but never applies states and never blurs. "survival" adds hunger
+#     states and thirst states, the penalties they carry and the thirst blur.
+#
+# Effects in survival mode:
+#   - Hunger states (satiety gauge, see HungerThirst.HungerStates): hunger
+#     deals no damage. Satiety at or below WarningThreshold (warning or
+#     critical band, above 0) applies spell 52749 with the penalties of
+#     HungerStatePenaltyPct; satiety at 0 applies spell 55316 with
+#     HungerStarvingPenaltyPct instead. Each state reduces movement speed and
+#     damage dealt, and increases damage taken, by its percentage. The state
+#     is removed when satiety returns to the normal band (Hysteresis
+#     applies), when HungerStates=0, or outside survival mode.
+#   - Thirst states (hydration gauge, see HungerThirst.ThirstStates): thirst
+#     deals no damage. Hydration at or below WarningThreshold (warning or
+#     critical band, above 0) applies spell 25696 "Drink" with the
+#     penalties of ThirstStatePenaltyPct; hydration at 0 applies spell 5909
+#     "Watered-down Beer" with ThirstDehydratedPenaltyPct instead. Each state
+#     reduces mana regeneration, magical damage done and healing done by its
+#     percentage; physical, ranged and pet damage are unaffected, and so is
+#     damage taken. The state is removed when hydration returns to the normal
+#     band (Hysteresis included), when ThirstStates=0, or outside survival
+#     mode. The legacy thirst spells of earlier module versions, 43155,
+#     46583, 14869 and 14870, are no longer applied; their auras are
+#     removed automatically from characters that still carry them.
+#   - Mana regeneration: the canonical
+#     SPELL_AURA_MOD_POWER_REGEN_PERCENT aura is used, which in this core
+#     only scales spirit-based regeneration. Flat mp5 regeneration is not
+#     reduced; no core patch is involved.
+#   - Thirst blur (see ThirstBlurIntervalMs/ThirstBlurDurationMs): while a
+#     thirst state is active, a client-side blur pulses for
+#     ThirstBlurDurationMs every ThirstBlurIntervalMs (2 s every 10 s by
+#     default) with intensity 35 for state 1 and 45 for state 2. It uses the
+#     fake inebriation player field (PLAYER_FAKE_INEBRIATION): no aura, no
+#     icon and no gameplay effect. Both intensities stay below the client's
+#     drunk threshold (50), so the field only tints the screen and never
+#     switches the client to the drunk stance and its unsteady walk
+#     animation. The blur is visual only and is not what caused the sliding
+#     walk reported on a real client: the character slid because the retired
+#     dehydrated state spell 14870 has a stun in the stock client data, so
+#     the client played the stunned stand animation while the server let the
+#     character move. The current dehydrated spell, 5909, carries the same
+#     icon (INV_Drink_04) but a stat aura on the client, which plays no
+#     animation.
+#     No pulse is sent while a pause applies (see below) or once the state
+#     ends; a pulse in progress is cleared.
+#   - Cold exposure (see the exposure keys below): Cold is a third gauge,
+#     0 (comfortable) to 100 (freezing). It is simulated in advisory and
+#     survival; the stock "Chilled" aura (spell 6136) and the health drain
+#     run in survival only, and instances are excluded from both. The gauge
+#     rises while the player is in a cold zone, outdoors, not resting and
+#     not within 8 yards of a warm fire; it falls otherwise. Bands are
+#     Chilly at 25, Cold at 50 and Freezing at 75, with Hysteresis on the
+#     way down. Hot zones have no gauge: they only multiply the hydration
+#     loss.
+#   - No exhaustion damage from hunger or thirst: neither gauge removes
+#     health. Cold exposure is the only drain: at 100 cold, and while still
+#     exposed, it removes ColdHealthDrainPct of maximum health per
+#     ColdDrainIntervalMs, stops at a floor of 1 % of maximum health and
+#     cannot kill the character on its own (no death cause, no death log).
+#
+# All changes can be applied with ".reload config"; they take effect at the
+# next tick. Two exceptions: HungerStatePenaltyPct,
+# HungerStarvingPenaltyPct, ThirstStatePenaltyPct and
+# ThirstDehydratedPenaltyPct are baked into the state spells at startup, so
+# changing them requires a server restart; and switching Enable from 0 to 1
+# does not load state for players already online (it was dropped while
+# disabled) - they must reconnect or use ".hungerthirst set"; new logins are
+# unaffected. ThirstStates, ThirstBlurIntervalMs and ThirstBlurDurationMs
+# are read live and do not need a restart.
+#
+# Some pauses are always active and have no configuration key: dead players,
+# characters whose state is still loading (or failed to load), and players
+# currently in a duel are never decayed or warned. Whenever a pause applies
+# (including the configured taxi, battleground, arena and GM exemptions) the
+# thirst blur is cleared, but state auras already applied stay in place.
+#
+# Persistence uses acore_characters.hunger_thirst_state, created
+# automatically at startup:
+#   guid INT UNSIGNED PRIMARY KEY
+#   satiety DECIMAL(5,2) NOT NULL DEFAULT 100.00
+#   hydration DECIMAL(5,2) NOT NULL DEFAULT 100.00
+#   cold DECIMAL(5,2) NOT NULL DEFAULT 0.00
+#   updated_at BIGINT UNSIGNED NOT NULL DEFAULT 0 (epoch milliseconds)
+# Existing installations predate the cold column: the module adds it with
+# "ALTER TABLE ... ADD COLUMN cold" at startup, so no SQL file is needed.
+# Saves are conditional on updated_at, so an older save never overwrites a
+# newer one. If the table cannot be created or verified, the simulation is
+# suspended for the affected players: no tick (decay, warnings, states,
+# blur), no save, no consumable credit and no periodic addon update. Login
+# is never blocked; with an active mode and ShowLoginSummary=1 the player
+# receives a "Persistence unavailable" chat notice, and when AddonEnable=1
+# the addon displays the same status. The state stays unloaded for the whole
+# session, so a reconnect is required once the table is available again.
+#
+# Validation performed while loading:
+#   - unknown Mode -> off (LOG_ERROR)
+#   - 0 <= CriticalThreshold < WarningThreshold <= 100
+#   - HungerStatePenaltyPct, HungerStarvingPenaltyPct,
+#     ThirstStatePenaltyPct and ThirstDehydratedPenaltyPct clamped to 0..90
+#   - all intervals/cooldowns >= 1000 ms
+#   - ColdSeconds and WarmSeconds clamped to >= 30 s
+#   - HotHydrationMultiplier clamped to 1..10
+#   - StartingCold and ColdHealthDrainPct clamped to 0..100
+#   - zone and gameobject ID lists are read as comma/space separated unsigned
+#     integers; reading stops at the first token that is not a number, and a
+#     value of 0 is dropped
+#   - ThirstBlurDurationMs clamped to >= 100 ms
+#   - all gauges/percentages/multipliers clamped to their documented range
+########################################################################################################################
+
+#
+#    HungerThirst.Enable
+#        Master on/off switch. See the header comment above for the
+#        difference with HungerThirst.Mode.
+#        Default: 1
+#
+HungerThirst.Enable = 1
+
+#
+#    HungerThirst.Mode
+#        Simulation mode:
+#          off      - loaded and persisted, but no decay, warnings, states,
+#                     blur or periodic addon updates (default, safe
+#                     installation). A login snapshot with mode=0 is still
+#                     sent if AddonEnable=1.
+#          advisory - decay, chat warnings, login summary and addon updates;
+#                     no states, no blur and no penalty, even at 0/0.
+#          survival - everything advisory does, plus hunger states and thirst
+#                     states (visible auras and their penalties) and the
+#                     thirst blur.
+#        Case-insensitive. An unknown value falls back to "off" and logs an
+#        error.
+#        Default: off
+#
+HungerThirst.Mode = off
+
+#
+#    HungerThirst.SatietyDecayPerMinute
+#        Satiety points lost per minute of active play (before the rest and
+#        instance multipliers). 0 disables satiety decay. Clamped to 0..100.
+#        Default: 0.50
+#
+HungerThirst.SatietyDecayPerMinute = 0.50
+
+#
+#    HungerThirst.HydrationDecayPerMinute
+#        Hydration points lost per minute of active play (before multipliers).
+#        Hydration normally drains slightly faster than satiety. Clamped to
+#        0..100.
+#        Default: 0.75
+#
+HungerThirst.HydrationDecayPerMinute = 0.75
+
+#
+#    HungerThirst.RestMultiplier
+#        Decay multiplier while resting (REST_FLAG_IN_TAVERN,
+#        REST_FLAG_IN_CITY or REST_FLAG_IN_FACTION_AREA). Multiplies the
+#        per-tick decay. Clamped to 0..10.
+#        Default: 0.50
+#
+HungerThirst.RestMultiplier = 0.50
+
+#
+#    HungerThirst.InstanceMultiplier
+#        Decay multiplier while inside a dungeon or raid map
+#        (Map::IsDungeon). Stacks multiplicatively with RestMultiplier if a
+#        rest area is also an instance. Clamped to 0..10.
+#        Default: 1.00
+#
+HungerThirst.InstanceMultiplier = 1.00
+
+#
+#    HungerThirst.PauseOnTaxi
+#        Suspend decay, warnings and the thirst blur while the player is on a
+#        taxi flight. Thirst state auras already applied stay in place.
+#        Default: 1
+#
+HungerThirst.PauseOnTaxi = 1
+
+#
+#    HungerThirst.PauseInBattleground
+#        Suspend decay, warnings, periodic addon updates and the thirst blur
+#        while the player is in a battleground or arena (the arena switch
+#        below is an additional guard). With both switches at 0, decay,
+#        warnings and blur keep running.
+#        Default: 1
+#
+HungerThirst.PauseInBattleground = 1
+
+#
+#    HungerThirst.PauseInArena
+#        Suspend decay, warnings, periodic addon updates and the thirst blur
+#        while the player is in an arena match. With this and
+#        PauseInBattleground at 0, decay, warnings and blur keep running.
+#        Default: 1
+#
+HungerThirst.PauseInArena = 1
+
+#
+#    HungerThirst.ExemptGMs
+#        Suspend the module for accounts with GM security, including the
+#        thirst blur. Handy while debugging.
+#        Default: 1
+#
+HungerThirst.ExemptGMs = 1
+
+#
+#    HungerThirst.WarningThreshold
+#        Upper bound of the "warning" band, in gauge points. A gauge above
+#        this value is normal; at or below it the player is hungry/thirsty.
+#        In survival mode this is also the threshold at which the hunger
+#        state (satiety) and the thirst state (hydration) begin, see
+#        HungerThirst.HungerStates and HungerThirst.ThirstStates; each state
+#        is removed only when its gauge returns to the normal band,
+#        Hysteresis included. Must be <= 100 and greater than
+#        CriticalThreshold.
+#        Default: 30
+#
+HungerThirst.WarningThreshold = 30
+
+#
+#    HungerThirst.CriticalThreshold
+#        Upper bound of the "critical" band, in gauge points. At or below it
+#        the gauge is very low. Survival thirst treats the warning and
+#        critical bands the same (state 1, spell 25696); hydration at 0 is
+#        empty and uses state 2 (spell 5909). Satiety never uses this band
+#        beyond the warning state. Also used for band labels and advisory
+#        warnings. Must be lower than WarningThreshold.
+#        Default: 10
+#
+HungerThirst.CriticalThreshold = 10
+
+#
+#    HungerThirst.HungerStates
+#        Survival only. When 1 (default), the satiety gauge applies a visible
+#        hunger state:
+#          - satiety at or below WarningThreshold (warning or critical band,
+#            above 0): spell 52749 "Voracious Appetite" with the penalties of
+#            HungerStatePenaltyPct;
+#          - satiety at 0: spell 55316 "Ravenous Hunger" with the penalties
+#            of HungerStarvingPenaltyPct, replacing spell 52749.
+#        Both states reduce movement speed and damage dealt, and increase
+#        damage taken, by their percentage. The state is removed when satiety
+#        returns to the normal band (Hysteresis included), outside survival
+#        mode, and when this option is 0 - hunger then has no gameplay effect
+#        at all. If either spell cannot be patched at startup, states are
+#        disabled and an error is logged.
+#        Default: 1
+#
+HungerThirst.HungerStates = 1
+
+#
+#    HungerThirst.HungerStatePenaltyPct
+#        Survival only, HungerStates=1: penalty while satiety is in the
+#        warning or critical band (above 0). Movement speed and damage dealt
+#        are reduced by this percentage; damage taken is increased by the
+#        same percentage. Clamped to 0..90.
+#        Baked into spell 52749 when the worldserver starts: changing this
+#        value requires a restart, ".reload config" is not enough.
+#        Default: 10.00
+#
+HungerThirst.HungerStatePenaltyPct = 10.00
+
+#
+#    HungerThirst.HungerStarvingPenaltyPct
+#        Survival only, HungerStates=1: penalty while satiety is at 0,
+#        replacing HungerStatePenaltyPct. Movement speed and damage dealt are
+#        reduced by this percentage; damage taken is increased by the same
+#        percentage. Clamped to 0..90.
+#        Baked into spell 55316 when the worldserver starts: changing this
+#        value requires a restart, ".reload config" is not enough.
+#        Default: 30.00
+#
+HungerThirst.HungerStarvingPenaltyPct = 30.00
+
+#
+#    HungerThirst.ThirstStates
+#        Survival only. When 1 (default), the hydration gauge applies a
+#        visible thirst state:
+#          - hydration at or below WarningThreshold (warning or critical
+#            band, above 0): spell 25696 "Drink" with the
+#            penalties of ThirstStatePenaltyPct;
+#          - hydration at 0: spell 5909 "Watered-down Beer" with the
+#            penalties of ThirstDehydratedPenaltyPct, replacing spell 25696.
+#        Both states reduce mana regeneration, magical damage done and
+#        healing done by their percentage. Physical, ranged and pet damage
+#        are unaffected, and so is damage taken. The state is removed when
+#        hydration returns to the normal band (Hysteresis included), outside
+#        survival mode, and when this option is 0 - thirst then has no
+#        gameplay effect at all. If either spell cannot be patched at
+#        startup, states are disabled and an error is logged. The spells
+#        keep their Blizzard names and icons, and their client tooltips keep
+#        the original Blizzard descriptions, which do not match the module
+#        effects. The server cannot rewrite those tooltips without a client
+#        patch: the chat message sent when the state begins is the
+#        authoritative description, and the optional client addon overrides
+#        the tooltips of all four state auras with the real effects and the
+#        remedy (eat or drink). Auras of the legacy thirst spells 43155,
+#        46583, 14869 and 14870 are removed automatically from characters
+#        that still carry them.
+#        Default: 1
+#
+HungerThirst.ThirstStates = 1
+
+#
+#    HungerThirst.ThirstStatePenaltyPct
+#        Survival only, ThirstStates=1: penalty while hydration is in the
+#        warning or critical band (above 0). Mana regeneration (spirit-based
+#        regeneration only, see the header), magical damage done and healing
+#        done are reduced by this percentage. Clamped to 0..90.
+#        Baked into spell 25696 when the worldserver starts: changing this
+#        value requires a restart, ".reload config" is not enough.
+#        Default: 10.00
+#
+HungerThirst.ThirstStatePenaltyPct = 10.00
+
+#
+#    HungerThirst.ThirstDehydratedPenaltyPct
+#        Survival only, ThirstStates=1: penalty while hydration is at 0,
+#        replacing ThirstStatePenaltyPct. Mana regeneration (spirit-based
+#        regeneration only, see the header), magical damage done and healing
+#        done are reduced by this percentage. Clamped to 0..90.
+#        Baked into spell 5909 when the worldserver starts: changing this
+#        value requires a restart, ".reload config" is not enough.
+#        Default: 30.00
+#
+HungerThirst.ThirstDehydratedPenaltyPct = 30.00
+
+#
+#    HungerThirst.ThirstBlurIntervalMs
+#        Survival only, ThirstStates=1: milliseconds between two blur
+#        pulses. The blur is a client-side visual only: it writes the fake
+#        inebriation player field (PLAYER_FAKE_INEBRIATION), with no aura, no
+#        icon and no gameplay effect. No pulse is sent while a pause applies
+#        (dead, state not loaded, duel, or a configured
+#        taxi/battleground/arena/GM pause), in advisory/off mode or with
+#        ThirstStates=0; a pulse in progress is cleared. Values below 1000
+#        are clamped to 1000.
+#        Default: 10000
+#
+HungerThirst.ThirstBlurIntervalMs = 10000
+
+#
+#    HungerThirst.ThirstBlurDurationMs
+#        Survival only, ThirstStates=1: duration of one blur pulse in
+#        milliseconds. The intensity is 35 while hydration is in the warning
+#        or critical band (state 1) and 45 at 0 (state 2). Both values are
+#        below the client's drunk threshold (50): the field is visual only
+#        and does not put the character into the drunk stance and its
+#        unsteady walk animation. Values below 100 are clamped to 100.
+#        Default: 2000
+#
+HungerThirst.ThirstBlurDurationMs = 2000
+
+########################################################################
+# Cold and heat exposure
+#
+# Cold is a third gauge, 0 (comfortable) to 100 (freezing). The band labels
+# are Chilly from 25, Cold from 50 and Freezing from 75; Hysteresis applies
+# on the way down. The gauge is simulated in advisory and survival; the
+# 'Chilled' aura (spell 6136, refreshed every 15 s at 75 or more) and the
+# health drain apply in survival only. Instances are excluded: no cold gain,
+# no aura and no drain inside a dungeon, raid or other instanceable map.
+########################################################################
+
+#
+#    HungerThirst.ExposureEnable
+#        Master switch for cold and heat exposure. When 0 the cold gauge is
+#        frozen at its current value (no gain, no warming) and hot zones have
+#        no effect. The cold gauge is still persisted and reported.
+#        Default: 1
+#
+HungerThirst.ExposureEnable = 1
+
+#
+#    HungerThirst.StartingCold
+#        Cold assigned to a character with no stored row (new character or
+#        first login after installing the module), and the value restored by
+#        ".hungerthirst reset". Clamped to 0..100.
+#        Default: 0.00
+#
+HungerThirst.StartingCold = 0.00
+
+#
+#    HungerThirst.ColdZones
+#        Comma-separated zone IDs in which the cold gauge rises while the
+#        player is exposed. A player is exposed when in a cold zone, outdoors,
+#        not resting and not within 8 yards of a warm fire; indoors or
+#        resting (tavern, city, faction area) counts as shelter, and the
+#        player warms instead. Swimming doubles the cold gain. An empty value
+#        disables cold gain even when ExposureEnable=1.
+#        Default: "1,65,67,210,618"
+#
+HungerThirst.ColdZones = "1,65,67,210,618"
+
+#
+#    HungerThirst.HotZones
+#        Comma-separated zone IDs that count as hot. Heat has no gauge: while
+#        the player is in a hot zone, outdoors, not sheltered and not
+#        drinking, hydration loss is multiplied by HotHydrationMultiplier.
+#        An empty value disables the heat effect.
+#        Default: "3,46,51,440,3483"
+#
+HungerThirst.HotZones = "3,46,51,440,3483"
+
+#
+#    HungerThirst.ColdCampfireEntries
+#        Extra gameobject_template entries treated as a warm fire, on top of
+#        every SPELL_FOCUS game object whose focus id is 4. Entry 2061
+#        (Campfire) is listed explicitly because its stock focus id is 0, and
+#        the focus-id check is kept for maps or custom data that use focus
+#        id 4. A fire only counts within 8 yards and in line of sight. The
+#        probe is a grid visit, so it is cached for 5 seconds while the
+#        player is exposed in a cold zone.
+#        Default: "2061"
+#
+HungerThirst.ColdCampfireEntries = "2061"
+
+#
+#    HungerThirst.ColdSeconds
+#        Seconds needed to go from 0 to 100 cold while exposed. Swimming
+#        halves this effective time. Values below 30 are clamped to 30.
+#        Default: 600
+#
+HungerThirst.ColdSeconds = 600
+
+#
+#    HungerThirst.WarmSeconds
+#        Seconds needed to go from 100 cold back to 0 while warm or
+#        sheltered, that is whenever the player is not exposed. Values below
+#        30 are clamped to 30.
+#        Default: 120
+#
+HungerThirst.WarmSeconds = 120
+
+#
+#    HungerThirst.ColdDrainIntervalMs
+#        Survival only: milliseconds between two health drain ticks at 100
+#        cold while the player is still exposed. Time spent at 100 cold is
+#        accumulated, so a long tick applies the intervals it covers. Values
+#        below 1000 are clamped to 1000.
+#        Default: 5000
+#
+HungerThirst.ColdDrainIntervalMs = 5000
+
+#
+#    HungerThirst.ColdHealthDrainPct
+#        Survival only: percentage of maximum health removed per drain
+#        interval at 100 cold. The drain stops at a floor of 1 % of maximum
+#        health (at least 1 health point), so it cannot kill a character on
+#        its own: there is no death cause and no death log. 0 disables the
+#        drain while keeping the aura and the warnings. Clamped to 0..100.
+#        Default: 1.00
+#
+HungerThirst.ColdHealthDrainPct = 1.00
+
+#
+#    HungerThirst.HotHydrationMultiplier
+#        Hydration loss multiplier in a hot zone for a player who is
+#        outdoors, not sheltered and not drinking (a drink or food-and-drink
+#        aura cast from an item). Clamped to 1..10; 1 disables the effect.
+#        Default: 2.00
+#
+HungerThirst.HotHydrationMultiplier = 2.00
+
+#
+#    HungerThirst.FoodSatietyGain
+#        Satiety restored when a food aura is credited (spell specific FOOD or
+#        FOOD_AND_DRINK). The configured gain is clamped to 0..100 and the
+#        gauge itself to 100.
+#        Default: 30.00
+#
+HungerThirst.FoodSatietyGain = 30.00
+
+#
+#    HungerThirst.DrinkHydrationGain
+#        Hydration restored when a drink aura is credited (spell specific
+#        DRINK or FOOD_AND_DRINK). The configured gain is clamped to 0..100 and
+#        the gauge itself to 100.
+#        Default: 35.00
+#
+HungerThirst.DrinkHydrationGain = 35.00
+
+#
+#    HungerThirst.RestoreCooldownMs
+#        Anti-double-credit window for item-based food/drink only: the same
+#        cast item entry is credited at most once per this window (refresh
+#        callbacks for the same bite are ignored). Auras without a cast item
+#        use AuraCreditCooldownMs instead. Values below 1000 are clamped to
+#        1000.
+#        Default: 1000
+#
+HungerThirst.RestoreCooldownMs = 1000
+
+#
+#    HungerThirst.AuraCreditCooldownMs
+#        Anti-double-credit window for every food/drink aura without a cast
+#        item (feast, gameobject, player-cast aura). The credit is keyed by
+#        (spellId, casterGuid) and the actual window is max(this value, aura
+#        duration), so one feast tick credits a player once, not once per
+#        server tick. Values below 1000 are clamped to 1000.
+#        Default: 30000
+#
+HungerThirst.AuraCreditCooldownMs = 30000
+
+#
+#    HungerThirst.StartingSatiety
+#        Satiety assigned to a character with no stored row (new character or
+#        first login after installing the module). Clamped to 0..100.
+#        Default: 100.00
+#
+HungerThirst.StartingSatiety = 100.00
+
+#
+#    HungerThirst.StartingHydration
+#        Hydration assigned to a character with no stored row. Clamped to
+#        0..100.
+#        Default: 100.00
+#
+HungerThirst.StartingHydration = 100.00
+
+#
+#    HungerThirst.Hysteresis
+#        Points a gauge must gain strictly above the threshold it is leaving
+#        before the band improves. Bands always worsen immediately. 0 disables
+#        hysteresis. Clamped to 0..(100 - WarningThreshold) so a full gauge
+#        can always leave the warning band.
+#        Default: 2.00
+#
+HungerThirst.Hysteresis = 2.00
+
+#
+#    HungerThirst.ShowLoginSummary
+#        Send a two-line chat summary on login: mode, satiety and hydration
+#        with their bands, then cold with its band and the hot-zone note.
+#        The cold band warning is restated when the gauge is at 25 or more.
+#        Skipped when the module is disabled or in mode off.
+#        Default: 1
+#
+HungerThirst.ShowLoginSummary = 1
+
+#
+#    HungerThirst.DebugLog
+#        Emit LOG_DEBUG lines for state load/save, consumable credits and
+#        thirst state/blur transitions.
+#        Default: 0
+#
+HungerThirst.DebugLog = 0
+
+#
+#    HungerThirst.AddonEnable
+#        Send the addon state packet when Enable=1, AddonEnable=1 and the
+#        player's state is loaded. A packet is sent at login even in mode off
+#        (mode=0) so the addon can display "Disabled"; periodic packets only
+#        run while Tick is active (advisory/survival, not paused). The packet
+#        is a CHAT_MSG_WHISPER / LANG_ADDON message sent directly to the
+#        player:
+#
+#            HT<TAB>satiety<TAB>hydration<TAB>mode<TAB>lethal<TAB>loaded<TAB>persistence<TAB>satBand<TAB>hydBand<TAB>cold<TAB>coldBand<TAB>hot
+#
+#        The payload is the prefix plus exactly 11 fields: the first eight
+#        keep their historical positions, and cold, coldBand and hot are
+#        appended, so an older addon that ignores extra fields keeps working.
+#        satiety/hydration/cold use one decimal; mode is 0=off, 1=advisory,
+#        2=survival; hunger/thirst bands are 0=normal, 1=warning, 2=critical,
+#        3=empty; coldBand is 0=comfortable, 1=chilly, 2=cold, 3=freezing;
+#        hot is 0/1; lethal is reserved for addon compatibility and always
+#        sent as 0; loaded/persistence are 0/1. No colors.
+#        Default: 1
+#
+HungerThirst.AddonEnable = 1
+
+#
+#    HungerThirst.AddonUpdateIntervalMs
+#        Periodic addon packet cadence in milliseconds while Tick is active.
+#        The login snapshot is sent immediately. Values below 1000 are clamped
+#        to 1000.
+#        Default: 1000
+#
+HungerThirst.AddonUpdateIntervalMs = 1000
+
+#
+#    HungerThirst.AddonPrefix
+#        Prefix written as the first tab-separated field of the addon packet.
+#        Must match the addon's prefix. An empty value falls back to "HT".
+#        Default: HT
+#
+HungerThirst.AddonPrefix = "HT"

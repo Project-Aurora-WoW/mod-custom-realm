@@ -1,0 +1,89 @@
+[worldserver]
+
+############################################
+#    First Login AIO configuration         #
+############################################
+
+###################################################################################################
+#   FirstLogin.Enable
+#       Description: Enable First Login Scripts
+#       Default: 1 (enabled)
+#                0 (disabled)
+
+FirstLogin.Enable = 1
+
+#   FirstLogin.Announce
+#       Description: Announce Module
+#       Default: 1 (enabled)
+#                0 (disabled)
+
+FirstLogin.Announce = 1
+
+#   FirstLogin.StableSlots
+#       Description: Starting StableSlots for hunters (0-4)
+#       Default: 0 (disabled)
+#                1-4 (enabled)
+
+FirstLogin.StableSlots = 0
+
+#   FirstLogin.Pet
+#       Description: New players of class Hunter gain a random pet
+#       Default: 0 (disabled)
+#                1 (enabled)
+
+FirstLogin.Pet = 0
+
+#   FirstLogin.RandPetName
+#       Description: Set random Petname for generated pet
+#       Default: 0 (disabled)
+#                1 (generate name randomly)
+#                2 (generate name out of 2 halves from db)
+
+FirstLogin.RandPetName = 0
+
+#   FirstLogin.LearnPetSpells
+#       Description: New players of class Hunter learn spells to manage their pets
+#       Default: 0 (disabled)
+#                1 (enabled)
+
+FirstLogin.LearnPetSpells = 0
+
+#   FirstLogin.WarlockMinion
+#       Description: Specifies the minions warlocks can start with and teaches them the according spell
+#                    Note that minion spells also have a minimum level and might not have any spells on low levels
+#                    This is a bitmask value of the following options
+#
+#                    1 - Imp
+#                    2 - Voidwalker
+#                    4 - Succubus
+#                    8 - Felhunter
+#                   16 - Felguard (only possible starting minion, does not teach spell)
+#                   32 - Drain Soul (teaches spell, required for Soul Shards)
+#
+#       Example:    41 - Imp, Felhunter, Drain Soul
+#                    0 - disabled
+#
+#       Default:    0
+
+FirstLogin.WarlockMinion = 0
+
+#   FirstLogin.BankSlots
+#       Description: Number of unlocked BankSlots for new players (0-7)
+#       Default: 0 (disabled)
+#                1-7 (enabled)
+
+FirstLogin.BankSlots = 0
+
+#   FirstLogin.BagID
+#       Description: ItemID of bag for BankSlots
+#       Default: 0 (disabled)
+#                id (Item)
+
+FirstLogin.BagID = 0
+
+#   FirstLogin.DualSpec
+#       Description: New players have DualSpec
+#       Default: 0 (disabled)
+#                1 (enabled)
+
+FirstLogin.DualSpec = 0

@@ -53,78 +53,25 @@ else
 fi
 
 # ------------------------------------------------------------
-# 2. Модули (mod-ale вендорен в modules/, остальные — рекомендованные)
+# 2. Модули (все вендорены в modules/ этого репо)
 # ------------------------------------------------------------
-# mod-ale (AzerothCore Lua Engine, форк Eluna) ВЕНДОРЕН прямо в этот репо:
-# modules/mod-ale — внешние клоны не используются (подробности modules/README.md).
-# Остальные внешние модули перечислены ниже; версии зафиксированы в MOD_PIN.
-
-MODULES=(
-  "mod-ah-bot|https://github.com/azerothcore/mod-ah-bot|"
-  "mod-transmog|https://github.com/azerothcore/mod-transmog|"
-  "mod-cfbg|https://github.com/azerothcore/mod-cfbg|"
-  "mod-duel-reset|https://github.com/azerothcore/mod-duel-reset|"
-  "mod-solocraft|https://github.com/azerothcore/mod-solocraft|"
-  "mod-firstlogin-aio|https://github.com/Gozzim/mod-FirstLogin-AIO.git|"
-  "mod-individual-xp|https://github.com/azerothcore/mod-individual-xp|"
-  "mod-starter-guild|https://github.com/Turor/mod-starter-guild.git|"
-  "mod-dungeonmaster|https://github.com/Turor/mod-dungeonmaster.git|"
-  "mod-ah-bot-plus|https://github.com/NathanHandley/mod-ah-bot-plus.git|"
-  "mod-hunger-thirst|https://github.com/Phanty78/mod-hunger-thirst.git|"
-  "mod-warband-camp|https://github.com/Ildourol/mod-warband-camp.git|"
-  "mod-forever-journal|https://github.com/buildthehomelab/wow-mod-forever-journal.git|"
-  "mod-archaeology|https://github.com/buildthehomelab/wow-mod-archaeology.git|"
-)
-
-# ---- ПИННИНГ ВЕРСИЙ МОДУЛЕЙ (воспроизводимость сборки) ----
-# Каждый внешний модуль зафиксирован на конкретном SHA его ветки по умолчанию.
-# Пин обеспевает: одинаковое дерево модулей при каждой сборке и обновление
-# только осознанным изменением этого коммита (а не незаметным git pull).
-# Обновить модуль: заменить SHA ниже на новый HEAD модуля.
-# Вендоренный mod-ale здесь не пинится (и не клонируется): он лежит в modules/mod-ale
-# этого репо и копируется в ядро при сборке (см. цикл ниже).
-declare -A MOD_PIN=(
-  ["mod-ah-bot"]=c11d8318cbd8714a9980f9464f78e07d3d48a70a
-  ["mod-transmog"]=d309745c9151ff2ea4202204c1efa991848414bf
-  ["mod-cfbg"]=78771c6d0d9d5fcd80206eaeb9668452adcbf4ee
-  ["mod-duel-reset"]=f2c67d4d82b79cefccfc89a4696a428529cf8cfd
-  ["mod-solocraft"]=59588838988d1b74111d26670d99d0e649014b93
-  ["mod-firstlogin-aio"]=9c425d21f2f40629fa140a3634c12cabace8e221
-  ["mod-individual-xp"]=1e7640aac09a62a5ca521456aff71e45fa915155
-  ["mod-starter-guild"]=6012bc460c51f8cfc44344f67802b3efd66bdd5a
-  ["mod-dungeonmaster"]=fd353a9200472dd277935ba9d06c9fec6e53f632
-  ["mod-ah-bot-plus"]=f685832994c825f90aa5a3dc0e1620aa568e875b
-  ["mod-hunger-thirst"]=0a7e95fe581726e4d0a255532a9a302a75c7fb07
-  ["mod-warband-camp"]=02d7c3568ce09539b9ed4c45e1c19b2ba1bd0d0e
-  ["mod-forever-journal"]=36d0f1d4c12f96259bd30ec0681feac2fac73058
-  ["mod-archaeology"]=5cc73856029bfe4dc010ec3bc19061e328052265
-)
+# КАЖДЫЙ модуль сборки живёт в modules/ этого репозитория (снапшоты без .git):
+#   echo-*                 — наши C++-модули реалма
+#   mod-ale                — вендоренный форк ALE (AzerothCore Lua Engine)
+#   mod-ah-bot, mod-transmog, ... — внешние модули, зафиксированные копированием
+# Поскольку модули лежат в репо, сборка не зависит от интернета/upstream
+# и воспроизводима «как есть». Источник версий — этот репозиторий, а не git-клоны.
+# ПРИМЕЧАНИЕ о пиннинге: ранее внешние модули клонировались по SHA (MOD_PIN).
+# Теперь они вендорены в modules/ (без .git) — версия фиксируется самим
+# содержимым каталога. Чтобы обновить модуль, замените его каталог в modules/
+# свежим снапшотом upstream и закоммитьте.
 mkdir -p "$CORE_DIR/modules"
-for entry in "${MODULES[@]}"; do
-  name="${entry%%|*}"
-  rest="${entry#*|}"
-  url="${rest%%|*}"
-  fallback="${rest#*|}"
-  dest="$CORE_DIR/modules/$name"
-  if [ -d "$dest/.git" ]; then
-    log "Модуль $name: уже установлен"
-    continue
-  fi
-  log "Модуль $name: клонирование из $url ..."
-  if ! git clone "$url" "$dest" 2>/dev/null; then
-    rm -rf "$dest"
-    if [ -n "$fallback" ] && [ "$fallback" != "$url" ]; then
-      log "Модуль $name: зеркало недоступно, fallback на $fallback ..."
-      git clone "$fallback" "$dest"
-    else
-      fail "Модуль $name: клонирование не удалось ($url)"
-    fi
-  fi
-  pin="${MOD_PIN[$name]:-}"
-  if [ -n "$pin" ]; then
-    log "Модуль $name: пиним на $pin"
-    git -C "$dest" checkout -q "$pin" || fail "Модуль $name: не удалось переключиться на $pin"
-  fi
+for mod in "$REALM_DIR"/modules/*/; do
+  name="$(basename "$mod")"
+  [ -d "$mod" ] || continue
+  log "Модуль $name: копирование из репо в ядро ..."
+  rm -rf "$CORE_DIR/modules/$name"
+  cp -R "$mod" "$CORE_DIR/modules/$name"
 done
 
 # ---- mod-warband-camp: лор-адаптация (чёрные зоны) ----
@@ -151,21 +98,13 @@ WBCONF
   fi
 fi
 
-# Кастомные модули реалма (echo-* + вендоренный mod-ale) копируются в ядро —
-# модульная система AC соберёт их вместе с ядром.
+# Кастомные модули реалма уже скопированы в ядро циклом выше (for mod in modules/*/).
 # Иерархия загрузки (полная схема — modules/README.md):
 #   1. C++-модули по алфавиту каталогов: echo-* (до mod-*) → mod-ale → прочие mod-*
 #      echo-balance → echo-challenge-modes → echo-campaigns → echo-economy
 #      → echo-pve → echo-pvp → echo-startup → mod-ale
 #   2. ALE грузит lua_scripts/: init.ext (первым), затем *.lua.
 #      Реестр кампаний — 00_CampaignRegistry.ext (гарантированно до всех .lua).
-for mod in echo-attune echo-balance echo-challenge-modes echo-campaigns echo-economy echo-pve echo-pvp echo-startup mod-ale; do
-  if [ -d "$REALM_DIR/modules/$mod" ]; then
-    log "Кастомный модуль $mod: копирование в ядро ..."
-    rm -rf "$CORE_DIR/modules/$mod"
-    cp -R "$REALM_DIR/modules/$mod" "$CORE_DIR/modules/$mod"
-  fi
-done
 
 # ------------------------------------------------------------
 # 3. Сборка
