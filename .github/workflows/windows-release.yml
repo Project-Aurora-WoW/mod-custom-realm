@@ -2,10 +2,10 @@
 # windows-release.yml — Windows-сборка ядра с модулями реалма,
 # генерация релиз-артефакта и публикация в GitHub Releases
 #
-# Проект "mod-custom-realm" — моно-репозиторий: кастомные C++-модули
-# echo-* подключаются к мастер-копии azerothcore-wotlk. Этот workflow
-# собирает ядро С модулями на Windows (MSVC) и публикует готовый
-# дистрибутив сервера как релиз.
+# Проект "mod-custom-realm" — моно-репозиторий: ВСЕ модули сборки (echo-*,
+# mod-ale, внешние mod-*) вендорены в modules/ и копируются в
+# мастер-копию azerothcore-wotlk. Этот workflow собирает ядро С модулями
+# на Windows (MSVC) и публикует готовый дистрибутив сервера как релиз.
 #
 # Примени, когда нужен бинарный релиз Windows:
 #   • вручную: Actions → windows-release → Run workflow (можно задать тег);
@@ -15,8 +15,9 @@
 # раскладка AC (bin/, etc/, data/, lib/), дополненная lua_scripts/
 # и модульными конфигами. Упаковывается в .zip и публикуется в Release.
 #
-# Entre структуры используется composite action .github/actions/setup-tree
-# (общий с core-build.yml): checkout мастер-ядра + модули echo-* + mod-ale.
+# Структура использует composite action .github/actions/setup-tree
+# (общий с core-build.yml): checkout мастер-ядра + встройка ВСЕХ
+# вендоренных модулей (echo-*, mod-ale, mod-*) из modules/ репо.
 # ============================================================
 
 name: windows-release
@@ -208,8 +209,9 @@ jobs:
           body: |
             ## Azeroth: Эхо Пустоты — сборка ядра (Windows)
 
-            Автоматически собранный дистрибутив `azerothcore-wotlk` с модулями реалма
-            (`modules/echo-*`) и Lua-движком ALE (`mod-ale`). Готов к развёртыванию.
+            Автоматически собранный дистрибутив `azerothcore-wotlk` со всеми модулями
+            реалма (вендорены в `modules/`: `echo-*`, `mod-ale`, внешние `mod-*`).
+            Готов к развёртыванию.
 
             **Содержимое архива (env/dist):**
             - `bin/` — `authserver.exe`, `worldserver.exe` + `lua_scripts/`
@@ -223,8 +225,8 @@ jobs:
             ---
             ## Azeroth: Echo of the Void — core build (Windows)
 
-            Auto-built `azerothcore-wotlk` distribution with the realm modules
-            (`modules/echo-*`) and the ALE Lua engine (`mod-ale`). Ready to deploy.
+            Auto-built `azerothcore-wotlk` distribution with all the realm modules
+            (vendored in `modules/`: `echo-*`, `mod-ale`, external `mod-*`). Ready to deploy.
 
             **Archive contents (env/dist):** `bin/` (authserver.exe, worldserver.exe +
             lua_scripts/), `etc/` (server configs incl. `modules/*.conf.dist`), `data/`, `lib/`.

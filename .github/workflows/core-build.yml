@@ -1,15 +1,16 @@
 # ============================================================
 # core-build.yml — эмуляция мастер-сборки AzerothCore с модулями реалма
 #
-# Проект "mod-custom-realm" — моно-репозиторий: C++-модули лежат в
-# modules/echo-* и подключаются к мастер-копии azerothcore-wotlk
+# Проект "mod-custom-realm" — моно-репозиторий: ВСЕ модули сборки лежат в
+# modules/ (echo-*, mod-ale, внешние mod-* — снапшоты без .git) и
+# копируются в мастер-копию azerothcore-wotlk
 # (https://github.com/azerothcore/azerothcore-wotlk.git, ветка master).
 #
 # Что делает этот workflow:
 #   1. Подготавливает дерево (composite action .github/actions/setup-tree):
 #        - клонирует мастер-ядро AC (submodules recursive);
-#        - встраивает все кастомные модули echo-* в <core>/modules/;
-#        - монтирует mod-ale (обязательный Lua-движок ALE);
+#        - встраивает ВСЕ вендоренные модули (echo-*, mod-ale, mod-*)
+#          из modules/ репо в <core>/modules/;
 #        - прокидывает lua_scripts/ для dry-run.
 #   2. Собирает ядро на Linux (clang, ccache, SCRIPTS=static, MODULES=static)
 #      И на Windows (MSVC, via ./acore.sh compiler build).
@@ -19,7 +20,7 @@
 #
 # == Самостоятельный workflow, а не azerothcore/reusable-workflows ==
 # Официальный reusable-workflow (core_build_modules.yml) рассчитан на ОДИН
-# модуль в корне репозитория. Здесь модулей семь (modules/echo-*),
+# модуль в корне репозитория. Здесь модулей много (все вендорены в modules/),
 # поэтому сборка повторяет шаги мастер-ядра AC напрямую.
 # ============================================================
 
