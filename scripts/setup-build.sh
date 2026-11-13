@@ -53,16 +53,13 @@ else
 fi
 
 # ------------------------------------------------------------
-# 2. Модули (mod-ale обязателен, остальные — рекомендованные)
+# 2. Модули (mod-ale вендорен в modules/, остальные — рекомендованные)
 # ------------------------------------------------------------
-# mod-ale (AzerothCore Lua Engine, форк Eluna): референс —
-# azerothcore/mod-ale на GitHub; в SourceCraft клон m-orlovrus59/mod-ale.
-# Переопределение URL: переменная окружения ALE_URL.
-ALE_URL="${ALE_URL:-https://git.sourcecraft.dev/m-orlovrus59/mod-ale.git}"
-ALE_FALLBACK_URL="https://github.com/azerothcore/mod-ale.git"
+# mod-ale (AzerothCore Lua Engine, форк Eluna) ВЕНДОРЕН прямо в этот репо:
+# modules/mod-ale — внешние клоны не используются (подробности modules/README.md).
+# Остальные внешние модули перечислены ниже; версии зафиксированы в MOD_PIN.
 
 MODULES=(
-  "mod-ale|$ALE_URL|$ALE_FALLBACK_URL"
   "mod-ah-bot|https://github.com/azerothcore/mod-ah-bot|"
   "mod-transmog|https://github.com/azerothcore/mod-transmog|"
   "mod-cfbg|https://github.com/azerothcore/mod-cfbg|"
@@ -84,9 +81,8 @@ MODULES=(
 # Пин обеспевает: одинаковое дерево модулей при каждой сборке и обновление
 # только осознанным изменением этого коммита (а не незаметным git pull).
 # Обновить модуль: заменить SHA ниже на новый HEAD модуля.
-# mod-ale НЕ пинится намеренно: он клонируется из SourceCraft (m-orlovrus59/mod-ale,
-# приватный реестр авторизацией) с fallback на GitHub — SHA в реестре SourceCraft
-# нестабилен между сессиями и недоступен без доступа к SourceCraft.
+# Вендоренный mod-ale здесь не пинится (и не клонируется): он лежит в modules/mod-ale
+# этого репо и копируется в ядро при сборке (см. цикл ниже).
 declare -A MOD_PIN=(
   ["mod-ah-bot"]=c11d8318cbd8714a9980f9464f78e07d3d48a70a
   ["mod-transmog"]=d309745c9151ff2ea4202204c1efa991848414bf
@@ -155,15 +151,15 @@ WBCONF
   fi
 fi
 
-# Кастомные C++-модули реалма (modules/echo-*) копируются в ядро —
-# модульная система AC соберёт их вместе с ядром и mod-ale.
+# Кастомные модули реалма (echo-* + вендоренный mod-ale) копируются в ядро —
+# модульная система AC соберёт их вместе с ядром.
 # Иерархия загрузки (полная схема — modules/README.md):
 #   1. C++-модули по алфавиту каталогов: echo-* (до mod-*) → mod-ale → прочие mod-*
 #      echo-balance → echo-challenge-modes → echo-campaigns → echo-economy
-#      → echo-pve → echo-pvp → echo-startup
+#      → echo-pve → echo-pvp → echo-startup → mod-ale
 #   2. ALE грузит lua_scripts/: init.ext (первым), затем *.lua.
 #      Реестр кампаний — 00_CampaignRegistry.ext (гарантированно до всех .lua).
-for mod in echo-balance echo-challenge-modes echo-campaigns echo-economy echo-pve echo-pvp echo-startup; do
+for mod in echo-balance echo-challenge-modes echo-campaigns echo-economy echo-pve echo-pvp echo-startup mod-ale; do
   if [ -d "$REALM_DIR/modules/$mod" ]; then
     log "Кастомный модуль $mod: копирование в ядро ..."
     rm -rf "$CORE_DIR/modules/$mod"

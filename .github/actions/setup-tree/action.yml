@@ -38,30 +38,23 @@ runs:
         submodules: recursive
         path: realm
 
-    # ---- Встройка кастомных модулей echo-* ----
+    # ---- Встройка кастомных модулей реалма (echo-* + вендоренный mod-ale) ----
+    # Все кастомные модули реалма живут в modules/ этого репо и копируются
+    # в ядро при сборке — внешние клоны модулей реалма не используются.
+    # mod-ale обязателен: без него lua_scripts/ не загружаются вовсе.
     - name: Install realm modules into the core
       shell: bash
       run: |
         set -euo pipefail
         for mod in echo-balance echo-challenge-modes echo-campaigns echo-economy \
-                   echo-pve echo-pvp echo-startup; do
+                   echo-pve echo-pvp echo-startup mod-ale; do
           if [ -d "realm/modules/$mod" ]; then
             rm -rf "azerothcore-wotlk/modules/$mod"
             cp -R "realm/modules/$mod" "azerothcore-wotlk/modules/$mod"
           fi
         done
         echo "Installed realm modules:"
-        ls -1 azerothcore-wotlk/modules/ | grep '^echo-'
-
-    # ---- mod-ale (обязательный Lua-движок ALE) ----
-    # Ядро без mod-ale собирается, но lua_scripts/ не загружаются вовсе.
-    - name: Checkout mod-ale (Lua engine ALE)
-      uses: actions/checkout@v4
-      with:
-        repository: azerothcore/mod-ale
-        ref: master
-        submodules: recursive
-        path: azerothcore-wotlk/modules/mod-ale
+        ls -1 azerothcore-wotlk/modules/ | grep -E '^(echo-|mod-ale)'
 
     # ---- Стандартные модули AC (Фаза 5.1) ----
     # Параллельно local setup-build.sh (scripts/setup-build.sh). Каждый модуль —
@@ -129,9 +122,17 @@ runs:
           # lua-5.2.4/ и содержит src/lua.c). www.lua.org заблокирован (код 35).
           curl -fsSL -o "$GITHUB_WORKSPACE/lua-5.2.4.tar.gz" \
             https://github.com/LuaDist/lua/archive/refs/tags/5.2.4.tar.gz
-          mkdir -p "$GITHUB_WORKSPACE/_lua_extract"
-          tar -xzf "$GITHUB_WORKSPACE/lua-5.2.4.tar.gz" -C "$GITHUB_WORKSPACE/_lua_extract"
-          mv "$GITHUB_WORKSPACE/_lua_extract/lua-5.2.4" "$LUA_SRC"
+          # Распаковка через Python, а не tar: на Windows-раннере $GITHUB_WORKSPACE
+          # = D:\\a\\... и GNU tar путает "D:" с удалённым узлом
+          # ("Cannot connect to D: resolve failed"). shutil.unpack_archive
+          # кросс-платформенный и не зависит от буквы диска.
+          python - <<'PY'
+          import shutil, os
+          ws = os.environ["GITHUB_WORKSPACE"]
+          shutil.unpack_archive(os.path.join(ws, "lua-5.2.4.tar.gz"), os.path.join(ws, "_lua_extract"))
+          shutil.move(os.path.join(ws, "_lua_extract", "lua-5.2.4"), os.path.join(ws, "lua-5.2.4"))
+          PY
+          rm -rf "$GITHUB_WORKSPACE/_lua_extract"
         fi
         test -f "$LUA_SRC/src/lua.c" || { echo "missing $LUA_SRC/src/lua.c"; exit 1; }
         {
