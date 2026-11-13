@@ -60,6 +60,13 @@ jobs:
       - name: Setup tree (core + realm modules + mod-ale)
         uses: ./.github/actions/setup-tree
 
+      # ---- Проверка конвенций порядка загрузки lua_scripts/ ----
+      # mod-ale грузит .ext раньше .lua и падает на дубликатах имён файлов.
+      # Чекер ловит эти нарушения до сборки/запуска (scripts/check-lua-order.sh).
+      - name: Check lua_scripts load-order conventions
+        shell: bash
+        run: bash scripts/check-lua-order.sh
+
       # ---- Кэш ccache (по компилятору/ветке/sha, как у AC) ----
       - name: Cache ccache
         uses: actions/cache@v4

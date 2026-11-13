@@ -17,11 +17,35 @@ EchoCampaigns.CommandSource = both
 # (acore_characters, миграция 0013).
 EchoCampaigns.EnableLogging = 1
 
-# Порядок запуска подсистем реалма (информационно, проверяется
-# при загрузке и пишется в лог):
+# Порядок запуска подсистем реалма (информационно, пишется в лог при старте).
+#
+# ВАЖНО про порядок загрузки Lua-скриптов: он НЕ настраивается этим конфигом
+# и не управляется из C++-модуля. Порядок жёстко задаёт движок mod-ale
+# (LuaEngine.cpp, RunScripts):
+#   1) сначала ВСЕ файлы с расширением .ext (реестры), затем ВСЕ .lua;
+#   2) внутри каждой группы — СТРОГО АЛФАВИТНЫЙ порядок по имени файла
+#      (ScriptPathComparator: std::less по полному пути).
+# Поэтому контроль порядка достигается ТОЛЬКО префиксами имён файлов
+# (NN_*): чем меньше числовой префикс, тем раньше файл загружается,
+# а .ext (реестры 00_) гарантированно грузятся раньше любых .lua.
+#
+# Фактический порядок загрузки lua_scripts/ (алфавитный, для сведения):
+#   .ext: 00_CampaignRegistry.ext, 00_LoreRegistry.ext
+#   .lua: 05_VoidAuras, 06_WaloriaRewards, 07_StartingZone, 08_ClientFixes,
+#         09_WorldChat, 10_EventSystem, 11_FixGear, 12_ZoneRestrictor,
+#         13_AccountMounts, 14_AutoLearnSkills, 15_Enchanter, 16_GoldStorage,
+#         17_TimeRift, 18_VoidCorruption, 19_PlayedTimeRewards, 20_PvpSystem,
+#         21_FactionChanger, 22_SanctuaryPvP, 23_WeaponMaster, 24_Lottery,
+#         25_SkipDkStarter, 26_PrayerAltar, 27_Classless(+Client),
+#         28_RandomEnchant, 29_Parangon, 30_(PaladinBlessings/PvpShop),
+#         31_PvpFullLoot, 32_TreasureChest, 33_DuelBet, 34_VipSystem,
+#         35_BandPerformance, 36_BandQuest, 37_BandMap(+Client),
+#         38_BandMapClient, 39_EchoWorldsoul, 40_CampaignWindow,
+#         AddonBridge, AIO, Campaign1-4, CampaignManager, LoreArchive,
+#         PortalGuardian, Store_*, WelcomeSystem, WorldChat, gpt_npc, queue.
+# Числа с большим приоритетом (кампании 39/40, служебные модули) — позже.
+# Схема C++-подсистем:
 #   1. echo-balance     (C++ UnitScript — баланс урона/лечения)
 #   2. echo-campaigns   (C++ команды + контроль порядка)
 #   3. mod-ale          (Lua-движок ALE)
-#   4. 00_CampaignRegistry.ext -> CampaignManager.lua -> Campaign1-4.lua
-#      -> LoreArchive.lua -> EventSystem -> PvpSystem -> PvpShop -> AddonBridge
 EchoCampaigns.CheckLoadOrder = 1
