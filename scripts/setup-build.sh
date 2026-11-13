@@ -159,7 +159,7 @@ fi
 #      → echo-pve → echo-pvp → echo-startup → mod-ale
 #   2. ALE грузит lua_scripts/: init.ext (первым), затем *.lua.
 #      Реестр кампаний — 00_CampaignRegistry.ext (гарантированно до всех .lua).
-for mod in echo-balance echo-challenge-modes echo-campaigns echo-economy echo-pve echo-pvp echo-startup mod-ale; do
+for mod in echo-attune echo-balance echo-challenge-modes echo-campaigns echo-economy echo-pve echo-pvp echo-startup mod-ale; do
   if [ -d "$REALM_DIR/modules/$mod" ]; then
     log "Кастомный модуль $mod: копирование в ядро ..."
     rm -rf "$CORE_DIR/modules/$mod"

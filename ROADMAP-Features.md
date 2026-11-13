@@ -74,6 +74,13 @@
 - [x] `.parangon` показывает/повышает уровень.
 - [x] Ауры стакаются корректно, вывод через GossipSetText (SMSG 384 via `CreatePacket`).
 
+### 3.1b Параллельная кампания «Мировая Душа» / Parallel campaign "Worldsoul"
+**Источник / Source:** идея-референс [`vibecoder99-cmd/echoes-of-the-worldsoul`](https://github.com/vibecoder99-cmd/echoes-of-the-worldsoul) (GPL-3.0) — перенос механик на наш Lua/C++-контур, **без** их MPQ/DBC и без наложения на весь мир.
+**Где / Where:** `lua_scripts/39_EchoWorldsoul.lua` + `sql/world/0041_echo_worldsoul.sql` + `modules/echo-attune/` (C++-модуль, пересборка ядра).
+**Что / What:** параллельная арка поверх основных 4 кампаний (не требует токенов прошлых арок). Механики: Essence (валюта) → Mastery (ранг) → Crucible (инвестиции), World Threat (риск/награда), пер-предметный Attunement по GUID (C++-модуль `echo-attune`), Forge (растворение) + Rack (пассивный аттюнмент).
+**Статус / Status:** 🔧 Разработано (каркас): SQL-миграция 0041 (таблицы `realm_echo_*`, НПС 70601–70603), Lua-скрипт (essence/mastery/crucible/threat/forge/rack меню, luaparse OK), C++-модуль `echo-attune` (хуки Equip/Unequip/OnSessionUpdate/Logout, per-item кэш, flush в `realm_echo_attune`). Требует проверки сборки ядра (пересборка) и игрового теста.
+**Вердикт по референсу / Verdict:** репо Echoes не интегрируется как есть (клиентский MPQ/DBC ≠ политика проекта, аккаунт-оверхол поверх баланса Classless+Parangon) — реализуем параллельной кампанией на собственных механиках.
+
 ### 3.2 Classless — полная версия / Classless full version
 **Источник / Source:** TODO Backlog `Classless — полная версия`.
 **Где / Where:** `lua_scripts/27_Classless.lua` + `27_ClasslessClient.lua` (AIO-UI) + `sql/world/0030_classless_full.sql` (колонка `talents`) + `0039_classless_hero.sql` (колонка `hero`).

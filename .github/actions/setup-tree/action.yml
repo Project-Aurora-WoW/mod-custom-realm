@@ -46,7 +46,7 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        for mod in echo-balance echo-challenge-modes echo-campaigns echo-economy \
+        for mod in echo-attune echo-balance echo-challenge-modes echo-campaigns echo-economy \
                    echo-pve echo-pvp echo-startup mod-ale; do
           if [ -d "realm/modules/$mod" ]; then
             rm -rf "azerothcore-wotlk/modules/$mod"
