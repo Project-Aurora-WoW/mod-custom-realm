@@ -50,12 +50,15 @@ git clone https://github.com/azerothcore/azerothcore-wotlk.git
 cd azerothcore-wotlk
 git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb
 
-# Скриптовый движок ALE — ОБЯЗАТЕЛЬНО
-git clone https://github.com/azerothcore/mod-ale.git modules/mod-ale
-cd modules/mod-ale && git checkout 84b85cc55980dbf67d596f3d5cb34ded10c59102 && cd ../..
+# Скриптовый движок ALE — ВЕНДОРЕН в modules/ репо (не клонируется)
 
-# Модули реалма из ЭТОГО репозитория (modules/echo-*):
-#   скопировать каталоги modules/echo-* в azerothcore-wotlk/modules/
+# Все модули реалма (echo-*, mod-ale, внешние mod-*) — в modules/ ЭТОГО репозитория.
+# Скопировать ВСЕ модули в ядро (в Git Bash):
+for d in ../mod-custom-realm/modules/*/; do
+  name="$(basename "$d")"
+  rm -rf "modules/$name"
+  cp -R "$d" "modules/$name"
+done
 ```
 
 > **Про mod-ale:** ALE использует внутренние API AzerothCore и несовместим с

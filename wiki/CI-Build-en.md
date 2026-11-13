@@ -11,7 +11,7 @@ The repo has two workflows in `.github/workflows/`:
 
 | Workflow | When it runs | What it does |
 |----------|--------------|--------------|
-| `core-build.yml` | push/PR on `main`/`master` | Master-build emulation: Linux (clang) + Windows (MSVC), core + 7 modules + mod-ale, server dry-run |
+| `core-build.yml` | push/PR on `main`/`master` | Master-build emulation: Linux (clang) + Windows (MSVC), core + all vendored modules from `modules/` + mod-ale, server dry-run |
 | `windows-release.yml` | manual (workflow_dispatch, with tag) or push tag `v*` | Windows build + release artifact (.zip) + publish to GitHub Releases |
 
 Common tree preparation is in the composite action `.github/actions/setup-tree`.
@@ -36,7 +36,7 @@ Common tree preparation is in the composite action `.github/actions/setup-tree`.
 Flow:
 
 1. `setup-tree` clones `azerothcore/azerothcore-wotlk@master`, embeds
-   `modules/echo-*` (all 7) and `mod-ale`, copies `lua_scripts/`.
+   all vendored modules from `modules/` (`echo-*`, `mod-ale`, external `mod-*`), copies `lua_scripts/`.
 2. **Linux job** (`ubuntu-26.04`, clang-20 + ccache):
    - CMake `SCRIPTS=static`, `MODULES=static`, `-Werror`, Release;
    - build → install → dry-run `authserver`/`worldserver` → check `Errors.log` → unit tests.

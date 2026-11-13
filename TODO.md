@@ -8,7 +8,7 @@
 > completed work moves to "Done" with its commit hash, new tasks are added to
 > the current backlog.
 >
-> Дата последнего обновления / Last updated: 2026-11-11
+> Дата последнего обновления / Last updated: 2026-11-13
 
 ---
 
@@ -31,17 +31,25 @@
 | (не закоммичено / not committed) | **Наполнение магазина (1.1)**: VIP-категория id 8 доступна с ранга 1, титул/бафф связаны с VIP, VIP-эксклюзив «Печать Бездны» (услуга 20, спелл 70051) за Жетоны (`0038_store_vip_expansion.sql`); `Store_Server.lua` отдаёт `accountRank = max(GM, VIP)` из `realm_vip` для фильтра `requiredRank` в клиенте. Маунт за Жетоны и `SERVER_HANDLED` уже были в 0020/0026. / **Store expansion (1.1)**: VIP category id 8 rank≥1, title/buff linked to VIP, VIP-exclusive "Seal of the Void" service (20, spell 70051) for Tokens (`0038`); `Store_Server.lua` returns `accountRank = max(GM, VIP)`. |
 | (не закоммичено / not committed) | **Миграция PvP-шопа (1.2)**: ассортимент уже в AIO (0027, категория 10); старый НПС-шоп (`30_PvpShop.lua`) отключён guard'ом `REG.shop.enabled=false` — без дублирования НПС, фолбэк при отсутствии AIO-клиента. / **PvP shop migration (1.2)**: wares already in AIO (0027, cat 10); legacy NPS shop disabled via `REG.shop.enabled=false`. |
 | (не закоммичено / not committed) | **CI/эмуляция мастер-сборки** (`.github/`): `.github/workflows/core-build.yml` (Linux clang + Windows MSVC, CCP-clone master+модули+mod-ale, dry-run), `.github/actions/setup-tree/action.yml`. / **CI / master-build emulation** (`.github/`): `.github/workflows/core-build.yml` (Linux clang + Windows MSVC, master clone+modules+mod-ale, dry-run), `.github/actions/setup-tree/action.yml`. |
+| `d12691d`,`3af8980` | **Принудительное окно выбора кампании** (2026-11): сервер `40_CampaignWindow.lua` + `realm_campaign_profile` (0042), клиент `CampaignWindow.lua`, клиентский обработчик OnPlayerCreate (флаг force_show_window). / **Forced campaign-select window** (2026-11): server `40_CampaignWindow.lua` + `realm_campaign_profile` (0042), client `CampaignWindow.lua`. |
+| `a6a8dd9` | **Переименование export-функций echo-***: `AddEcho*Scripts` → `Addecho_<dir>Scripts` — имена, которые ждёт свежий сборщик AC (ModulesLoader). / **Rename echo-* script loaders** to `Addecho_<dir>Scripts` (AC macro derives name from module dir, lowercase). |
+| `8665aca` | **Клиентский zip AzerothEcho обновлён** до всех файлов (добавлены `Lore.lua`, `CampaignWindow.lua`); manifest v5. / **AzerothEcho client zip refreshed** (add Lore.lua + CampaignWindow.lua), manifest v5. |
+| `2c0cc0d` | **Панель-хаб AzerothEcho**: `Hub.lua` — кнопки-ссылки на аддоны Journal и ArchaeologyUI (через их публичные API); manifest v6. / **AzerothEcho hub panel**: `Hub.lua` links to Journal and ArchaeologyUI; manifest v6. |
+| `9f95550` | **Вендоринг ВСЕХ модулей в `modules/`** (2026-11-13): 14 внешних модулей (mod-ah-bot, mod-transmog, mod-cfbg, mod-duel-reset, mod-solocraft, mod-firstlogin-aio, mod-individual-xp, mod-starter-guild, mod-dungeonmaster, mod-ah-bot-plus, mod-hunger-thirst, mod-warband-camp, mod-forever-journal, mod-archaeology) как снапшоты без `.git`; `setup-build.sh` копирует `modules/*/` в ядро одним циклом вместо клонирования по SHA. / **Vendored all modules into `modules/`**: 14 external mods as .git-less snapshots; setup-build copies modules/*/ into core. |
+| `f674170` | **CI: вендоринг** — setup-tree/action.yml копирует все модули из `modules/` репо в ядро (без `git clone`/`MOD_PIN`); обновлены core-build + windows-release. / **CI: vendoring** — setup-tree copies all modules from repo `modules/`; dropped git clone/MOD_PIN. |
+| `20fdfad` | **CI: Lua 5.2.4 через `actions/checkout`** (LuaDist/lua, tag 5.2.4) вместо curl+heredoc — heredoc падал на Windows-раннере. / **CI: Lua 5.2.4 via actions/checkout** (LuaDist/lua tag), removing the heredoc that broke on Windows. |
+| `4d69c0f` | **mod-dungeonmaster: фикс bash** — `MOD_DUNGEON_MASTER_ROOT` → `MOD_DUNGON_MASTER_ROOT` в `conf/conf.sh.dist` (auth path); под `set -u` были `unbound variable` в CI ci-pending-sql.sh. / **mod-dungeonmaster: bash fix** — align auth path var in conf.sh.dist (unbound variable under set -u). |
 
 ---
 
 ## 🔥 Актуально (следующий шаг) / Next up
 
-- [ ] **Закоммитить и запушить CI** — `.github/` (workflow + composite action) ещё не в git. / **Commit and push CI** — `.github/` (workflow + composite action) is not yet in git.
-- [ ] **Клиентский аддон AIO_Client**: взять из Rochet2/AIO и вшить в patch-x как `Interface/AddOns/AIO/` — без него AIO-клиентская часть не работает. / **AIO_Client addon**: take from Rochet2/AIO and embed into patch-x as `Interface/AddOns/AIO/`.
-- [ ] **Тестовый прогон Tier A/B + Classless** на тестовом реалме: логи загрузки `[EchoOfTheVoid] 13_…18_…, 23_…27_`, чек-листы. / **Test run of Tier A/B + Classless** on a test realm: `[EchoOfTheVoid] 13_…18_…, 23_…27_` load logs, checklists.
-- [ ] **Пересборка ядра** с модулями + миграции 0018–0025 → чек-листы разделов 12–15 (`echo-challenge-modes`, AIO, Tier A/B, Classless). / **Core rebuild** with modules + migrations 0018–0025 → checklist sections 12–15 (`echo-challenge-modes`, AIO, Tier A/B, Classless).
+- [ ] **Обновить вики/доки** под вендоринг и последние изменения (сделано в коммите документации). / **Update wiki/docs** for vendoring and recent changes (done in the docs commit).
+- [ ] **Клиентский аддон AIO_Client**: вшить в patch-x как `Interface/AddOns/AIO/` — без него AIO-клиентская часть магазина не работает. / **AIO_Client addon**: embed into patch-x as `Interface/AddOns/AIO/`.
+- [ ] **Тестовый прогон Tier A/B + Classless** на тестовом реалме: логи загрузки `[EchoOfTheVoid] 13_…18_…, 23_…27_`, чек-листы. / **Test run of Tier A/B + Classless** on a test realm: load logs, checklists.
+- [ ] **Мирации 0018–0042 на тестовой БД** → чек-листы разделов 12–15 (`echo-challenge-modes`, AIO, Tier A/B, Classless). / **Apply migrations 0018–0042** on a test DB → checklist sections 12–15.
 - [ ] **Сборка `patch-x.mpq`** по `client-patch.md` (база `Patch-T.MPQ.rar`; Map.dbc НЕ включать; Store_UI BLP + аддон AIO_Client). / **Build `patch-x.mpq`** per `client-patch.md`.
-- [ ] **Проверить фактический прогон CI** (зарегистрировать репозиторий на GitHub Actions — мастере-ядро собирает все 7 модулей + mod-ale). / **Verify CI actually runs** (register repo on GitHub Actions — master core builds all 7 modules + mod-ale).
+- [ ] **Проверить фактический прогон CI** на GitHub Actions (ветка `main`; master-ядро + все вендоренные модули + mod-ale). / **Verify CI actually runs** on GitHub Actions (main; master core + all vendored modules + mod-ale).
 
 ---
 
@@ -57,7 +65,7 @@
 - [x] **Classless — полная версия** (таланты + AIO-UI + класс Hero + мобильный кастинг): ✅ таланты реализованы в Lua (`27_Classless.lua` `.aeclassless learn talent`, `talent_dbc`+`talenttab_dbc`; AIO-UI `27_ClasslessClient.lua`; колонка `talents` — `0030_classless_full.sql`). ✅ **Hero-класс реализован в Lua** (`.aeclassless hero`, аур-бонусы силы/ловкости + Fortitude, колонка `hero` — `0039_classless_hero.sql`). ⏭ Мобильный кастинг — **C++-этап** (ядро AC/ALE не имеют серверного «каст при движении»; пересборка ядра). / **Classless — full version**: ✅ talents + AIO-UI + 0030. ✅ Hero class in Lua (+0039). ⏭ Mobile casting — C++ stage (core rebuild).
 - [ ] RAI / SpellAIO из waloriaold (крупные модули). / RAI / SpellAIO from waloriaold (large modules).
 - [ ] mod-delves (wow-mod-delves) — после запуска тестового реалма. / mod-delves (wow-mod-delves) — after test realm launch.
-- [ ] Интеграция модулей AzerothCore: mod-ah-bot, mod-transmog, mod-cfbg, mod-duel-reset (`modules/README.md`). / Integrate AzerothCore modules: mod-ah-bot, mod-transmog, mod-cfbg, mod-duel-reset.
+- [x] Интеграция модулей AzerothCore: mod-ah-bot, mod-transmog, mod-cfbg, mod-duel-reset, mod-solocraft, mod-firstlogin-aio, mod-individual-xp, mod-starter-guild, mod-dungeonmaster, mod-ah-bot-plus, mod-hunger-thirst, mod-warband-camp, mod-forever-journal, mod-archaeology. ✅ **Все завендорены в `modules/`** (снапшоты без `.git`, commit `9f95550`), `setup-build.sh` и CI копируют их в ядро. / Integrate AzerothCore modules. ✅ **All vendored into `modules/`** (commit `9f95550`).
 - [ ] Полный тестовый прогон кампаний 1–4 по чек-листам. / Full test run of campaigns 1–4 per checklists.
 - [x] **Random-энчанты предметов** (референс `azerothcore-content`): реализовано как весовые тиры оружия T1–T4 по ilvl (`28_RandomEnchant.lua` + `0028_item_enchant_random.sql`, НПС 70192). Решение (2026-11-13): «~700» из первоначальной идеи переработано в осознанную тир-модель — оставить тиры, полный справочник энчантов не наполняем. / **Random item enchants**: implemented as weighted weapon tiers T1–T4 by ilvl (28_RandomEnchant + 0028). Decision: keep tiers (full ~700 roster not populated).
 - [x] **Solo-friendly данжи** (мод-solocraft / vasautobalance): ✅ модуль `mod-solocraft` зарегистрирован в интеграции — `.github/actions/setup-tree/action.yml` (78, 87) и `scripts/setup-build.sh` (70); собирается с ядром. Масштабирование статов/HP от размера группы — C++-слоем модуля. / **Solo-friendly dungeons** (mod-solocraft/vasautobalance): ✅ registered in setup-tree + setup-build, built with core.
@@ -79,5 +87,5 @@
 - Entry НПС/предметы: 70001–79999; SQL-миграции `NNNN_*.sql` строго вперёд. / NPC/item entries: 70001–79999; migrations strictly forward.
 - Порядок загрузки ALE: `*.ext` до всех `*.lua`; реестр — `00_CampaignRegistry.ext`. / ALE load order: `*.ext` before `*.lua`; registry — `00_CampaignRegistry.ext`.
 - Локализация скриптов — полная ru/en. / Script localization — full ru/en.
-- CI: `.github/workflows/core-build.yml` эмулирует мастер-сборку (мастер-ядро + 7 модулей + mod-ale, Linux/Windows). / CI: `.github/workflows/core-build.yml` emulates a master build (master core + 7 modules + mod-ale, Linux/Windows).
+- CI: `.github/workflows/core-build.yml` эмулирует мастер-сборку (мастер-ядро + все вендоренные модули + mod-ale, Linux/Windows). / CI: `.github/workflows/core-build.yml` emulates a master build (master core + all vendored modules + mod-ale, Linux/Windows).
 - Референсы: `azerothcore-wotlk`, `waloria(old)`, `wow-mod-delves`, `mod-ale`, `eluna-scripts`, `custom-maps`, `mod-challenge-modes`, `elunamod-gpt-npcs`, `eluna-aio-storesystem`, `public-scripts`, `dwrath-eluna-3-3-5a`, `lua-parangon`, `azerothcore-content`, `azerothcore-classless-solo`. / References: listed above.

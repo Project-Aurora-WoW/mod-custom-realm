@@ -36,17 +36,21 @@ git clone https://github.com/azerothcore/azerothcore-wotlk.git
 cd azerothcore-wotlk
 git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb
 
-# ALE script engine — REQUIRED
-git clone https://github.com/azerothcore/mod-ale.git modules/mod-ale
-cd modules/mod-ale && git checkout 84b85cc55980dbf67d596f3d5cb34ded10c59102 && cd ../..
+# ALE script engine — VENDORED in this repo's modules/ (not cloned)
 
-# Realm modules from THIS repo: copy modules/echo-* into ./modules/
+# All realm modules (echo-*, mod-ale, external mod-*) live in modules/ of THIS repo.
+# Copy them ALL into the core:
+for d in ../mod-custom-realm/modules/*/; do
+  name="$(basename "$d")"
+  rm -rf "modules/$name"
+  cp -R "$d" "modules/$name"
+done
 ```
 
 > **Optional automation:** [`../scripts/setup-build.sh`](../scripts/setup-build.sh)
-> automates core + modules cloning (incl. the custom `echo-*`) and build:
+> automates core cloning + module lay-down (all from `modules/`) and build:
 > ```bash
-> ./scripts/setup-build.sh            # full cycle: core + modules + build
+> ./scripts/setup-build.sh            # full cycle: core + all modules + build
 > ./scripts/setup-build.sh --no-core  # core already present — only modules + build
 > ```
 

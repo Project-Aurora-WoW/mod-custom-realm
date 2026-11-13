@@ -11,7 +11,7 @@
 
 | Workflow | Когда запускается | Что делает |
 |----------|-------------------|------------|
-| `core-build.yml` | push/PR на `main`/`master` | Эмуляция мастер-сборки: Linux (clang) + Windows (MSVC), ядро + 7 модулей + mod-ale, dry-run серверов |
+| `core-build.yml` | push/PR на `main`/`master` | Эмуляция мастер-сборки: Linux (clang) + Windows (MSVC), ядро + все вендоренные модули из `modules/` + mod-ale, dry-run серверов |
 | `windows-release.yml` | вручную (workflow_dispatch, с тегом) или push тега `v*` | Windows-сборка + генерация релиз-артефакта (.zip) + публикация в GitHub Releases |
 
 Общая подготовка дерева вынесена в composite action `.github/actions/setup-tree`.
@@ -36,7 +36,8 @@
 Схема:
 
 1. `setup-tree` клонирует `azerothcore/azerothcore-wotlk@master`, встраивает
-   `modules/echo-*` (все 7) и `mod-ale`, копирует `lua_scripts/`.
+   **все** вендоренные модули из `modules/` репо (`echo-*`, `mod-ale`, внешние `mod-*`),
+   копирует `lua_scripts/`.
 2. **Linux job** (`ubuntu-26.04`, clang-20 + ccache):
    - CMake `SCRIPTS=static`, `MODULES=static`, `-Werror`, Release;
    - build → install → dry-run `authserver`/`worldserver` → проверка `Errors.log` → юнит-тесты.

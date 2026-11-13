@@ -43,10 +43,12 @@ azeroth-custom-realm/
 ├── docs/                          # Документация (ландшафт, деплой, тесты, client-patch)
 ├── lua_scripts/                   # Lua-скрипты ALE (00_CampaignRegistry.ext → 27_Classless.lua, магазин, кампании, GPT-НПС)
 ├── modules/
-│   ├── echo-balance/ … echo-startup/   # Кастомные C++-модули реалма (7 шт.)
-│   └── README.md                  # Инструкция по модулям
+│   ├── echo-balance/ … echo-startup/   # Кастомные C++-модули реалма
+│   ├── mod-ale/                        # Lua-движок ALE (вендорен)
+│   ├── mod-ah-bot/ … mod-archaeology/  # Внешние модули (вендорены)
+│   └── README.md                       # Инструкция по модулям
 ├── service/                       # Внешние сервисы (GPT-НПС: Python+openai; ключ — вне репо)
-└── sql/world/                     # Миграции 0001–0031 (нумерованные, только вперёд)
+└── sql/world/                     # Миграции 0001–0042 (нумерованные, только вперёд)
 ```
 
 ---
@@ -60,7 +62,9 @@ azeroth-custom-realm/
    git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb   # фиксированная версия ядра
    cd azerothcore-wotlk
    ```
-2. Установить модули (mod-ale обязателен) и собрать ядро — см. [`modules/README.md`](modules/README.md).
+2. Все модули уже вендорены в `modules/` этого репо (echo-*, mod-ale, внешние mod-*).
+   Собрать: `../mod-custom-realm/scripts/setup-build.sh --no-core` — раскладывает все
+   модули из `modules/` в ядро и собирает. Подробности — [`modules/README.md`](modules/README.md).
 3. Применить миграции из `sql/world/` **в порядке нумерации** — см. [`sql/README.md`](sql/README.md).
 4. Скопировать `lua_scripts/*.ext` и `lua_scripts/*.lua` в `lua_scripts/` сервера.
 5. Запустить `worldserver`. В логе ожидать строки `[EchoOfTheVoid] …` (см. `lua_scripts/README.md`).
@@ -74,7 +78,9 @@ azeroth-custom-realm/
    git checkout 1459af9576eb8bd0a67f38ac54236965b5fe28eb   # pinned core version
    cd azerothcore-wotlk
    ```
-2. Install modules (mod-ale is required) and build the core — see [`modules/README.md`](modules/README.md).
+2. All modules are already vendored in this repo's `modules/` (echo-*, mod-ale, external mod-*).
+   Build: `../mod-custom-realm/scripts/setup-build.sh --no-core` — copies every module from
+   `modules/` into the core and builds. Details — [`modules/README.md`](modules/README.md).
 3. Apply migrations from `sql/world/` **in numeric order** — see [`sql/README.md`](sql/README.md).
 4. Copy `lua_scripts/*.ext` and `lua_scripts/*.lua` into the server `lua_scripts/` dir.
 5. Start `worldserver`. Expect `[EchoOfTheVoid] …` log lines (see `lua_scripts/README.md`).
@@ -84,7 +90,8 @@ azeroth-custom-realm/
 ## 🧪 CI / Emulated master build
 
 `core-build.yml` клонирует мастер-ядро `azerothcore/azerothcore-wotlk@master`, встраивает
-все 7 кастомных модулей `echo-*` и обязательный `mod-ale`, затем собирает ядро:
+**все** вендоренные модули из `modules/` репо (echo-*, mod-ale, внешние mod-*),
+затем собирает ядро:
 
 - **Linux** (`ubuntu-26.04`, clang-20 + ccache): CMake `SCRIPTS=static`, `MODULES=static`, `-Werror`,
   build → install → dry-run `authserver`/`worldserver` → проверка `Errors.log` → юнит-тесты.
@@ -95,7 +102,7 @@ azeroth-custom-realm/
 
 Trigger: push/PR на `main`/`master`.
 
-*(EN: CI clones the master core, embeds all 7 `echo-*` modules + required `mod-ale`, then builds:
+*(EN: CI clones the master core, embeds all vendored modules from `modules/` (echo-*, mod-ale, external mod-*), then builds:
 Linux clang static build with dry-run and error check; Windows MSVC via `acore.sh`.)*
 
 ---

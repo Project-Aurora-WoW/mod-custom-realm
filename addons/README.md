@@ -43,6 +43,16 @@
 - **Карта разломов** (`/ae rifts` или кнопка) — пины Northrend с уровнями опасности.
 - **Всплывающие уведомления** при повышении главы / завершении кампании.
 - **Вкладка «Лор»** — разделы вселенной (через `AECHOLORE`).
+- **Окно выбора кампании** (`CampaignWindow.lua`) — принудительное при первом входе
+  (сервер `lua_scripts/40_CampaignWindow.lua`, событие AECHOUI/AECHOSEL).
+- **Панель-хаб** (`Hub.lua`) — кнопки-ссылки «Журнал приключений» и «Археология»,
+  открывающие независимые аддоны `Journal` и `ArchaeologyUI` (если установлены).
+
+> **Клиентская поставка / Client delivery:** актуальный zip — `client/addons/AzerothEcho.zip`
+> (собирается из этого каталога, см. [`../client/README.md`](../client/README.md));
+> manifest `client/manifest.json` (v6, 2026-11-13) доставляет аддон игрокам через лаунчер.
+> Аддоны `Journal` и `ArchaeologyUI` — клиентские части модулей и в этот zip НЕ входят
+> (доставляются из модулей `mod-forever-journal`/`mod-archaeology`).
 
 ### Slash-команды / Commands
 | Команда / Command | Действие / Action |
