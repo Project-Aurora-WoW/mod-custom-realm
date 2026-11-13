@@ -1,6 +1,6 @@
 {
   "realm": "Эхо Пустоты",
-  "version": 5,
+  "version": 6,
   "realmlist": "127.0.0.1",
   "files": [
     {
@@ -22,15 +22,15 @@
     {
       "path": "addons/AzerothEcho.zip",
       "destination": "Interface/AddOns/AzerothEcho.zip",
-      "sha256": "30b12de0a6f3bf3f6a9d616fab45506925660378d8424b2a773fa17506c96aa1",
-      "size": 14640,
+      "sha256": "3cfbdab4884818e116fb0f7405d62fbeb45680e030d17d26ebe70c066daa1fbb",
+      "size": 16349,
       "required": true,
-      "description": "Клиентский аддон реалма AzerothEcho v2.1.0 (addons/AzerothEcho, zip без вложенного каталога): панель реалма, окно выбора кампании, лор, карта разломов."
+      "description": "Клиентский аддон реалма AzerothEcho v2.1.0 (addons/AzerothEcho, zip без вложенного каталога): панель реалма, окно выбора кампании, лор, карта разломов, хаб-кнопки к аддонам Journal и ArchaeologyUI."
     }
   ],
   "cacheDirs": [
     "Cache",
     "Cache/WDB"
   ],
-  "notes": "sha256/size заполнены 2026-11-13 по фактическим файлам репозитория (AzerothEcho.zip пересобран 2026-11-13: добавлены Lore.lua и CampaignWindow.lua). patch-x собран из client/aio-client/AIO + client/custom maps/DBFilesClient/Map-merged-5000.dbc. Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 -> ... -> patch-x -> patch-Z."
+  "notes": "sha256/size заполнены 2026-11-13 по фактическим файлам репозитория (AzerothEcho.zip пересобран 2026-11-13: добавлены Hub.lua, Lore.lua, CampaignWindow.lua). patch-x собран из client/aio-client/AIO + client/custom maps/DBFilesClient/Map-merged-5000.dbc. Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 -> ... -> patch-x -> patch-Z."
 }

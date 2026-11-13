@@ -11,4 +11,5 @@ Panel.lua
 Lore.lua
 RiftMap.lua
 CampaignWindow.lua
+Hub.lua
 AzerothEcho.lua
