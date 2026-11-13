@@ -8,7 +8,7 @@
 > completed work moves to "Done" with its commit hash, new tasks are added to
 > the current backlog.
 >
-> Дата последнего обновления / Last updated: 2026-11-13
+> Дата последнего обновления / Last updated: 2026-11-14
 
 ---
 
@@ -44,7 +44,10 @@
 
 ## 🔥 Актуально (следующий шаг) / Next up
 
-- [ ] **Обновить вики/доки** под вендоринг и последние изменения (сделано в коммите документации). / **Update wiki/docs** for vendoring and recent changes (done in the docs commit).
+- [x] **Обновить вики/доки** под вендоринг и последние изменения. / **Update wiki/docs** for vendoring and recent changes.
+  ✅ Сделано коммитом `9169232` (2026-11-13): README, modules/addons/client README, RELEASE, deployment, ROADMAP,
+  wiki CI/Install (RU+EN), TODO — вендоринг модулей, manifest v6, экспорт-функции. / 
+  ✅ Done in commit `9169232`: all README/wiki/TODO docs updated for vendoring + client manifest v6.
 - [ ] **Клиентский аддон AIO_Client**: вшить в patch-x как `Interface/AddOns/AIO/` — без него AIO-клиентская часть магазина не работает. / **AIO_Client addon**: embed into patch-x as `Interface/AddOns/AIO/`.
 - [ ] **Тестовый прогон Tier A/B + Classless** на тестовом реалме: логи загрузки `[EchoOfTheVoid] 13_…18_…, 23_…27_`, чек-листы. / **Test run of Tier A/B + Classless** on a test realm: load logs, checklists.
 - [ ] **Мирации 0018–0042 на тестовой БД** → чек-листы разделов 12–15 (`echo-challenge-modes`, AIO, Tier A/B, Classless). / **Apply migrations 0018–0042** on a test DB → checklist sections 12–15.
