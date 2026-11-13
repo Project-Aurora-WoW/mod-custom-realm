@@ -73,6 +73,7 @@ runs:
         set -euo pipefail
         declare -A MODS=(
           [mod-ah-bot]="https://github.com/azerothcore/mod-ah-bot.git"
+          [mod-ah-bot-plus]="https://github.com/NathanHandley/mod-ah-bot-plus.git"
           [mod-transmog]="https://github.com/azerothcore/mod-transmog.git"
           [mod-cfbg]="https://github.com/azerothcore/mod-cfbg.git"
           [mod-duel-reset]="https://github.com/azerothcore/mod-duel-reset.git"
@@ -84,7 +85,7 @@ runs:
             "${MODS[$name]}" "azerothcore-wotlk/modules/$name"
         done
         echo "Standard modules installed:"
-        ls -1 azerothcore-wotlk/modules/ | grep -E '^(mod-ah-bot|mod-transmog|mod-cfbg|mod-duel-reset|mod-solocraft|mod-firstlogin-aio)$'
+        ls -1 azerothcore-wotlk/modules/ | grep -E '^(mod-ah-bot|mod-ah-bot-plus|mod-transmog|mod-cfbg|mod-duel-reset|mod-solocraft|mod-firstlogin-aio)$'
 
     # ---- Vendor Lua 5.2.4 (обход блокировки www.lua.org на CI-раннерах) ----
     # mod-ale объявляет Lua через FetchContent (src/lualib/lua/CMakeLists.txt) и

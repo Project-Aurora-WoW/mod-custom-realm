@@ -72,7 +72,7 @@ MODULES=(
   "mod-individual-xp|https://github.com/azerothcore/mod-individual-xp|"
   "mod-starter-guild|https://github.com/Turor/mod-starter-guild.git|"
   "mod-dungeonmaster|https://github.com/Turor/mod-dungeonmaster.git|"
-  "mod-ah-bot-plus|https://github.com/Turor/mod-ah-bot-plus.git|"
+  "mod-ah-bot-plus|https://github.com/NathanHandley/mod-ah-bot-plus.git|"
 )
 mkdir -p "$CORE_DIR/modules"
 for entry in "${MODULES[@]}"; do
