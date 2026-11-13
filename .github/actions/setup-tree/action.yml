@@ -79,13 +79,14 @@ runs:
           [mod-duel-reset]="https://github.com/azerothcore/mod-duel-reset.git"
           [mod-solocraft]="https://github.com/azerothcore/mod-solocraft.git"
           [mod-firstlogin-aio]="https://github.com/Gozzim/mod-FirstLogin-AIO.git"
+          [mod-hunger-thirst]="https://github.com/Phanty78/mod-hunger-thirst.git"
         )
         for name in "${!MODS[@]}"; do
           git clone --depth 1 --branch master --single-branch --recursive \
             "${MODS[$name]}" "azerothcore-wotlk/modules/$name"
         done
         echo "Standard modules installed:"
-        ls -1 azerothcore-wotlk/modules/ | grep -E '^(mod-ah-bot|mod-ah-bot-plus|mod-transmog|mod-cfbg|mod-duel-reset|mod-solocraft|mod-firstlogin-aio)$'
+        ls -1 azerothcore-wotlk/modules/ | grep -E '^(mod-ah-bot|mod-ah-bot-plus|mod-transmog|mod-cfbg|mod-duel-reset|mod-solocraft|mod-firstlogin-aio|mod-hunger-thirst)$'
 
     # ---- Vendor Lua 5.2.4 (обход блокировки www.lua.org на CI-раннерах) ----
     # mod-ale объявляет Lua через FetchContent (src/lualib/lua/CMakeLists.txt) и
