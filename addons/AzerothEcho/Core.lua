@@ -120,3 +120,31 @@ function AE.ParsePvp(payload)
     end
     AE.NotifyChanged()
 end
+
+-- ============================================================
+-- Гильдия (AECHOGUILD от 45_GuildProgress.lua)
+-- Формат: name;level;xp;total;unlocked  | "none"
+-- ============================================================
+
+AE.guild = { name = nil, level = 0, xp = 0, total = 0, unlocked = 0, none = true }
+
+function AE.ParseGuild(payload)
+    if not payload or payload == "" then return end
+    if payload == "none" then
+        AE.guild = { name = nil, level = 0, xp = 0, total = 0, unlocked = 0, none = true }
+    else
+        local name, level, xp, total, unlocked =
+            string.match(payload, "^(.-);(%d+);(%d+);(%d+);(%d+)$")
+        if name and level then
+            AE.guild = {
+                name = name, level = tonumber(level), xp = tonumber(xp),
+                total = tonumber(total), unlocked = tonumber(unlocked), none = false,
+            }
+        end
+    end
+    -- Обновить вкладку Гильдия, если панель уже создана
+    if AE.RefreshGuildPanel then
+        AE.RefreshGuildPanel(AE.guild)
+    end
+    AE.NotifyChanged()
+end

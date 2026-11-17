@@ -43,7 +43,7 @@ title:SetText(C.void .. "Эхо Пустоты|r")
 -- Вкладки
 -- ============================================================
 
-local TABS = { "Кампании", "Ивенты", "PvP", "Справка" }
+local TABS = { "Кампании", "Ивенты", "PvP", "Гильдия", "Справка" }
 local tabButtons = {}
 local pages = {}
 
@@ -152,10 +152,47 @@ pvpText:SetJustifyH("LEFT")
 pvpText:SetWidth(PANEL_W - 40)
 
 -- ============================================================
--- Вкладка 4: Справка (лор)
+-- Вкладка 4: Гильдия (уровень/опыт/разблокировки)
 -- ============================================================
 
-local lorePage = pages[4]
+local guildPage = pages[4]
+local guildTitle = guildPage:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+guildTitle:SetPoint("TOPLEFT", guildPage, "TOPLEFT", 0, -4)
+guildTitle:SetText(C.gold .. "Гильдия|r")
+
+local guildText = guildPage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+guildText:SetPoint("TOPLEFT", guildPage, "TOPLEFT", 0, -34)
+guildText:SetJustifyH("LEFT")
+guildText:SetWidth(PANEL_W - 40)
+guildText:SetText(C.gray .. "Ждите данных сервера…|r (гильдейская активность начисляет опыт).")
+
+-- Обновление данных гильдии (вызывается из Core при парсинге AECHOGUILD)
+function AE.RefreshGuildPanel(data)
+    if not data or not guildText then return end
+    if data.none then
+        guildText:SetText(C.gray .. "У вас нет гильдии.|r\nВступите в гильдию, чтобы начислять опыт.")
+        guildTitle:SetText(C.gold .. "Гильдия|r")
+        return
+    end
+    guildTitle:SetText(C.gold .. data.name .. "|r")
+    local lines = "Уровень: " .. C.order .. data.level .. "|r\n" ..
+                  "Опыт: " .. C.void .. data.xp .. "|r (всего " .. data.total .. ")\n" ..
+                  "Разблокировано перков: " .. (data.unlocked or 0)
+    -- Разблокировки (первые)
+    if data.unlocks and #data.unlocks > 0 then
+        lines = lines .. "\n\n" .. C.green .. "Активные перки:|r\n" .. table.concat(data.unlocks, "\n")
+    end
+    guildText:SetText(lines)
+end
+
+-- Слушатель данных гильдии (вызывается после парсинга AECHOGUILD)
+if not AE.guildListeners then AE.guildListeners = {} end
+
+-- ============================================================
+-- Вкладка 5: Справка (лор)
+-- ============================================================
+
+local lorePage = pages[5]
 local loreText = lorePage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 loreText:SetPoint("TOPLEFT", lorePage, "TOPLEFT", 0, -4)
 loreText:SetJustifyH("LEFT")

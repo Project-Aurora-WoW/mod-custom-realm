@@ -56,6 +56,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             if AE.ParseLocationMap then
                 AE.ParseLocationMap(message)
             end
+        elseif prefix == "AECHOGUILD" then
+            if AE.ParseGuild then
+                AE.ParseGuild(message)
+            end
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Запрос данных у сервера
