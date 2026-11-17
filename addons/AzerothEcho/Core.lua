@@ -203,3 +203,37 @@ function AE.ParseSocial(payload)
     end
     AE.NotifyChanged()
 end
+
+-- ============================================================
+-- Сезонные эвенты (AECHOSEASON от 48_SeasonEvents.lua)
+-- Формат: season;seasonName;holiday;holidayName;stage;stageName;stageGoal;stageDays
+-- ============================================================
+
+AE.season = { season = nil, seasonName = nil, holiday = nil, holidayName = nil,
+              stage = nil, stageName = nil, stageGoal = nil, stageDays = 0 }
+
+function AE.ParseSeason(payload)
+    AE.season = { season = nil, seasonName = nil, holiday = nil, holidayName = nil,
+                  stage = nil, stageName = nil, stageGoal = nil, stageDays = 0 }
+    if not payload or payload == "" then
+        if AE.RefreshSeasonPanel then AE.RefreshSeasonPanel(AE.season) end
+        return
+    end
+    local season, seasonName, holiday, holidayName, stage, stageName, stageGoal, stageDays =
+        string.match(payload, "^(.-);(.-);(.-);(.-);(%d+);(.-);(.-);(%d+)$")
+    if season then
+        AE.season = {
+            season = (season ~= "none" and season) or nil,
+            seasonName = (seasonName ~= "" and seasonName) or nil,
+            holiday = (holiday ~= "none" and holiday) or nil,
+            holidayName = (holidayName ~= "" and holidayName) or nil,
+            stage = tonumber(stage), stageName = stageName,
+            stageGoal = (stageGoal ~= "" and stageGoal) or nil,
+            stageDays = tonumber(stageDays) or 0,
+        }
+    end
+    if AE.RefreshSeasonPanel then
+        AE.RefreshSeasonPanel(AE.season)
+    end
+    AE.NotifyChanged()
+end

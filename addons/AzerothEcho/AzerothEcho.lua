@@ -68,6 +68,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             if AE.ParseSocial then
                 AE.ParseSocial(message)
             end
+        elseif prefix == "AECHOSEASON" then
+            if AE.ParseSeason then
+                AE.ParseSeason(message)
+            end
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Запрос данных у сервера

@@ -141,6 +141,31 @@ eventsText:SetPoint("TOPLEFT", eventsPage, "TOPLEFT", 0, -4)
 eventsText:SetJustifyH("LEFT")
 eventsText:SetWidth(PANEL_W - 40)
 
+-- Сезонная строка (вкладка Ивенты): активный сезон/праздник/этап.
+-- Обновляется из парсера AECHOSEASON (48_SeasonEvents.lua).
+local seasonText = eventsPage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+seasonText:SetPoint("BOTTOMLEFT", eventsPage, "BOTTOMLEFT", 0, -6)
+seasonText:SetJustifyH("LEFT")
+seasonText:SetWidth(PANEL_W - 40)
+seasonText:SetText("")
+
+function AE.RefreshSeasonPanel(data)
+    if not data or not seasonText then return end
+    local lines = {}
+    if data.seasonName then
+        table.insert(lines, C.gold .. "Сезон: " .. data.seasonName .. "|r")
+    end
+    if data.holidayName then
+        table.insert(lines, C.cult .. "Праздник: " .. data.holidayName .. "|r")
+    end
+    if data.stageName then
+        local days = (data.stageDays and data.stageDays > 0) and (" (" .. data.stageDays .. " дн. до конца)") or ""
+        local goal = data.stageGoal and (" — " .. data.stageGoal) or ""
+        table.insert(lines, C.order .. "Этап: " .. data.stageName .. goal .. days .. "|r")
+    end
+    seasonText:SetText(table.concat(lines, "\n"))
+end
+
 -- ============================================================
 -- Вкладка 3: PvP
 -- ============================================================

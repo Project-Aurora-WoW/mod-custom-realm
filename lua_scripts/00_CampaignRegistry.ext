@@ -88,6 +88,45 @@ AzerothEchoCampaigns = {
         },
     },
 
+    -- Сезонные эвенты (48_SeasonEvents.lua): надстройка над авто-ивентами.
+    -- Календарные сезонные циклы (4 сезона по месяцам), праздничные ивенты
+    -- (по датам) и ежегодный сезон с этапами. Во время активного сезона
+    -- циклические авто-ивенты дают доп. бонусы (token_mult) и сезонную валюту.
+    season_events = {
+        -- Календарные сезоны (месяцы 1-12). key, name, months[], token_mult.
+        seasons = {
+            winter = { key = "winter", name = "Буря Наследия",
+                       months = { 12, 1, 2 }, token_mult = 2, currency_item = 70019 },
+            spring = { key = "spring", name = "Цветение Пустоты",
+                       months = { 3, 4, 5 }, token_mult = 2, currency_item = 70020 },
+            summer = { key = "summer", name = "Пепел Середины Лета",
+                       months = { 6, 7, 8 }, token_mult = 2, currency_item = 70021 },
+            autumn = { key = "autumn", name = "Урожай Ложных Слёз",
+                       months = { 9, 10, 11 }, token_mult = 2, currency_item = 70022 },
+        },
+        -- Праздничные ивенты (date = "месяц-день"): уникальная валюта/награда
+        holidays = {
+            { key = "newyear", name = "Хрустальный Полночь Наследия", month = 1, day = 1, currency_item = 70023 },
+            { key = "springday", name = "Пробуждение Ордена",         month = 3, day = 8, currency_item = 70024 },
+            { key = "summerfire", name = "Ночь Костров Пустоты",      month = 6, day = 21, currency_item = 70025 },
+            { key = "harvest", name = "Урожай Душ",                   month = 10, day = 31, currency_item = 70026 },
+        },
+        -- Ежегодный сезон с этапами (большой событийный сезон реалма)
+        annual = {
+            name = "Цикл Осколка",
+            start_month = 1, start_day = 1,   -- старт ежегодного сезона
+            stage_len_days = 30,              -- длина этапа (дней)
+            stages = {                         -- этапы: название и цель
+                { name = "Пробуждение Осколка", goal = "Набрать 1000 Жетонов Эха" },
+                { name = "Гонка Рейдов",         goal = "Поразить 3 рейдовых босса" },
+                { name = "Турнир Фракций",       goal = "10 зачётных PvP-киллов" },
+                { name = "Глубина Пустоты",      goal = "Завершить 2 кампании" },
+            },
+        },
+        -- Сезонная валюта (item) -> префикс аддон-сообщений
+        prefix = "AECHOSEASON",
+    },
+
     -- PvP-система (.aepvp)
     pvp = {
         min_level_diff = 10,        -- анти-абюз: разница уровней киллер/жертва
