@@ -244,17 +244,29 @@ loreText:SetText(
 -- Кнопки и нижняя панель
 -- ============================================================
 
-local riftsBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-riftsBtn:SetWidth(140)
-riftsBtn:SetHeight(24)
-riftsBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -156, 12)
-riftsBtn:SetText("Карта разломов")
-
+-- Единый переключатель карты: «Карта локаций» / «Карта разломов».
 local mapBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 mapBtn:SetWidth(140)
 mapBtn:SetHeight(24)
 mapBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 12)
 mapBtn:SetText("Карта локаций")
+mapBtn.toggle = "locations"   -- текущий режим: "locations" | "rifts"
+
+local mapOrigin = function() end   -- показать исходную карту
+local mapRift   = function() end   -- показать карту разломов
+
+local function OnMapToggle()
+    if mapBtn.toggle == "locations" then
+        mapRift()
+        mapBtn.toggle = "rifts"
+        mapBtn:SetText("Карта разломов")
+    else
+        mapOrigin()
+        mapBtn.toggle = "locations"
+        mapBtn:SetText("Карта локаций")
+    end
+end
+mapBtn:SetScript("OnClick", OnMapToggle)
 
 local closeBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 closeBtn:SetWidth(90)
@@ -263,9 +275,73 @@ closeBtn:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 12, 12)
 closeBtn:SetText("Закрыть")
 closeBtn:SetScript("OnClick", function() frame:Hide() end)
 
--- Строка жетонов (общая, под заголовком)
-local tokensText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-tokensText:SetPoint("TOP", frame, "TOP", 0, -28)
+-- ============================================================
+-- Быстрый доступ (ряд кнопок над строкой карт/закрыть)
+-- ============================================================
+-- Хаб-кнопки: открывают нужную вкладку панели или карту.
+local QUICK = {
+    { name = "Кампании", tab = 1 },
+    { name = "Гильдия",  tab = 4 },
+    { name = "Дом",      tab = 5 },
+}
+local quickRow = CreateFrame("Frame", nil, frame)
+quickRow:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 12, 40)
+quickRow:SetWidth(120 + #QUICK * 96)
+quickRow:SetHeight(24)
+local qx = 0
+for _, q in ipairs(QUICK) do
+    local btn = CreateFrame("Button", nil, quickRow, "UIPanelButtonTemplate")
+    btn:SetWidth(90)
+    btn:SetHeight(22)
+    btn:SetPoint("LEFT", quickRow, "LEFT", qx, 0)
+    btn:SetText(q.name)
+    btn:SetScript("OnClick", function() AE.ShowTab(q.tab) end)
+    qx = qx + 96
+end
+
+-- Статус-бар (общая строка под заголовком): жетоны + фракция + дом/гильдия
+local statusText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+statusText:SetPoint("TOP", frame, "TOP", 0, -28)
+statusText:SetJustifyH("CENTER")
+statusText:SetWidth(PANEL_W - 24)
+
+-- Функция обновления статус-бара (данные из AE.state/tokens/home/guild)
+local function RefreshStatusBar()
+    local parts = {}
+
+    -- Жетоны Эха
+    if AE.tokens and AE.tokens > 0 then
+        table.insert(parts, C.void .. "Жетоны:" .. AE.tokens .. "|r")
+    end
+
+    -- Фракция (из фракционной системы: стартовая по расе, если не выбрана)
+    local faction = nil
+    if AE.faction and AE.faction.name then
+        faction = AE.faction.name
+    else
+        -- локальный фолбэк по расе (без серверного паёka)
+        local race = select(2, UnitRace("player"))
+        faction = (race == "Human" or race == "Dwarf" or race == "Gnome" or race == "NightElf" or race == "Draenei")
+            and "Альянс" or "Орда"
+    end
+    if faction then
+        table.insert(parts, C.blue .. faction .. "|r")
+    end
+
+    -- Гильдия
+    if AE.guild and not AE.guild.none then
+        table.insert(parts, C.gold .. "Г:" .. AE.guild.name .. " (ур." .. AE.guild.level .. ")|r")
+    end
+
+    -- Дом
+    if AE.home and not AE.home.none then
+        local l = AE.home.label or ("карта " .. (AE.home.map or "?"))
+        table.insert(parts, C.green .. "Дом:" .. l .. "|r")
+    end
+
+    statusText:SetText(table.concat(parts, C.gray .. " • " .. "|r"))
+end
+AE.RefreshStatusBar = RefreshStatusBar
 
 -- ============================================================
 -- Обновление содержимого
@@ -326,8 +402,8 @@ local function RefreshPanel()
         "Анти-фарм: разница уровней и кулдаун на жертву.|r"
     )
 
-    -- Жетоны
-    tokensText:SetText(C.void .. "Жетоны Эха: " .. AE.tokens .. "|r")
+    -- Статус-бар (жетоны + фракция + гильдия + дом)
+    RefreshStatusBar()
 end
 
 -- Перерисовка при поступлении данных от сервера
@@ -359,11 +435,14 @@ function AE.TogglePanel()
 end
 
 function AE.SetRiftsHandler(fn)
-    riftsBtn:SetScript("OnClick", fn)
+    mapRift = fn or function() end
 end
 
 function AE.SetMapToolsHandler(fn)
-    mapBtn:SetScript("OnClick", fn)
+    mapOrigin = fn or function() end
+    -- Начальный режим — локации (кнопка подписана «Карта локаций»)
+    mapBtn.toggle = "locations"
+    mapBtn:SetText("Карта локаций")
 end
 
 frame:Hide()
