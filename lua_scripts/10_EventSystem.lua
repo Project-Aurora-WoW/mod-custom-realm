@@ -36,8 +36,18 @@ end
 -- Утилиты
 -- ============================================================
 
+-- Цвет-иконка ивента. По умолчанию — культовый (красный);
+-- storm — пустотный (фиолетовый), mist — туманно-серый,
+-- royal — золотой/королевский.
 local function EventIcon(key)
-    return (key == "storm") and VOID_COLOR or CULT_COLOR
+    if key == "storm" then
+        return VOID_COLOR
+    elseif key == "mist" then
+        return "|cffb0b0b0"
+    elseif key == "royal" then
+        return "|cffd4af37"
+    end
+    return CULT_COLOR
 end
 
 local function IsEventActive(key)
@@ -127,24 +137,29 @@ local function OnEventMobDeath(event, killer, killed)
     end
 
     local entry = killed:GetEntry()
-    if entry ~= REG.events.storm.mob_entry and entry ~= REG.events.blood.mob_entry then
+
+    -- Находим ивент по entry моба (не хардкодим каждый ивент:
+    -- REG.events содержит конфиг; rift — это точка, не ивент).
+    local key
+    for k, cfg in pairs(REG.events) do
+        if k ~= "rift" and cfg.mob_entry == entry then
+            key = k
+            break
+        end
+    end
+    if not key then
+        return
+    end
+
+    -- Награда выдаётся только если соответствующий ивент активен
+    -- (иначе обычные спавны того же НПС давали бы жетоны).
+    if not IsEventActive(key) then
         return
     end
 
     local rift = REG.events.rift
     local dist = math.sqrt((killed:GetX() - rift.x) ^ 2 + (killed:GetY() - rift.y) ^ 2)
     if dist > EVENT_ZONE_RADIUS then
-        return
-    end
-
-    -- Определяем, какому ивенту соответствует entry моба
-    local key
-    if entry == REG.events.storm.mob_entry and IsEventActive("storm") then
-        key = "storm"
-    elseif entry == REG.events.blood.mob_entry and IsEventActive("blood") then
-        key = "blood"
-    end
-    if not key then
         return
     end
 
@@ -278,4 +293,4 @@ AE_EventNext = function(key)
     return math.ceil((cfg.interval_secs - phase) / 60)
 end
 
-print("[EchoOfTheVoid] 10_EventSystem.lua загружен (ивенты: storm, blood; GM: .aeevent).")
+print("[EchoOfTheVoid] 10_EventSystem.lua загружен (ивенты: storm, blood, mist, royal; GM: .aeevent).")
