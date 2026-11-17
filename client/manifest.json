@@ -1,15 +1,15 @@
 {
   "realm": "Эхо Пустоты",
-  "version": 6,
+  "version": 7,
   "realmlist": "127.0.0.1",
   "files": [
     {
       "path": "patch-x.mpq",
       "destination": "Data/patch-x.mpq",
-      "sha256": "0193cd8c2050f9ac80ef03bac8e75e09bc27dd581c3239a90e235574355245a9",
-      "size": 126124,
+      "sha256": "a6120b8f5291c549d04c51a8a2fa089b0fb6c5ed90eedeeb6cbf3cd8a09a7462",
+      "size": 5029836,
       "required": true,
-      "description": "Клиентский патч реалма: аддон AIO (Interface/AddOns/AIO) + Map.dbc с записью карты 5000 (Морза, Долина Предательства). MPQ v1, без сжатия. НЕ требует patch-Z для записи карты, но ADT-тайлы карты 5000 живут в patch-Z — ставить оба. Титул 48 и спелл 70010 в этот патч НЕ включены (см. RELEASE.md)."
+      "description": "Клиентский патч реалма (MPQ v2, StormLib): CharTitles.dbc (титул 48 «Хранитель Эха»), Spell.dbc (кастомные спеллы), аддон AIO (Interface/AddOns/AIO — клиентская часть AIO-фреймворка для магазина и других AIO-систем), Store_UI (Frames/StoreFrame_Main.blp). Map.dbc НЕ включён — владелец patch-Z (карта 5000). Пересобран 2026-11-17 через mpqcli/StormLib вместо прежнего самодельного MPQ v1."
     },
     {
       "path": "patch-Z.mpq",
@@ -32,5 +32,5 @@
     "Cache",
     "Cache/WDB"
   ],
-  "notes": "sha256/size заполнены 2026-11-13 по фактическим файлам репозитория (AzerothEcho.zip пересобран 2026-11-13: добавлены Hub.lua, Lore.lua, CampaignWindow.lua). patch-x собран из client/aio-client/AIO + client/custom maps/DBFilesClient/Map-merged-5000.dbc. Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 -> ... -> patch-x -> patch-Z."
+  "notes": "sha256/size актуальны на 2026-11-17. patch-x пересобран через mpqcli/StormLib (MPQ v2): CharTitles.dbc (титул 48), Spell.dbc, Interface/AddOns/AIO (клиентская часть AIO), Interface/Store_UI/Frames/StoreFrame_Main.blp; Map.dbc НЕ включён (владелец patch-Z). AzerothEcho.zip собран из addons/AzerothEcho (Hub.lua, Lore.lua, CampaignWindow.lua). Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 -> ... -> patch-x -> patch-Z."
 }

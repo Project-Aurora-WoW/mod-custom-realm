@@ -13,14 +13,14 @@
 |------|-----------|
 | `manifest.json` | Манифест: версия, список файлов, SHA256, realmlist |
 | `update-client.ps1` | Лаунчер-минимум (PowerShell): сверка → докачка → кэш → realmlist → запуск |
-| `patch-x.mpq` | ⛔ Добавить после сборки DBC-патча (инструкция: `../docs/client-patch.md` ч. 1–4, база — `Patch-T.MPQ.rar` из waloriaold) |
+| `patch-x.mpq` | ✅ Есть (пересобран 2026-11-17, MPQ v2 через mpqcli/StormLib): CharTitles.dbc (титул 48 «Хранитель Эха»), Spell.dbc, `Interface/AddOns/AIO` (клиентская часть AIO-фреймворка), `Interface/Store_UI/Frames/StoreFrame_Main.blp`. Map.dbc НЕ включён — владелец patch-Z. Сборка — `../docs/client-patch.md` ч. 1–4, отладка — `client/aio-client/AIO` |
 | `patch-Z.mpq` | ⛔ Добавить: кастомные карты (карта 5000). Берётся **готовым** из репозитория `custom-maps` (`patch-Z.MPQ`), пересборка не требуется. См. `../docs/client-patch.md` ч. 6 |
 | `addons/AzerothEcho.zip` | ✅ Есть (актуальный, из `../addons/AzerothEcho/`): панель реалма + окно выбора кампании + лор + карта разломов + панель-хаб (Hub.lua). Zip без вложенного каталога — файлы аддона в корне архива |
 
-> **Статус manifest на 2026-11-13:** `client/manifest.json` — **версия 6**.
-> В манифест входит только `addons/AzerothEcho.zip` (клиентская поставка).
-> Аддоны `Journal` и `ArchaeologyUI` — клиентские части модулей и в манифест
-> не включаются (доставляются вместе с ядром/модулями).
+> **Статус manifest на 2026-11-17:** `client/manifest.json` — **версия 7**.
+> В манифест входят `patch-x.mpq` (MPQ v2, StormLib), `patch-Z.mpq` (карта 5000)
+> и `addons/AzerothEcho.zip`. Аддоны `Journal` и `ArchaeologyUI` — клиентские
+> части модулей и в манифест не включаются (доставляются вместе с ядром/модулями).
 
 ## Процедура публикации обновления
 
