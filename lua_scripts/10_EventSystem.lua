@@ -168,8 +168,20 @@ local function OnEventMobDeath(event, killer, killed)
     end
 
     local cfg = REG.events[key]
-    killer:AddItem(TOKEN_ITEM, cfg.token_reward)
-    killer:SendBroadcastMessage(TAG .. " +" .. cfg.token_reward .. " " .. VOID_COLOR .. "Жетон Эха|r — награда за ивент!")
+    local reward = cfg.token_reward
+
+    -- Сезонный бонус (48_SeasonEvents.lua): во время активного календарного
+    -- сезона жетоны умножаются (SeasonTokenMult), а также выдаётся сезонная/
+    -- праздничная валюта (AE_GrantSeasonReward). Nil-защита: если модуль
+    -- сезонов не загружен (например, порядок загрузки), работаем как раньше.
+    if _G.SeasonTokenMult then
+        reward = math.floor(reward * _G.SeasonTokenMult())
+    end
+    killer:AddItem(TOKEN_ITEM, reward)
+    killer:SendBroadcastMessage(TAG .. " +" .. reward .. " " .. VOID_COLOR .. "Жетон Эха|r — награда за ивент!")
+    if _G.AE_GrantSeasonReward then
+        _G.AE_GrantSeasonReward(killer, cfg.token_reward)
+    end
 end
 
 RegisterPlayerEvent(7, OnEventMobDeath) -- PLAYER_EVENT_ON_CREATURE_KILL
