@@ -47,6 +47,48 @@ local MENU_PICK_H = 3   -- выбрать ветку Орды
 local MIN_LEVEL = REG.meta.min_level
 local COMBAT_REQUIRED = 6   -- глава 2: фракционных целей
 
+-- ============================================================
+-- Локализация ru/en (системные/игровые сообщения; лор-цитаты — на русском)
+-- ============================================================
+local L = {
+    ru = {
+        notReady    = "«%s:|r Сначала %s. Ты ещё не готов.»",
+        branchTaken = "ветка «%s» принята.",
+        ch2Done     = "Глава 2 «Прорыв»|r — выполнено. Путь открыт.",
+        ch2Next     = "Развяжи узел фракции: убей %s.",
+        ch2Progress = "Фракционная цель повержена (%d/%d).",
+        ch3Done     = "Глава 3 «Узел фракции»|r — выполнено. Узы скреплены.",
+        comp        = "Кампания «Узы фракций» завершена!",
+        reward      = "Награда — %s«Знамёна Верности»|r — придёт почтой.",
+        worldDone   = " скрепил Узы фракции и доказал свою верность!",
+        forAlliance = "Паладина-Отступника",
+        forHorde    = "Владыку Волков-Пустотников",
+        brkThrough  = "Прорвись через %d %s",
+    },
+    en = {
+        notReady    = "«%s:|r First, %s. You are not ready yet.»",
+        branchTaken = "branch «%s» accepted.",
+        ch2Done     = "Chapter 2 «Breakthrough»|r — done. Path open.",
+        ch2Next     = "Untie the knot of the faction: slay %s.",
+        ch2Progress = "Faction target slain (%d/%d).",
+        ch3Done     = "Chapter 3 «Faction Knot»|r — done. Bonds forged.",
+        comp        = "Campaign «Bonds of Factions» completed!",
+        reward      = "Reward — %sBanner of Faithfulness|r — will arrive by mail.",
+        worldDone   = " forged the Bonds of Faction and proved their allegiance!",
+        forAlliance = "the Apostate Paladin",
+        forHorde    = "the Lord of Void Wolves",
+        brkThrough  = "Break through %d %s",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function Loc(player, s, ...)
+    local t = IsRu(player) and L.ru or L.en
+    return string.format(t[s] or s, ...)
+end
+
 local function HasCampaign10Token(player)
     return player:HasItem(CAMPAIGN10_TOKEN)
 end
@@ -115,9 +157,9 @@ local function GrantReward(player)
         "твоей верности, когда мир готов был расколоться. — Орден Рассвета",
         player:GetGUIDLow(), nil, nil, REWARD_MAIL_DELAY, REWARD_ITEM
     )
-    player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Кампания «Узы фракций» завершена!|r")
-    player:SendBroadcastMessage(TAG .. " Награда — " .. ORDER_COLOR .. "«Знамёна Верности»|r — придёт почтой.")
-    SendWorldMessage(TAG .. " " .. player:GetName() .. " скрепил Узы фракции и доказал свою верность!")
+    player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "comp") .. "|r")
+    player:SendBroadcastMessage(TAG .. " " .. Loc(player, "reward", ORDER_COLOR))
+    SendWorldMessage(TAG .. " " .. player:GetName() .. Loc(player, "worldDone"))
 end
 
 -- ============================================================
@@ -168,7 +210,7 @@ local function OnHeraldSelect(event, player, creature, sender, intid, code)
 
     if wantFaction then
         if not HasCampaign10Token(player) then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Герольд:|r «Сначала Свет Истины. Ты ещё не готов.»")
+            player:SendBroadcastMessage(TAG .. Loc(player, "notReady", "Герольд", "Свет Истины"))
             player:GossipComplete()
             return
         end
@@ -176,9 +218,10 @@ local function OnHeraldSelect(event, player, creature, sender, intid, code)
         local branch = HeraldBranch(wantFaction)
         WriteCounter(player, 2, "combat", 0, wantFaction)
         player:Teleport(571, branch.rally.x, branch.rally.y, branch.rally.z, branch.rally.o)
-        player:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 1 «Выбор Zнамён»|r — ветка «" .. (wantFaction == "horde" and "Орда" or "Альянс") .. "» принята.")
+        player:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 1|r — " .. Loc(player, "branchTaken",
+            wantFaction == "horde" and "Орда" or "Альянс"))
         player:SendBroadcastMessage(TAG .. ORDER_COLOR .. "Герольд:|r " .. branch.rpl)
-        player:SendBroadcastMessage(TAG .. " Прорвись через " .. COMBAT_REQUIRED .. " " .. branch.combat.name)
+        player:SendBroadcastMessage(TAG .. Loc(player, "brkThrough", COMBAT_REQUIRED, branch.combat.name))
         player:GossipComplete()
         return
     end
@@ -208,18 +251,19 @@ local function OnCreatureKill(event, killer, killed)
         local n = ReadCounter(killer, "combat") + 1
         if n >= COMBAT_REQUIRED then
             SaveProgress(killer, 3, false, "combat=" .. n .. ";faction=" .. faction)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 2 «Прорыв»|r — выполнено. Путь открыт.")
-            killer:SendBroadcastMessage(TAG .. " Развяжи узел фракции: убей " .. CULT_COLOR .. (faction == "horde" and "Владыку Волков-Пустотников|r" or "Паладина-Отступника|r") .. ".")
+            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch2Done") .. "|r")
+            killer:SendBroadcastMessage(TAG .. " " .. Loc(killer, "ch2Next", CULT_COLOR ..
+                (faction == "horde" and Loc(killer, "forHorde") or Loc(killer, "forAlliance"))))
         else
             WriteCounter(killer, 2, "combat", n, faction)
-            killer:SendBroadcastMessage(TAG .. " Фракционная цель повержена (" .. n .. "/" .. COMBAT_REQUIRED .. ").")
+            killer:SendBroadcastMessage(TAG .. Loc(killer, "ch2Progress", n, COMBAT_REQUIRED))
         end
         return
     end
 
     if entry == bossEntry and chapter == 3 then
         SaveProgress(killer, 4, true, "campaign_done=1;boss=slain;faction=" .. faction)
-        killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 3 «Узел фракции»|r — выполнено. Узы скреплены.")
+        killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch3Done") .. "|r")
         GrantReward(killer)
     end
 end

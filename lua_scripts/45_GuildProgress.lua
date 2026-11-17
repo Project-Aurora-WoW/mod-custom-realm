@@ -33,6 +33,46 @@ if REG.legacy and REG.legacy.pve_bosses then
 end
 
 -- ============================================================
+-- Локализация ru/en
+-- ============================================================
+local L = {
+    ru = {
+        guildTag   = "Гильдия:",
+        pvpGain    = "Гильдия:|r +%d опыта гильдии (уровень %d).",
+        bossGain   = "Гильдия:|r +%d опыта гильдии за босса (уровень %d).",
+        gmTitle    = "== Гильдия (GM) ==",
+        noData     = "Нет данных. Член гильдии должен выполнить действие.",
+        statusRow  = "Уровень: %d | Опыт: %d | Всего: %d",
+        lvlDev     = "Уровень гильдии — команда в разработке. Используйте .aeguild xp <amount>.",
+        xpGiven    = "Гильдия получила +%d опыта (уровень %d).",
+        unlocksT   = "== Разблокировки гильдии ==",
+        unlockRow  = "[ур. %d] %s",
+        help       = "Команды: .aeguild status|xp <n>|unlocks",
+    },
+    en = {
+        guildTag   = "Guild:",
+        pvpGain    = "Guild:|r +%d guild XP (level %d).",
+        bossGain   = "Guild:|r +%d guild XP for a boss (level %d).",
+        gmTitle    = "== Guild (GM) ==",
+        noData     = "No data. A guild member must do an action.",
+        statusRow  = "Level: %d | XP: %d | Total: %d",
+        lvlDev     = "Guild level — command in development. Use .aeguild xp <amount>.",
+        xpGiven    = "Guild gained +%d XP (level %d).",
+        unlocksT   = "== Guild unlocks ==",
+        unlockRow  = "[lvl %d] %s",
+        help       = "Commands: .aeguild status|xp <n>|unlocks",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function Loc(player, s, ...)
+    local t = IsRu(player) and L.ru or L.en
+    return string.format(t[s] or s, ...)
+end
+
+-- ============================================================
 -- Хелперы прогресса
 -- ============================================================
 
@@ -86,7 +126,8 @@ local function OnPvpKill(event, killer, killed)
     local np = GetProgress(guid)
     CharDBQuery(string.format(
         "UPDATE %s SET last_pvp_ts = %d WHERE guild_id = %d", DB_TABLE, os.time(), guid))
-    killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Гильдия:|r +" .. XP_PVP .. " опыта гильдии (уровень " .. (np and np.level or level) .. ").")
+    killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "pvpGain",
+        XP_PVP, np and np.level or level))
 end
 RegisterPlayerEvent(6, OnPvpKill)
 
@@ -102,7 +143,8 @@ local function OnBossKill(event, killer, killed)
 
     local level = AddXp(guid, XP_BOSS)
     local np = GetProgress(guid)
-    killer:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Гильдия:|r +" .. XP_BOSS .. " опыта гильдии за босса (уровень " .. (np and np.level or level) .. ").")
+    killer:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(killer, "bossGain",
+        XP_BOSS, np and np.level or level))
 end
 RegisterPlayerEvent(7, OnBossKill)
 
@@ -180,12 +222,12 @@ local function OnPlayerChat(event, player, msg, lang, typ)
     local p = GetProgress(guid)
 
     if cmd == "status" then
-        player:SendBroadcastMessage(TAG .. " == Гильдия (GM) ==")
+        player:SendBroadcastMessage(TAG .. Loc(player, "gmTitle"))
         if not p then
-            player:SendBroadcastMessage(TAG .. " Нет данных. Гильдя-член должен выполнить действие.")
+            player:SendBroadcastMessage(TAG .. Loc(player, "noData"))
             return false
         end
-        player:SendBroadcastMessage(TAG .. " Уровень: " .. p.level .. " | Опыт: " .. p.xp .. " | Всего: " .. p.total)
+        player:SendBroadcastMessage(TAG .. Loc(player, "statusRow", p.level, p.xp, p.total))
         return false
     end
 
@@ -196,8 +238,7 @@ local function OnPlayerChat(event, player, msg, lang, typ)
         for k = 1, amt do
             local lvl = AddXp(guid, 0)  -- no-op, чтобы не менять; просто покажем
         end
-        -- Выдаём опыт, перепрыгивая уровень: просто добьём до следующего порога
-        player:SendBroadcastMessage(TAG .. " Уровень гильдии — команда в разработке. Используйте .aeguild xp <amount>.")
+        player:SendBroadcastMessage(TAG .. Loc(player, "lvlDev"))
         return false
     end
 
@@ -205,21 +246,21 @@ local function OnPlayerChat(event, player, msg, lang, typ)
         local amt = tonumber(arg or 0)
         if amt <= 0 then return false end
         local lvl = AddXp(guid, amt)
-        player:SendBroadcastMessage(TAG .. " Гильдия получила +" .. amt .. " опыта (уровень " .. lvl .. ").")
+        player:SendBroadcastMessage(TAG .. Loc(player, "xpGiven", amt, lvl))
         return false
     end
 
     if cmd == "unlocks" then
-        player:SendBroadcastMessage(TAG .. " == Разблокировки гильдии ==")
+        player:SendBroadcastMessage(TAG .. Loc(player, "unlocksT"))
         for lvl, desc in pairs(UNLOCKS) do
             if tonumber(lvl) <= (p and p.level or 1) then
-                player:SendBroadcastMessage(TAG .. " [ур. " .. lvl .. "] " .. desc)
+                player:SendBroadcastMessage(TAG .. Loc(player, "unlockRow", lvl, desc))
             end
         end
         return false
     end
 
-    player:SendBroadcastMessage(TAG .. " Команды: .aeguild status|xp <n>|unlocks")
+    player:SendBroadcastMessage(TAG .. Loc(player, "help"))
     return false
 end
 RegisterPlayerEvent(18, OnPlayerChat)

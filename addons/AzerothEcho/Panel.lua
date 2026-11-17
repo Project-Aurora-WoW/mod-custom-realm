@@ -9,6 +9,85 @@ local AE = AzerothEcho
 local C = AE.COLOR
 
 -- ============================================================
+-- Локализация клиентских вкладок (ru/en по GetLocale)
+-- ============================================================
+local isRU = (GetLocale and GetLocale() == "ruRU") or false
+local UI = {
+    ru = {
+        guildWait = "Ждите данных сервера… (гильдейская активность начисляет опыт).",
+        guildNo   = "У вас нет гильдии.\nВступите в гильдию, чтобы начислять опыт.",
+        guildLevel= "Уровень: ",
+        guildXp   = "Опыт: ",
+        guildTotal= " (всего ",
+        guildUnl  = "Разблокировано перков: ",
+        guildPerks= "Активные перки:",
+        homeWait  = "Дома нет. Установи точку: .ae homehere",
+        homeNo    = "У вас ещё нет дома.\nУстанови точку: ",
+        homeBack  = "Вернуться: ",
+        homeCd    = "Кулдаун телепорта: ",
+        homeReady = ".ae home — вернуться домой (готово).",
+        homePt    = "Точка дома",
+        homeMap   = "Карта: ",
+        homeTag   = "Дом",
+        socWait   = "Связей пока нет. Добавить: .aesocial friend <имя>",
+        socNone   = "Связей пока нет.\nДобавить спутника: ",
+        socMentor = "Стать наставником: ",
+        socPart   = "Спутники:",
+        socBond   = " — связь ур. ",
+        socMenTor = "Наставник: ",
+        socTag    = "Социальное",
+        seasonSeason = "Сезон: ",
+        seasonHoliday = "Праздник: ",
+        seasonStage   = "Этап: ",
+        seasonDays    = " дн. до конца",
+        mapLoc    = "Карта локаций",
+        mapRift   = "Карта разломов",
+        statusSeparator = " • ",
+        stTokens  = "Жетоны:",
+        stGuild   = "Г:",
+        stLvl     = " (ур.",
+        stHome    = "Дом:",
+        stMap     = "карта ",
+        scAlliance = "Альянс",
+        scHorde   = "Орда",
+    },
+    en = {
+        guildWait = "Waiting for server data… (guild activity grants XP).",
+        guildNo   = "You have no guild.\nJoin a guild to earn XP.",
+        guildLevel= "Level: ",
+        guildXp   = "XP: ",
+        guildTotal= " (total ",
+        guildUnl  = "Unlocked perks: ",
+        guildPerks= "Active perks:",
+        homeWait  = "No home. Set a point: .ae homehere",
+        homeNo    = "You have no home yet.\nSet a point: ",
+        homeBack  = "Return: ",
+        homeCd    = "Teleport cooldown: ",
+        homeReady = ".ae home — return home (ready).",
+        homePt    = "Home point",
+        homeMap   = "Map: ",
+        homeTag   = "Home",
+        socWait   = "No bonds yet. Add: .aesocial friend <name>",
+        socNone   = "No bonds yet.\nAdd a partner: ",
+        socMentor = "Become a mentor: ",
+        socPart   = "Partners:",
+        socBond   = " — bond lvl ",
+        socMenTor = "Mentor: ",
+        socTag    = "Social",
+        seasonSeason = "Season: ",
+        seasonHoliday = "Holiday: ",
+        seasonStage   = "Stage: ",
+        seasonDays    = " days left",
+        mapLoc    = "Location map",
+        mapRift   = "Rifts map",
+        statusSeparator = " • ",
+    },
+}
+local function RL(key)
+    return (isRU and UI.ru or UI.en)[key] or key
+end
+
+-- ============================================================
 -- Каркас окна
 -- ============================================================
 
@@ -153,15 +232,15 @@ function AE.RefreshSeasonPanel(data)
     if not data or not seasonText then return end
     local lines = {}
     if data.seasonName then
-        table.insert(lines, C.gold .. "Сезон: " .. data.seasonName .. "|r")
+        table.insert(lines, C.gold .. RL("seasonSeason") .. data.seasonName .. "|r")
     end
     if data.holidayName then
-        table.insert(lines, C.cult .. "Праздник: " .. data.holidayName .. "|r")
+        table.insert(lines, C.cult .. RL("seasonHoliday") .. data.holidayName .. "|r")
     end
     if data.stageName then
-        local days = (data.stageDays and data.stageDays > 0) and (" (" .. data.stageDays .. " дн. до конца)") or ""
+        local days = (data.stageDays and data.stageDays > 0) and (" (" .. data.stageDays .. RL("seasonDays") .. ")") or ""
         local goal = data.stageGoal and (" — " .. data.stageGoal) or ""
-        table.insert(lines, C.order .. "Этап: " .. data.stageName .. goal .. days .. "|r")
+        table.insert(lines, C.order .. RL("seasonStage") .. data.stageName .. goal .. days .. "|r")
     end
     seasonText:SetText(table.concat(lines, "\n"))
 end
@@ -189,23 +268,23 @@ local guildText = guildPage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 guildText:SetPoint("TOPLEFT", guildPage, "TOPLEFT", 0, -34)
 guildText:SetJustifyH("LEFT")
 guildText:SetWidth(PANEL_W - 40)
-guildText:SetText(C.gray .. "Ждите данных сервера…|r (гильдейская активность начисляет опыт).")
+guildText:SetText(C.gray .. RL("guildWait") .. "|r")
 
 -- Обновление данных гильдии (вызывается из Core при парсинге AECHOGUILD)
 function AE.RefreshGuildPanel(data)
     if not data or not guildText then return end
     if data.none then
-        guildText:SetText(C.gray .. "У вас нет гильдии.|r\nВступите в гильдию, чтобы начислять опыт.")
-        guildTitle:SetText(C.gold .. "Гильдия|r")
+        guildText:SetText(C.gray .. RL("guildNo") .. "|r")
+        guildTitle:SetText(C.gold .. RL("guildTag") .. "|r")
         return
     end
     guildTitle:SetText(C.gold .. data.name .. "|r")
-    local lines = "Уровень: " .. C.order .. data.level .. "|r\n" ..
-                  "Опыт: " .. C.void .. data.xp .. "|r (всего " .. data.total .. ")\n" ..
-                  "Разблокировано перков: " .. (data.unlocked or 0)
+    local lines = RL("guildLevel") .. C.order .. data.level .. "|r\n" ..
+                  RL("guildXp") .. C.void .. data.xp .. "|r" .. RL("guildTotal") .. data.total .. ")\n" ..
+                  RL("guildUnl") .. (data.unlocked or 0)
     -- Разблокировки (первые)
     if data.unlocks and #data.unlocks > 0 then
-        lines = lines .. "\n\n" .. C.green .. "Активные перки:|r\n" .. table.concat(data.unlocks, "\n")
+        lines = lines .. "\n\n" .. C.green .. RL("guildPerks") .. "|r\n" .. table.concat(data.unlocks, "\n")
     end
     guildText:SetText(lines)
 end
@@ -225,25 +304,24 @@ local homeText = homePage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 homeText:SetPoint("TOPLEFT", homePage, "TOPLEFT", 0, -34)
 homeText:SetJustifyH("LEFT")
 homeText:SetWidth(PANEL_W - 40)
-homeText:SetText(C.gray .. "Дома нет. Установи точку: .ae homehere|r")
+homeText:SetText(C.gray .. RL("homeWait") .. "|r")
 
 function AE.RefreshHomePanel(data)
     if not data or not homeText then return end
     if data.none then
-        homeTitle:SetText(C.gold .. "Дом|r")
-        homeText:SetText(C.gray .. "У вас ещё нет дома.|r\n" ..
-            "Установи точку: " .. C.gold .. ".ae homehere|r\n" ..
-            "Вернуться: " .. C.gold .. ".ae home|r")
+        homeTitle:SetText(C.gold .. RL("homeTag") .. "|r")
+        homeText:SetText(C.gray .. RL("homeNo") .. "|r" .. C.gold .. ".ae homehere|r\n" ..
+            RL("homeBack") .. C.gold .. ".ae home|r")
         return
     end
-    homeTitle:SetText(C.gold .. "Дом|r")
+    homeTitle:SetText(C.gold .. RL("homeTag") .. "|r")
     local label = data.label and (" «" .. data.label .. "»") or ""
     local cd = data.cd or 0
-    local cdLine = (cd > 0) and ("\nКулдаун телепорта: " .. C.orange .. cd .. " сек.|r") or
-                                   ("\n" .. C.green .. ".ae home — вернуться домой (готово).|r")
+    local cdLine = (cd > 0) and ("\n" .. RL("homeCd") .. C.orange .. cd .. " сек.|r") or
+                                   ("\n" .. C.green .. RL("homeReady") .. "|r")
     homeText:SetText(
-        "Точка дома" .. label .. ".\n" ..
-        "Карта: " .. (data.map or "?") .. cdLine
+        RL("homePt") .. label .. ".\n" ..
+        RL("homeMap") .. (data.map or "?") .. cdLine
     )
 end
 
@@ -254,28 +332,27 @@ end
 local socialPage = pages[6]
 local socialTitle = socialPage:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 socialTitle:SetPoint("TOPLEFT", socialPage, "TOPLEFT", 0, -4)
-socialTitle:SetText(C.gold .. "Социальное|r")
+socialTitle:SetText(C.gold .. RL("socTag") .. "|r")
 
 local socialText = socialPage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 socialText:SetPoint("TOPLEFT", socialPage, "TOPLEFT", 0, -34)
 socialText:SetJustifyH("LEFT")
 socialText:SetWidth(PANEL_W - 40)
-socialText:SetText(C.gray .. "Связей пока нет. Добавить: .aesocial friend <имя>|r")
+socialText:SetText(C.gray .. RL("socWait") .. "|r")
 
 function AE.RefreshSocialPanel(data)
     if not data or not socialText then return end
     if not data.partners or #data.partners == 0 then
-        socialText:SetText(C.gray .. "Связей пока нет.|r\n" ..
-            "Добавить спутника: " .. C.gold .. ".aesocial friend <имя>|r\n" ..
-            "Стать наставником: " .. C.gold .. ".aesocial mentor <имя>|r")
+        socialText:SetText(C.gray .. RL("socNone") .. "|r" .. C.gold .. ".aesocial friend <имя>|r\n" ..
+            RL("socMentor") .. C.gold .. ".aesocial mentor <имя>|r")
         return
     end
-    local lines = C.blue .. "Спутники:|r\n"
+    local lines = C.blue .. RL("socPart") .. "|r\n"
     for _, p in ipairs(data.partners) do
-        lines = lines .. "  " .. C.order .. p.name .. "|r — связь ур. " .. C.void .. p.level .. "|r\n"
+        lines = lines .. "  " .. C.order .. p.name .. "|r" .. RL("socBond") .. C.void .. p.level .. "|r\n"
     end
     if data.mentor then
-        lines = lines .. "\n" .. C.green .. "Наставник: " .. data.mentor .. "|r"
+        lines = lines .. "\n" .. C.green .. RL("socMenTor") .. data.mentor .. "|r"
     end
     socialText:SetText(lines)
 end
@@ -307,7 +384,7 @@ local mapBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 mapBtn:SetWidth(140)
 mapBtn:SetHeight(24)
 mapBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 12)
-mapBtn:SetText("Карта локаций")
+mapBtn:SetText(RL("mapLoc"))
 mapBtn.toggle = "locations"   -- текущий режим: "locations" | "rifts"
 
 local mapOrigin = function() end   -- показать исходную карту
@@ -317,11 +394,11 @@ local function OnMapToggle()
     if mapBtn.toggle == "locations" then
         mapRift()
         mapBtn.toggle = "rifts"
-        mapBtn:SetText("Карта разломов")
+        mapBtn:SetText(RL("mapRift"))
     else
         mapOrigin()
         mapBtn.toggle = "locations"
-        mapBtn:SetText("Карта локаций")
+        mapBtn:SetText(RL("mapLoc"))
     end
 end
 mapBtn:SetScript("OnClick", OnMapToggle)
@@ -369,7 +446,7 @@ local function RefreshStatusBar()
 
     -- Жетоны Эха
     if AE.tokens and AE.tokens > 0 then
-        table.insert(parts, C.void .. "Жетоны:" .. AE.tokens .. "|r")
+        table.insert(parts, C.void .. RL("stTokens") .. AE.tokens .. "|r")
     end
 
     -- Фракция (из фракционной системы: стартовая по расе, если не выбрана)
@@ -379,8 +456,8 @@ local function RefreshStatusBar()
     else
         -- локальный фолбэк по расе (без серверного паёka)
         local race = select(2, UnitRace("player"))
-        faction = (race == "Human" or race == "Dwarf" or race == "Gnome" or race == "NightElf" or race == "Draenei")
-            and "Альянс" or "Орда"
+        local isA = (race == "Human" or race == "Dwarf" or race == "Gnome" or race == "NightElf" or race == "Draenei")
+        faction = isA and RL("scAlliance") or (race ~= nil and RL("scHorde"))
     end
     if faction then
         table.insert(parts, C.blue .. faction .. "|r")
@@ -388,12 +465,12 @@ local function RefreshStatusBar()
 
     -- Гильдия
     if AE.guild and not AE.guild.none then
-        table.insert(parts, C.gold .. "Г:" .. AE.guild.name .. " (ур." .. AE.guild.level .. ")|r")
+        table.insert(parts, C.gold .. RL("stGuild") .. AE.guild.name .. RL("stLvl") .. AE.guild.level .. ")|r")
     end
 
     -- Дом
     if AE.home and not AE.home.none then
-        local l = AE.home.label or ("карта " .. (AE.home.map or "?"))
+        local l = AE.home.label or (RL("stMap") .. (AE.home.map or "?"))
         table.insert(parts, C.green .. "Дом:" .. l .. "|r")
     end
 
@@ -500,7 +577,7 @@ function AE.SetMapToolsHandler(fn)
     mapOrigin = fn or function() end
     -- Начальный режим — локации (кнопка подписана «Карта локаций»)
     mapBtn.toggle = "locations"
-    mapBtn:SetText("Карта локаций")
+    mapBtn:SetText(RL("mapLoc"))
 end
 
 frame:Hide()

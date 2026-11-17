@@ -42,6 +42,56 @@ local MENU_RELIC = 3   -- коснуться реликвии
 
 local MIN_LEVEL = REG.meta.min_level
 
+-- ============================================================
+-- Локализация ru/en (системные/игровые сообщения; лор-цитаты — на русском)
+-- ============================================================
+local L = {
+    ru = {
+        notReady     = "«%s:|r Сначала %s. Ты ещё не готов.»",
+        ch1Start     = "Глава 1 «Тень Виалии»|r — развей %d теней былого легиона.",
+        ch1Done      = "Глава 1 «Тень Виалии»|r — выполнено. Тени рассеялись.",
+        ch1Find      = "Найди %sреликвии Наследия|r — %d шт.",
+        ch1Progress  = "Тень развеяна (%d/%d).",
+        ch2Done      = "Глава 2 «Реликвии»|r — выполнено. Наследие узнало тебя.",
+        ch2Next      = "Прорвись через %sтюремщиков|r, стерегущих Страж.",
+        ch2Progress  = "Реликвия откликнулась (%d/%d).",
+        ch3Done      = "Глава 3 «Тюремщики»|r — выполнено. Стражники пали.",
+        ch3Next      = "%sСтраж Иллидана|r просыпается в центре. Убей его.",
+        ch3Progress  = "Тюремщик повержен (%d/%d).",
+        ch4Done      = "Глава 4 «Страж Иллидана»|r — выполнено. Наследие принято.",
+        comp         = "Кампания «Наследие Иллидана» завершена!",
+        reward       = "Награда — %s«Осколок Наследия»|r — придёт почтой.",
+        worldDone    = " явился наследником Иллидана и сокрушил его Стража!",
+        sentToRift   = "Телепорт к разлому Наследия...",
+    },
+    en = {
+        notReady     = "«%s:|r First, %s. You are not ready yet.»",
+        ch1Start     = "Chapter 1 «Shade of Vi'alia»|r — dispel %d shades of the old legion.",
+        ch1Done      = "Chapter 1 «Shade of Vi'alia»|r — done. Shades dispelled.",
+        ch1Find      = "Find %sRelics of Legacy|r — %d pcs.",
+        ch1Progress  = "Shade dispelled (%d/%d).",
+        ch2Done      = "Chapter 2 «Relics»|r — done. Legacy recognized you.",
+        ch2Next      = "Break through the %swardens|r guarding the Guardian.",
+        ch2Progress  = "Relic responded (%d/%d).",
+        ch3Done      = "Chapter 3 «Wardens»|r — done. Guards fallen.",
+        ch3Next      = "%sGuardian of Illidan|r awakens at the center. Slay him.",
+        ch3Progress  = "Warden slain (%d/%d).",
+        ch4Done      = "Chapter 4 «Guardian of Illidan»|r — done. Legacy accepted.",
+        comp         = "Campaign «Legacy of Illidan» completed!",
+        reward       = "Reward — %sShard of Legacy|r — will arrive by mail.",
+        worldDone    = " became Illidan's heir and crushed his Guardian!",
+        sentToRift   = "Teleporting to the rift of Legacy...",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function Loc(player, s, ...)
+    local t = IsRu(player) and L.ru or L.en
+    return string.format(t[s] or s, ...)
+end
+
 local function HasCampaign7Token(player)
     return player:HasItem(CAMPAIGN7_TOKEN)
 end
@@ -99,9 +149,9 @@ local function GrantReward(player)
         "Пусть твоё имя войдёт в летопись. — Изгнанник Кель'Тас",
         player:GetGUIDLow(), nil, nil, REWARD_MAIL_DELAY, REWARD_ITEM
     )
-    player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Кампания «Наследие Иллидана» завершена!|r")
-    player:SendBroadcastMessage(TAG .. " Награда — " .. ORDER_COLOR .. "«Осколок Наследия»|r — придёт почтой.")
-    SendWorldMessage(TAG .. " " .. player:GetName() .. " явился наследником Иллидана и сокрушил его Стража!")
+    player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "comp") .. "|r")
+    player:SendBroadcastMessage(TAG .. " " .. Loc(player, "reward", ORDER_COLOR))
+    SendWorldMessage(TAG .. " " .. player:GetName() .. Loc(player, "worldDone"))
 end
 
 -- ============================================================
@@ -131,7 +181,7 @@ end
 local function OnHeraldSelect(event, player, creature, sender, intid, code)
     if intid == MENU_START then
         if not HasCampaign7Token(player) then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Кель'Тас:|r «Сначала Пепел Сильваны. Ты ещё не готов.»")
+            player:SendBroadcastMessage(TAG .. Loc(player, "notReady", "Кель'Тас", "Пепел Сильваны"))
             player:GossipComplete()
             return
         end
@@ -164,11 +214,11 @@ local function OnCreatureKill(event, killer, killed)
         local n = ReadCounter(killer, "shade") + 1
         if n >= SHADE_REQUIRED then
             SaveProgress(killer, 2, false, "shade=" .. n)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 1 «Тень Виалии»|r — выполнено. Тени рассеялись.")
-            killer:SendBroadcastMessage(TAG .. " Найди " .. ORDER_COLOR .. "реликвии Наследия|r — " .. RELIC_TOTAL .. " шт.")
+            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch1Done") .. "|r")
+            killer:SendBroadcastMessage(TAG .. " " .. Loc(killer, "ch1Find", ORDER_COLOR, RELIC_TOTAL))
         else
             WriteCounter(killer, 1, "shade", n)
-            killer:SendBroadcastMessage(TAG .. " Тень развеяна (" .. n .. "/" .. SHADE_REQUIRED .. ").")
+            killer:SendBroadcastMessage(TAG .. Loc(killer, "ch1Progress", n, SHADE_REQUIRED))
         end
         return
     end
@@ -177,18 +227,18 @@ local function OnCreatureKill(event, killer, killed)
         local n = ReadCounter(killer, "warden") + 1
         if n >= WARDEN_REQUIRED then
             SaveProgress(killer, 4, false, "warden=" .. n)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 3 «Тюремщики»|r — выполнено. Стражники пали.")
-            killer:SendBroadcastMessage(TAG .. " " .. CULT_COLOR .. "Страж Иллидана|r просыпается в центре. Убей его.")
+            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch3Done") .. "|r")
+            killer:SendBroadcastMessage(TAG .. " " .. Loc(killer, "ch3Next", CULT_COLOR))
         else
             WriteCounter(killer, 3, "warden", n)
-            killer:SendBroadcastMessage(TAG .. " Тюремщик повержен (" .. n .. "/" .. WARDEN_REQUIRED .. ").")
+            killer:SendBroadcastMessage(TAG .. Loc(killer, "ch3Progress", n, WARDEN_REQUIRED))
         end
         return
     end
 
     if entry == NPC_BOSS and chapter == 4 then
         SaveProgress(killer, 5, true, "campaign_done=1;boss=slain")
-        killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 4 «Страж Иллидана»|r — выполнено. Наследие принято.")
+        killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch4Done") .. "|r")
         GrantReward(killer)
     end
 end
@@ -215,11 +265,11 @@ local function OnRelicSelect(event, player, creature, sender, intid, code)
         local n = ReadCounter(player, "relic") + 1
         if n >= RELIC_TOTAL then
             SaveProgress(player, 3, false, "relic=" .. n)
-            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Глава 2 «Реликвии»|r — выполнено. Наследие узнало тебя.")
-            player:SendBroadcastMessage(TAG .. " Прорвись через " .. VOID_COLOR .. "тюремщиков|r, стерегущих Страж.")
+            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "ch2Done") .. "|r")
+            player:SendBroadcastMessage(TAG .. " " .. Loc(player, "ch2Next", VOID_COLOR))
         else
             WriteCounter(player, 2, "relic", n)
-            player:SendBroadcastMessage(TAG .. " Реликвия откликнулась (" .. n .. "/" .. RELIC_TOTAL .. ").")
+            player:SendBroadcastMessage(TAG .. Loc(player, "ch2Progress", n, RELIC_TOTAL))
         end
     end
     player:GossipComplete()

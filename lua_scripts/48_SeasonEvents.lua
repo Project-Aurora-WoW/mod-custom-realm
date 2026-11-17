@@ -28,6 +28,26 @@ local PREFIX = SE.prefix or "AECHOSEASON"
 local STATE_TABLE = "realm_season_state"
 
 -- ============================================================
+-- Локализация ru/en
+-- ============================================================
+local L = {
+    ru = {
+        holidayReward = "Праздник «%s»! +валюта праздника.",
+    },
+    en = {
+        holidayReward = "Holiday «%s»! +holiday currency.",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function Loc(player, s, ...)
+    local t = IsRu(player) and L.ru or L.en
+    return string.format(t[s] or s, ...)
+end
+
+-- ============================================================
 -- Текущая дата (год, месяц, день)
 -- ============================================================
 
@@ -109,7 +129,7 @@ function AE_GrantSeasonReward(player, baseTokens)
     local hol = ActiveHoliday(month, day)
     if hol then
         player:AddItem(hol.currency_item, baseTokens)
-        player:SendBroadcastMessage(TAG .. " " .. GOLD_COLOR .. "Праздник «" .. hol.name .. "»!|r +валюта праздника.")
+        player:SendBroadcastMessage(TAG .. " " .. GOLD_COLOR .. Loc(player, "holidayReward", hol.name) .. "|r")
     end
 end
 

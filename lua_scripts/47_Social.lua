@@ -32,6 +32,62 @@ local SOCIAL_PREFIX = S.prefix or "AECHOSOCIAL"
 local LINKS_TABLE = "realm_social_links"
 local MENTOR_TABLE = "realm_mentor"
 
+-- Рейдовые боссы (из legacy.pve_bosses) — за них начисляется опыт связи.
+local PVE_BOSSES = {}
+if REG.legacy and REG.legacy.pve_bosses then
+    for _, e in pairs(REG.legacy.pve_bosses) do PVE_BOSSES[e] = true end
+end
+
+-- ============================================================
+-- Локализация ru/en
+-- ============================================================
+local L = {
+    ru = {
+        linkUp     = "Связь с %s|r укрепилась (+%d, уровень %d).",
+        fmtFriend  = "Формат: .aesocial friend <имя игрока>",
+        selfNo     = "Нельзя связаться с самим собой.",
+        notFound   = "Игрок «%s» не найден.",
+        already    = "Вы уже связаны с %s|r.",
+        linkSet    = "Связь с %s|r установлена (уровень 1).",
+        circle     = "== Мой социальный круг ==",
+        partnerRow = "%s|r — связь ур.%d",
+        noPartners = "Пока никого. .aesocial friend <имя>.",
+        mentorRow  = "Наставник: %s|r",
+        fmtMentor  = "Формат: .aesocial mentor <имя ученика>",
+        selfMentor = "Нельзя быть наставником самому себе.",
+        mentorSet  = "Ты стал наставником %s.|r",
+        fmtBreak   = "Формат: .aesocial break <имя>",
+        linkBroken = "Связь с %s|r разорвана.",
+        linkNone   = "Связи с %s нет.",
+    },
+    en = {
+        linkUp     = "Link with %s|r strengthened (+%d, level %d).",
+        fmtFriend  = "Format: .aesocial friend <player name>",
+        selfNo     = "You cannot bond with yourself.",
+        notFound   = "Player «%s» not found.",
+        already    = "You are already linked to %s|r.",
+        linkSet    = "Linked with %s|r (level 1).",
+        circle     = "== My social circle ==",
+        partnerRow = "%s|r — bond lvl %d",
+        noPartners = "No one yet. .aesocial friend <name>.",
+        mentorRow  = "Mentor: %s|r",
+        fmtMentor  = "Format: .aesocial mentor <student name>",
+        selfMentor = "You cannot be your own mentor.",
+        mentorSet  = "You became the mentor of %s.|r",
+        fmtBreak   = "Format: .aesocial break <name>",
+        linkBroken = "Link with %s|r broken.",
+        linkNone   = "No link with %s.",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function Loc(player, s, ...)
+    local t = IsRu(player) and L.ru or L.en
+    return string.format(t[s] or s, ...)
+end
+
 -- ============================================================
 -- Хелперы имён/guid (по игроку и по guid из БД)
 -- ============================================================
@@ -142,7 +198,7 @@ local function GrantSharedXp(player, amount)
     if targetGUID and targetGUID ~= 0 then
         local lvl = AddLinkXp(myGuid, targetGUID, amount)
         player:SendBroadcastMessage(TAG .. " " .. VOID_COLOR ..
-            "Связь с " .. NameByGuid(targetGUID) .. "|r укрепилась (+" .. amount .. ", уровень " .. lvl .. ").")
+            Loc(player, "linkUp", NameByGuid(targetGUID), amount, lvl))
     end
 end
 
@@ -160,6 +216,9 @@ RegisterPlayerEvent(6, OnPvpKill)
 -- ============================================================
 local function OnBossKill(event, killer, killed)
     if not killer or not killer:IsPlayer() or not killed then return end
+    -- Фильтр: только рейдовые боссы дают опыт связи (не любой моб)
+    local entry = killed:GetEntry()
+    if not PVE_BOSSES[entry] then return end
     GrantSharedXp(killer, XP_BOSS)
 end
 RegisterPlayerEvent(7, OnBossKill)
@@ -183,46 +242,45 @@ local function OnPlayerChat(event, player, msg, lang, typ)
     if cmd == "friend" then
         local name = trim(arg or "")
         if name == "" then
-            player:SendBroadcastMessage(TAG .. " Формат: .aesocial friend <имя игрока>")
+            player:SendBroadcastMessage(TAG .. Loc(player, "fmtFriend"))
             return false
         end
         if name == player:GetName() then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Нельзя связаться с самим собой.|r")
+            player:SendBroadcastMessage(TAG .. CULT_COLOR .. Loc(player, "selfNo") .. "|r")
             return false
         end
         local other = PlayerGuid(name)
         if not other then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Игрок «" .. name .. "» не найден.|r")
+            player:SendBroadcastMessage(TAG .. CULT_COLOR .. Loc(player, "notFound", name) .. "|r")
             return false
         end
         if HasLink(myGuid, other) then
-            player:SendBroadcastMessage(TAG .. " Вы уже связаны с " .. ORDER_COLOR .. name .. "|r.")
+            player:SendBroadcastMessage(TAG .. Loc(player, "already", ORDER_COLOR .. name) .. ".")
             return false
         end
         EnsureLink(myGuid, other)
-        player:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Связь с " .. name .. "|r установлена (уровень 1).")
+        player:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(player, "linkSet", name))
         return false
     end
 
     -- .aesocial status
     if cmd == "status" then
-        player:SendBroadcastMessage(TAG .. " == Мой социальный круг ==")
+        player:SendBroadcastMessage(TAG .. Loc(player, "circle"))
         local partners = GetPartners(myGuid)
         local n = 0
         for guid, link in pairs(partners) do
             n = n + 1
             local lvl = link and link.level or 1
-            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. NameByGuid(guid) ..
-                "|r — связь ур." .. lvl)
+            player:SendBroadcastMessage(TAG .. " " .. Loc(player, "partnerRow", ORDER_COLOR .. NameByGuid(guid), lvl))
         end
         if n == 0 then
-            player:SendBroadcastMessage(TAG .. " Пока никого. .aesocial friend <имя>.")
+            player:SendBroadcastMessage(TAG .. Loc(player, "noPartners"))
         end
         -- Наставник/ученик
         local mq = CharDBQuery(string.format(
             "SELECT mentor_guid FROM %s WHERE student_guid = %d", MENTOR_TABLE, myGuid))
         if mq then
-            player:SendBroadcastMessage(TAG .. " Наставник: " .. ORDER_COLOR .. NameByGuid(mq:GetUInt32(0)) .. "|r")
+            player:SendBroadcastMessage(TAG .. Loc(player, "mentorRow", ORDER_COLOR .. NameByGuid(mq:GetUInt32(0))))
         end
         return false
     end
@@ -231,22 +289,22 @@ local function OnPlayerChat(event, player, msg, lang, typ)
     if cmd == "mentor" then
         local name = trim(arg or "")
         if name == "" then
-            player:SendBroadcastMessage(TAG .. " Формат: .aesocial mentor <имя ученика>")
+            player:SendBroadcastMessage(TAG .. Loc(player, "fmtMentor"))
             return false
         end
         local student = PlayerGuid(name)
         if not student then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Игрок «" .. name .. "» не найден.|r")
+            player:SendBroadcastMessage(TAG .. CULT_COLOR .. Loc(player, "notFound", name) .. "|r")
             return false
         end
         if student == myGuid then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Нельзя быть наставником самому себе.|r")
+            player:SendBroadcastMessage(TAG .. CULT_COLOR .. Loc(player, "selfMentor") .. "|r")
             return false
         end
         CharDBQuery(string.format(
             "REPLACE INTO %s (mentor_guid, student_guid) VALUES (%d, %d)",
             MENTOR_TABLE, myGuid, student))
-        player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Ты стал наставником " .. name .. ".|r")
+        player:SendBroadcastMessage(TAG .. " " .. Loc(player, "mentorSet", ORDER_COLOR .. name))
         return false
     end
 
@@ -254,12 +312,12 @@ local function OnPlayerChat(event, player, msg, lang, typ)
     if cmd == "break" then
         local name = trim(arg or "")
         if name == "" then
-            player:SendBroadcastMessage(TAG .. " Формат: .aesocial break <имя>")
+            player:SendBroadcastMessage(TAG .. Loc(player, "fmtBreak"))
             return false
         end
         local other = PlayerGuid(name)
         if not other then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Игрок «" .. name .. "» не найден.|r")
+            player:SendBroadcastMessage(TAG .. CULT_COLOR .. Loc(player, "notFound", name) .. "|r")
             return false
         end
         if HasLink(myGuid, other) then
@@ -267,9 +325,9 @@ local function OnPlayerChat(event, player, msg, lang, typ)
             local aG, bG = string.match(key, "^(%d+):(%d+)$")
             CharDBQuery(string.format(
                 "DELETE FROM %s WHERE guid_a = %d AND guid_b = %d", LINKS_TABLE, tonumber(aG), tonumber(bG)))
-            player:SendBroadcastMessage(TAG .. " Связь с " .. CULT_COLOR .. name .. "|r разорвана.")
+            player:SendBroadcastMessage(TAG .. Loc(player, "linkBroken", CULT_COLOR .. name))
         else
-            player:SendBroadcastMessage(TAG .. " Связи с " .. name .. " нет.")
+            player:SendBroadcastMessage(TAG .. Loc(player, "linkNone", name))
         end
         return false
     end

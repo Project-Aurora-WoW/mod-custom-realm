@@ -43,6 +43,54 @@ local MENU_RELIC = 3   -- коснуться Часовни Лжи
 
 local MIN_LEVEL = REG.meta.min_level
 
+-- ============================================================
+-- Локализация ru/en (системные/игровые сообщения; лор-цитаты — на русском)
+-- ============================================================
+local L = {
+    ru = {
+        notReady     = "«%s:|r Сначала %s. Ты ещё не готов.»",
+        ch1Start     = "Глава 1 «Тень Светлой Лжи»|r — развей %d Теней лжесвятого.",
+        ch1Done      = "Глава 1 «Тень Светлой Лжи»|r — выполнено. Тени рассеялись.",
+        ch1Find      = "Найди %sЧасовни Лжи|r — %d шт.",
+        ch1Progress  = "Тень развеяна (%d/%d).",
+        ch2Done      = "Глава 2 «Часовни Лжи»|r — выполнено. Истина увидела тебя.",
+        ch2Next      = "Прорвись через %sСтражей-отступников|r, стерегущих Плащаницу.",
+        ch2Progress  = "Часовня откликнулась (%d/%d).",
+        ch3Done      = "Глава 3 «Стражи-отступники»|r — выполнено. Стражи пали.",
+        ch3Next      = "%sПлащаница Светлой Лжи|r просыпается в центре. Обличи её.",
+        ch3Progress  = "Страж-отступник повержен (%d/%d).",
+        ch4Done      = "Глава 4 «Плащаница Светлой Лжи»|r — выполнено. Ложь изгнана.",
+        comp         = "Кампания «Светлая Ложь Альянса» завершена!",
+        reward       = "Награда — %s«Свет Истины»|r — придёт почтой.",
+        worldDone    = " обличил Светлую Ложь Альянса и низверг её Плащаницу!",
+    },
+    en = {
+        notReady     = "«%s:|r First, %s. You are not ready yet.»",
+        ch1Start     = "Chapter 1 «Shade of the Bright Lie»|r — dispel %d false-saint shades.",
+        ch1Done      = "Chapter 1 «Shade of the Bright Lie»|r — done. Shades dispelled.",
+        ch1Find      = "Find %sChaplins of the Lie|r — %d pcs.",
+        ch1Progress  = "Shade dispelled (%d/%d).",
+        ch2Done      = "Chapter 2 «Chaplins»|r — done. Truth saw you.",
+        ch2Next      = "Break through the %sRenegade Guards|r guarding the Shroud.",
+        ch2Progress  = "Chapel responded (%d/%d).",
+        ch3Done      = "Chapter 3 «Renegade Guards»|r — done. Guards fallen.",
+        ch3Next      = "%sShroud of the Bright Lie|r awakens. Expose it.",
+        ch3Progress  = "Renegade slain (%d/%d).",
+        ch4Done      = "Chapter 4 «Shroud of the Lie»|r — done. The lie is vanquished.",
+        comp         = "Campaign «The Bright Lie of the Alliance» completed!",
+        reward       = "Reward — %sLight of Truth|r — will arrive by mail.",
+        worldDone    = " exposed the Bright Lie of the Alliance and brought down its Shroud!",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function Loc(player, s, ...)
+    local t = IsRu(player) and L.ru or L.en
+    return string.format(t[s] or s, ...)
+end
+
 local function HasCampaign9Token(player)
     return player:HasItem(CAMPAIGN9_TOKEN)
 end
@@ -100,9 +148,9 @@ local function GrantReward(player)
         "сводом. — Праведник Мораин",
         player:GetGUIDLow(), nil, nil, REWARD_MAIL_DELAY, REWARD_ITEM
     )
-    player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Кампания «Светлая Ложь Альянса» завершена!|r")
-    player:SendBroadcastMessage(TAG .. " Награда — " .. ORDER_COLOR .. "«Свет Истины»|r — придёт почтой.")
-    SendWorldMessage(TAG .. " " .. player:GetName() .. " обличил Светлую Ложь Альянса и низверг её Плащаницу!")
+    player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "comp") .. "|r")
+    player:SendBroadcastMessage(TAG .. " " .. Loc(player, "reward", ORDER_COLOR))
+    SendWorldMessage(TAG .. " " .. player:GetName() .. Loc(player, "worldDone"))
 end
 
 -- ============================================================
@@ -132,7 +180,7 @@ end
 local function OnHeraldSelect(event, player, creature, sender, intid, code)
     if intid == MENU_START then
         if not HasCampaign9Token(player) then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Праведник Мораин:|r «Сначала Осколок Проклятия. Ты ещё не готов.»")
+            player:SendBroadcastMessage(TAG .. Loc(player, "notReady", "Праведник Мораин", "Осколок Проклятия"))
             player:GossipComplete()
             return
         end
@@ -165,11 +213,11 @@ local function OnCreatureKill(event, killer, killed)
         local n = ReadCounter(killer, "shade") + 1
         if n >= SHADE_REQUIRED then
             SaveProgress(killer, 2, false, "shade=" .. n)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 1 «Тень Светлой Лжи»|r — выполнено. Тени рассеялись.")
-            killer:SendBroadcastMessage(TAG .. " Найди " .. ORDER_COLOR .. "Часовни Лжи|r — " .. RELIC_TOTAL .. " шт.")
+            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch1Done") .. "|r")
+            killer:SendBroadcastMessage(TAG .. " " .. Loc(killer, "ch1Find", ORDER_COLOR, RELIC_TOTAL))
         else
             WriteCounter(killer, 1, "shade", n)
-            killer:SendBroadcastMessage(TAG .. " Тень развеяна (" .. n .. "/" .. SHADE_REQUIRED .. ").")
+            killer:SendBroadcastMessage(TAG .. Loc(killer, "ch1Progress", n, SHADE_REQUIRED))
         end
         return
     end
@@ -178,18 +226,18 @@ local function OnCreatureKill(event, killer, killed)
         local n = ReadCounter(killer, "warden") + 1
         if n >= WARDEN_REQUIRED then
             SaveProgress(killer, 4, false, "warden=" .. n)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 3 «Стражи-отступники»|r — выполнено. Стражи пали.")
-            killer:SendBroadcastMessage(TAG .. " " .. CULT_COLOR .. "Плащаница Светлой Лжи|r просыпается в центре. Обличи её.")
+            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch3Done") .. "|r")
+            killer:SendBroadcastMessage(TAG .. " " .. Loc(killer, "ch3Next", CULT_COLOR))
         else
             WriteCounter(killer, 3, "warden", n)
-            killer:SendBroadcastMessage(TAG .. " Страж-отступник повержен (" .. n .. "/" .. WARDEN_REQUIRED .. ").")
+            killer:SendBroadcastMessage(TAG .. Loc(killer, "ch3Progress", n, WARDEN_REQUIRED))
         end
         return
     end
 
     if entry == NPC_BOSS and chapter == 4 then
         SaveProgress(killer, 5, true, "campaign_done=1;boss=slain")
-        killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 4 «Плащаница Светлой Лжи»|r — выполнено. Ложь изгнана.")
+        killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch4Done") .. "|r")
         GrantReward(killer)
     end
 end
@@ -216,11 +264,11 @@ local function OnRelicSelect(event, player, creature, sender, intid, code)
         local n = ReadCounter(player, "relic") + 1
         if n >= RELIC_TOTAL then
             SaveProgress(player, 3, false, "relic=" .. n)
-            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Глава 2 «Часовни Лжи»|r — выполнено. Истина увидела тебя.")
-            player:SendBroadcastMessage(TAG .. " Прорвись через " .. VOID_COLOR .. "Стражей-отступников|r, стерегущих Плащаницу.")
+            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "ch2Done") .. "|r")
+            player:SendBroadcastMessage(TAG .. " " .. Loc(player, "ch2Next", VOID_COLOR))
         else
             WriteCounter(player, 2, "relic", n)
-            player:SendBroadcastMessage(TAG .. " Часовня откликнулась (" .. n .. "/" .. RELIC_TOTAL .. ").")
+            player:SendBroadcastMessage(TAG .. Loc(player, "ch2Progress", n, RELIC_TOTAL))
         end
     end
     player:GossipComplete()

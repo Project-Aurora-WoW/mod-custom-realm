@@ -43,6 +43,54 @@ local MENU_RELIC = 3   -- коснуться Склепа Проклятия
 
 local MIN_LEVEL = REG.meta.min_level
 
+-- ============================================================
+-- Локализация ru/en (системные/игровые сообщения; лор-цитаты — на русском)
+-- ============================================================
+local L = {
+    ru = {
+        notReady     = "«%s:|r Сначала %s. Ты ещё не готов.»",
+        ch1Start     = "Глава 1 «Тень Проклятия»|r — развей %d Проклятых Теней.",
+        ch1Done      = "Глава 1 «Тень Проклятия»|r — выполнено. Тени рассеялись.",
+        ch1Find      = "Найди %sСклепы Проклятия|r — %d шт.",
+        ch1Progress  = "Тень развеяна (%d/%d).",
+        ch2Done      = "Глава 2 «Склепы Проклятия»|r — выполнено. Проклятие узнало тебя.",
+        ch2Next      = "Прорвись через %sТюремщиков Проклятых|r, стерегущих Страж.",
+        ch2Progress  = "Склеп откликнулся (%d/%d).",
+        ch3Done      = "Глава 3 «Тюремщики Проклятых»|r — выполнено. Стражи пали.",
+        ch3Next      = "%sСтраж Проклятого Склепа|r просыпается в центре. Убей его.",
+        ch3Progress  = "Тюремщик повержен (%d/%d).",
+        ch4Done      = "Глава 4 «Страж Проклятого Склепа»|r — выполнено. Проклятие признало тебя.",
+        comp         = "Кампания «Экскурсия в Мир Проклятых» завершена!",
+        reward       = "Награда — %s«Осколок Проклятия»|r — придёт почтой.",
+        worldDone    = " осилил экскурсию в Мир Проклятых и низверг его Стража!",
+    },
+    en = {
+        notReady     = "«%s:|r First, %s. You are not ready yet.»",
+        ch1Start     = "Chapter 1 «Curse Shade»|r — dispel %d Cursed Shades.",
+        ch1Done      = "Chapter 1 «Curse Shade»|r — done. Shades dispelled.",
+        ch1Find      = "Find %sCrypts of the Cursed|r — %d pcs.",
+        ch1Progress  = "Shade dispelled (%d/%d).",
+        ch2Done      = "Chapter 2 «Crypts»|r — done. The curse recognized you.",
+        ch2Next      = "Break through the %sCursed Wardens|r guarding the Guardian.",
+        ch2Progress  = "Crypt responded (%d/%d).",
+        ch3Done      = "Chapter 3 «Cursed Wardens»|r — done. Guards fallen.",
+        ch3Next      = "%sGuardian of the Cursed Crypt|r awakens. Slay him.",
+        ch3Progress  = "Warden slain (%d/%d).",
+        ch4Done      = "Chapter 4 «Crypt Guardian»|r — done. The curse accepted you.",
+        comp         = "Campaign «Tour to the Cursed World» completed!",
+        reward       = "Reward — %sShard of Curse|r — will arrive by mail.",
+        worldDone    = " completed the tour to the Cursed World and brought down its Guardian!",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function Loc(player, s, ...)
+    local t = IsRu(player) and L.ru or L.en
+    return string.format(t[s] or s, ...)
+end
+
 local function HasCampaign8Token(player)
     return player:HasItem(CAMPAIGN8_TOKEN)
 end
@@ -100,9 +148,9 @@ local function GrantReward(player)
         "Пусть проклятие признает в тебе хозяина. — Эмиссар Проклятых",
         player:GetGUIDLow(), nil, nil, REWARD_MAIL_DELAY, REWARD_ITEM
     )
-    player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Кампания «Экскурсия в Мир Проклятых» завершена!|r")
-    player:SendBroadcastMessage(TAG .. " Награда — " .. ORDER_COLOR .. "«Осколок Проклятия»|r — придёт почтой.")
-    SendWorldMessage(TAG .. " " .. player:GetName() .. " осилил экскурсию в Мир Проклятых и низверг его Стража!")
+    player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "comp") .. "|r")
+    player:SendBroadcastMessage(TAG .. " " .. Loc(player, "reward", ORDER_COLOR))
+    SendWorldMessage(TAG .. " " .. player:GetName() .. Loc(player, "worldDone"))
 end
 
 -- ============================================================
@@ -132,7 +180,7 @@ end
 local function OnHeraldSelect(event, player, creature, sender, intid, code)
     if intid == MENU_START then
         if not HasCampaign8Token(player) then
-            player:SendBroadcastMessage(TAG .. CULT_COLOR .. "Эмиссар Проклятых:|r «Сначала Осколок Наследия. Ты ещё не готов.»")
+            player:SendBroadcastMessage(TAG .. Loc(player, "notReady", "Эмиссар Проклятых", "Осколок Наследия"))
             player:GossipComplete()
             return
         end
@@ -165,11 +213,11 @@ local function OnCreatureKill(event, killer, killed)
         local n = ReadCounter(killer, "shade") + 1
         if n >= SHADE_REQUIRED then
             SaveProgress(killer, 2, false, "shade=" .. n)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 1 «Тень Проклятия»|r — выполнено. Тени рассеялись.")
-            killer:SendBroadcastMessage(TAG .. " Найди " .. ORDER_COLOR .. "Склепы Проклятия|r — " .. RELIC_TOTAL .. " шт.")
+            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch1Done") .. "|r")
+            killer:SendBroadcastMessage(TAG .. " " .. Loc(killer, "ch1Find", ORDER_COLOR, RELIC_TOTAL))
         else
             WriteCounter(killer, 1, "shade", n)
-            killer:SendBroadcastMessage(TAG .. " Тень развеяна (" .. n .. "/" .. SHADE_REQUIRED .. ").")
+            killer:SendBroadcastMessage(TAG .. Loc(killer, "ch1Progress", n, SHADE_REQUIRED))
         end
         return
     end
@@ -178,18 +226,18 @@ local function OnCreatureKill(event, killer, killed)
         local n = ReadCounter(killer, "warden") + 1
         if n >= WARDEN_REQUIRED then
             SaveProgress(killer, 4, false, "warden=" .. n)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 3 «Тюремщики Проклятых»|r — выполнено. Стражи пали.")
-            killer:SendBroadcastMessage(TAG .. " " .. CULT_COLOR .. "Страж Проклятого Склепа|r просыпается в центре. Убей его.")
+            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch3Done") .. "|r")
+            killer:SendBroadcastMessage(TAG .. " " .. Loc(killer, "ch3Next", CULT_COLOR))
         else
             WriteCounter(killer, 3, "warden", n)
-            killer:SendBroadcastMessage(TAG .. " Тюремщик повержен (" .. n .. "/" .. WARDEN_REQUIRED .. ").")
+            killer:SendBroadcastMessage(TAG .. Loc(killer, "ch3Progress", n, WARDEN_REQUIRED))
         end
         return
     end
 
     if entry == NPC_BOSS and chapter == 4 then
         SaveProgress(killer, 5, true, "campaign_done=1;boss=slain")
-        killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 4 «Страж Проклятого Склепа»|r — выполнено. Проклятие признало тебя.")
+        killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. Loc(killer, "ch4Done") .. "|r")
         GrantReward(killer)
     end
 end
@@ -216,11 +264,11 @@ local function OnRelicSelect(event, player, creature, sender, intid, code)
         local n = ReadCounter(player, "relic") + 1
         if n >= RELIC_TOTAL then
             SaveProgress(player, 3, false, "relic=" .. n)
-            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Глава 2 «Склепы Проклятия»|r — выполнено. Проклятие узнало тебя.")
-            player:SendBroadcastMessage(TAG .. " Прорвись через " .. VOID_COLOR .. "Тюремщиков Проклятых|r, стерегущих Страж.")
+            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "ch2Done") .. "|r")
+            player:SendBroadcastMessage(TAG .. " " .. Loc(player, "ch2Next", VOID_COLOR))
         else
             WriteCounter(player, 2, "relic", n)
-            player:SendBroadcastMessage(TAG .. " Склеп откликнулся (" .. n .. "/" .. RELIC_TOTAL .. ").")
+            player:SendBroadcastMessage(TAG .. Loc(player, "ch2Progress", n, RELIC_TOTAL))
         end
     end
     player:GossipComplete()

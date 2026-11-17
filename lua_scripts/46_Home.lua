@@ -23,6 +23,38 @@ local DB_TABLE = "realm_homes"
 local HOME_PREFIX = H.prefix or "AECHOHOME"
 
 -- ============================================================
+-- Локализация ru/en
+-- ============================================================
+local L = {
+    ru = {
+        wait       = "подожди ещё %d сек.",
+        homeBack   = "ты вернулся домой%s.",
+        homeSet    = "точка дома установлена здесь.",
+        needFirst  = "Сначала установи точку (.ae homehere).",
+        fmtLabel   = "Формат: .ae homeset <имя дома>",
+        labeled    = "дом назван «%s».",
+        homeTag    = "Дом:",
+    },
+    en = {
+        wait       = "wait %d more sec.",
+        homeBack   = "you returned home%s.",
+        homeSet    = "home point set here.",
+        needFirst  = "Set a point first (.ae homehere).",
+        fmtLabel   = "Format: .ae homeset <home name>",
+        labeled    = "home named «%s».",
+        homeTag    = "Home:",
+    },
+}
+local function IsRu(player)
+    local ok, loc = pcall(function() return player:GetSession():GetSessionDbcLocale() end)
+    return (ok and loc == 8) or false
+end
+local function Loc(player, s, ...)
+    local t = IsRu(player) and L.ru or L.en
+    return string.format(t[s] or s, ...)
+end
+
+-- ============================================================
 -- Хелперы
 -- ============================================================
 
@@ -85,16 +117,16 @@ local function OnPlayerChat(event, player, msg, lang, typ)
         local last = lastTeleport[g] or 0
         if now - last < COOLDOWN then
             local left = COOLDOWN - (now - last)
-            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Дом:|r " .. VOID_COLOR ..
-                "подожди ещё " .. left .. " сек.|r")
+            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "homeTag") .. "|r " .. VOID_COLOR ..
+                Loc(player, "wait", left) .. "|r")
             return false
         end
         local home = GetHome(player) or DEFAULT
         player:Teleport(home.map, home.x, home.y, home.z, home.o)
         lastTeleport[g] = now
-        local label = home.label ~= "" and (" («" .. home.label .. "»)") or ""
-        player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Дом:|r " .. VOID_COLOR ..
-            "ты вернулся домой" .. label .. ".|r")
+        local label = home.label ~= "" and (" «" .. home.label .. "»") or ""
+        player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "homeTag") .. "|r " .. VOID_COLOR ..
+            Loc(player, "homeBack", label) .. "|r")
         -- клиент обновит кулдаун
         if AE_SendHomePayload then AE_SendHomePayload(player) end
         return false
@@ -109,8 +141,8 @@ local function OnPlayerChat(event, player, msg, lang, typ)
             label = (GetHome(player) or {}).label or "",
         }
         SaveHome(player, home)
-        player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Дом:|r " .. VOID_COLOR ..
-            "точка дома установлена здесь.|r")
+        player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "homeTag") .. "|r " .. VOID_COLOR ..
+            Loc(player, "homeSet") .. "|r")
         if AE_SendHomePayload then AE_SendHomePayload(player) end
         return false
     end
@@ -119,17 +151,19 @@ local function OnPlayerChat(event, player, msg, lang, typ)
     if cmd == "homeset" then
         local home = GetHome(player)
         if not home then
-            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Дом:|r Сначала установи точку (.ae homehere).")
+            player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "homeTag") .. "|r " ..
+                Loc(player, "needFirst"))
             return false
         end
         local label = (arg or ""):gsub(";", ","):sub(1, 64)
         if label == "" then
-            player:SendBroadcastMessage(TAG .. " Формат: .ae homeset <имя дома>")
+            player:SendBroadcastMessage(TAG .. Loc(player, "fmtLabel"))
             return false
         end
         home.label = label
         SaveHome(player, home)
-        player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. "Дом:|r назван «" .. label .. "».")
+        player:SendBroadcastMessage(TAG .. " " .. ORDER_COLOR .. Loc(player, "homeTag") .. "|r " ..
+            Loc(player, "labeled", label))
         if AE_SendHomePayload then AE_SendHomePayload(player) end
         return false
     end
