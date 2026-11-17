@@ -43,7 +43,7 @@ title:SetText(C.void .. "Эхо Пустоты|r")
 -- Вкладки
 -- ============================================================
 
-local TABS = { "Кампании", "Ивенты", "PvP", "Гильдия", "Дом", "Справка" }
+local TABS = { "Кампании", "Ивенты", "PvP", "Гильдия", "Дом", "Соц.", "Справка" }
 local tabButtons = {}
 local pages = {}
 
@@ -223,10 +223,43 @@ function AE.RefreshHomePanel(data)
 end
 
 -- ============================================================
--- Вкладка 6: Справка (лор)
+-- Вкладка 6: Социальное (спутники, уровень связи, наставник)
 -- ============================================================
 
-local lorePage = pages[6]
+local socialPage = pages[6]
+local socialTitle = socialPage:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+socialTitle:SetPoint("TOPLEFT", socialPage, "TOPLEFT", 0, -4)
+socialTitle:SetText(C.gold .. "Социальное|r")
+
+local socialText = socialPage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+socialText:SetPoint("TOPLEFT", socialPage, "TOPLEFT", 0, -34)
+socialText:SetJustifyH("LEFT")
+socialText:SetWidth(PANEL_W - 40)
+socialText:SetText(C.gray .. "Связей пока нет. Добавить: .aesocial friend <имя>|r")
+
+function AE.RefreshSocialPanel(data)
+    if not data or not socialText then return end
+    if not data.partners or #data.partners == 0 then
+        socialText:SetText(C.gray .. "Связей пока нет.|r\n" ..
+            "Добавить спутника: " .. C.gold .. ".aesocial friend <имя>|r\n" ..
+            "Стать наставником: " .. C.gold .. ".aesocial mentor <имя>|r")
+        return
+    end
+    local lines = C.blue .. "Спутники:|r\n"
+    for _, p in ipairs(data.partners) do
+        lines = lines .. "  " .. C.order .. p.name .. "|r — связь ур. " .. C.void .. p.level .. "|r\n"
+    end
+    if data.mentor then
+        lines = lines .. "\n" .. C.green .. "Наставник: " .. data.mentor .. "|r"
+    end
+    socialText:SetText(lines)
+end
+
+-- ============================================================
+-- Вкладка 7: Справка (лор)
+-- ============================================================
+
+local lorePage = pages[7]
 local loreText = lorePage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 loreText:SetPoint("TOPLEFT", lorePage, "TOPLEFT", 0, -4)
 loreText:SetJustifyH("LEFT")

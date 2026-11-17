@@ -64,6 +64,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             if AE.ParseHome then
                 AE.ParseHome(message)
             end
+        elseif prefix == "AECHOSOCIAL" then
+            if AE.ParseSocial then
+                AE.ParseSocial(message)
+            end
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Запрос данных у сервера

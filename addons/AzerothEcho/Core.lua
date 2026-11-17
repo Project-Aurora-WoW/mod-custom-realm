@@ -175,3 +175,31 @@ function AE.ParseHome(payload)
     end
     AE.NotifyChanged()
 end
+
+-- ============================================================
+-- Социальное (AECHOSOCIAL от 47_Social.lua)
+-- Формат: count;name1:lvl1;name2:lvl2;... [;MENTOR;имяНаставника]
+-- ============================================================
+
+AE.social = { partners = {}, mentor = nil, count = 0 }
+
+function AE.ParseSocial(payload)
+    AE.social = { partners = {}, mentor = nil, count = 0 }
+    if not payload or payload == "" then
+        if AE.RefreshSocialPanel then AE.RefreshSocialPanel(AE.social) end
+        return
+    end
+    local countStr, rest = string.match(payload, "^(%d+);(.*)$")
+    local count = tonumber(countStr) or 0
+    AE.social.count = count
+    -- Разбираем пары name:lvl и метку MENTOR
+    for name, lvl in string.gmatch(rest or "", "([^:;]+):(%d+)") do
+        table.insert(AE.social.partners, { name = name, level = tonumber(lvl) })
+    end
+    local mentor = string.match(rest or "", "MENTOR;([^;]+)$")
+    if mentor then AE.social.mentor = mentor end
+    if AE.RefreshSocialPanel then
+        AE.RefreshSocialPanel(AE.social)
+    end
+    AE.NotifyChanged()
+end
