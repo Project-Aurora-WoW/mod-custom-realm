@@ -227,25 +227,36 @@ end
 
 local function OnCreatureKill(event, killer, killed)
     local entry = killed:GetEntry()
-    if entry ~= NPC_VOID_GUARD and entry ~= NPC_BOSS then
-        return
-    end
-
     local chapter, completed = LoadProgress(killer)
     if completed then
         return
     end
 
-    if entry == NPC_VOID_GUARD and chapter == 2 then
-        local guards = ReadCounter(killer, "guards") + 1
-        if guards >= GUARDS_REQUIRED then
-            SaveProgress(killer, 3, false, "guards=" .. guards)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 2 «Разлом в сердце»|r — выполнено. Путь к осколку открыт.")
-            killer:SendBroadcastMessage(TAG .. " Погаси " .. RITUAL_FIRES .. " " .. VOID_COLOR .. "Очага Ритуала|r у осколка Трона.")
-        else
-            WriteCounter(killer, 2, "guards", guards)
-            killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Пустотный Страж повержен (" .. guards .. "/" .. GUARDS_REQUIRED .. ").")
+    -- Глава 2: фракционный прорыв. Цель зависит от выбранной ветки:
+    --   Альянс — Пустотные Стражи (обычная цель),
+    --   Орда   — Проклятые Тени (фракционная цель, см. реестр faction).
+    -- Определяем фракционную цель из REG.faction.branches[<ветка>].combat.
+    if chapter == 2 then
+        local faction = ReadFaction(killer)
+        local branch = faction == "horde" and REG.faction.branches.horde or REG.faction.branches.alliance
+        local combatEntry = branch and branch.combat and branch.combat.entry or NPC_VOID_GUARD
+        local combatName = branch and branch.combat and branch.combat.name or "Пустотный Страж"
+        if entry ~= combatEntry and entry ~= NPC_BOSS then
+            return
         end
+        if entry == combatEntry then
+            local guards = ReadCounter(killer, "guards") + 1
+            if guards >= GUARDS_REQUIRED then
+                SaveProgress(killer, 3, false, "guards=" .. guards .. ";faction=" .. faction)
+                killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. "Глава 2 «Разлом в сердце»|r — выполнено. Путь к осколку открыт.")
+                killer:SendBroadcastMessage(TAG .. " Погаси " .. RITUAL_FIRES .. " " .. VOID_COLOR .. "Очага Ритуала|r у осколка Трона.")
+            else
+                WriteCounter(killer, 2, "guards", guards)
+                killer:SendBroadcastMessage(TAG .. " " .. VOID_COLOR .. combatName .. " повержен (" .. guards .. "/" .. GUARDS_REQUIRED .. ").")
+            end
+            return
+        end
+    elseif entry ~= NPC_VOID_GUARD and entry ~= NPC_BOSS then
         return
     end
 
