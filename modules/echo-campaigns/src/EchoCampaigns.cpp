@@ -104,11 +104,17 @@ namespace
 
     // ---- Реестр кампаний (дублирует 00_CampaignRegistry.ext; синхронизировано) ----
     struct CampaignInfo { uint32 id; std::string name; uint32 chapters; uint32 reqToken; };
-    std::array<CampaignInfo, 4> CAMPAIGNS = {{
-        { 1, "Эхо Шёпота",       3, 0     },
-        { 2, "Пепел Зул'Драка",  5, 70001 },
-        { 3, "Пробуждение",      4, 70004 },
-        { 4, "Второе Эхо",       5, 70002 },
+    std::array<CampaignInfo, 10> CAMPAIGNS = {{
+        { 1,  "Эхо Шёпота",                3, 0     },
+        { 2,  "Пепел Зул'Драка",           5, 70001 },
+        { 3,  "Пробуждение",               4, 70004 },
+        { 4,  "Второе Эхо",                5, 70002 },
+        { 5,  "Пепел Культа",              5, 70006 },
+        { 6,  "Утро было вчера",           5, 70009 },
+        { 7,  "Последняя Любовь Сильваны", 5, 70010 },
+        { 8,  "Наследие Иллидана",         4, 70011 },
+        { 9,  "Экскурсия в Мир Проклятых", 4, 70012 },
+        { 10, "Светлая Ложь Альянса",      4, 70014 },
     }};
 
     // ============================================================
@@ -211,6 +217,12 @@ namespace
 
     void GmComplete(Player* player, uint32 campId)
     {
+        if (campId < 1 || campId > CAMPAIGNS.size())
+        {
+            SendLine(player, std::string(TAG_COLOR) + " Укажите ID кампании (1–" +
+                std::to_string(CAMPAIGNS.size()) + ").");
+            return;
+        }
         auto const* info = &CAMPAIGNS[campId - 1];
         SetProgress(player->GetGUID().GetCounter(), campId, info->chapters, true);
         // Жетоны за завершение (баланс реалма)
@@ -236,14 +248,15 @@ namespace
             // нечисловой строки — разыменование сломалось бы (UB/краш).
             auto parsedId = Acore::StringTo<uint32>(arg);
             uint32 campId = parsedId.value_or(0);
-            if (campId >= 1 && campId <= 4)
+            if (campId >= 1 && campId <= CAMPAIGNS.size())
             {
                 ResetProgress(player->GetGUID().GetCounter(), campId);
                 SendLine(player, std::string(TAG_COLOR) + " Кампания " + std::to_string(campId) + " сброшена.");
                 LogCampaignAction(player->GetGUID().GetCounter(), campId, 0, "gm_core_reset", "");
             }
             else
-                SendLine(player, std::string(TAG_COLOR) + " Укажите ID кампании (1–4) или 'all'.");
+                SendLine(player, std::string(TAG_COLOR) + " Укажите ID кампании (1–" +
+                    std::to_string(CAMPAIGNS.size()) + ") или 'all'.");
         }
     }
 
@@ -367,7 +380,7 @@ namespace
             LOG_INFO("module.echo-campaigns",
                 "  3. mod-ale        (Lua-движок ALE)");
             LOG_INFO("module.echo-campaigns",
-                "  4. Lua: 00_CampaignRegistry.ext -> CampaignManager -> Campaign1-4 -> LoreArchive -> 10/20/30_* -> AddonBridge");
+                "  4. Lua: 00_CampaignRegistry.ext -> CampaignManager -> Campaign1-10 -> LoreArchive -> 10/20/30/41/42/43_* -> AddonBridge");
             LOG_INFO("module.echo-campaigns",
                 "  Источник команд: {} (both|core|lua)", commandSource);
 
