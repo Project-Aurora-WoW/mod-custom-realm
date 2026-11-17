@@ -5,11 +5,14 @@
 ## Version: 2.1.0
 ## X-Website: https://sourcecraft.dev/m-orlovrus59/azeroth-custom-realm
 ## DefaultState: enabled
+## SavedVariables: AzerothEchoMapDB
 
+Bindings.xml
 Core.lua
 Panel.lua
 Lore.lua
 RiftMap.lua
+LocationMap.lua
 CampaignWindow.lua
 Hub.lua
 AzerothEcho.lua

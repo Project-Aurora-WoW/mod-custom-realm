@@ -52,6 +52,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             if AE.ParseLore then
                 AE.ParseLore(message)
             end
+        elseif prefix == "AECHOMAP" then
+            if AE.ParseLocationMap then
+                AE.ParseLocationMap(message)
+            end
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Запрос данных у сервера
@@ -106,6 +110,8 @@ SlashCmdList["AZEROTHECHO"] = function(msg)
     msg = string.lower(msg or "")
     if msg == "rifts" then
         AE.ShowRiftMap()
+    elseif msg == "map" or msg == "m" or msg == "location" then
+        if AE.ShowLocationMap then AE.ShowLocationMap() end
     elseif msg == "pvp" then
         AE.ShowTab(3)   -- вкладка PvP
     elseif msg == "events" then
@@ -115,10 +121,37 @@ SlashCmdList["AZEROTHECHO"] = function(msg)
     elseif msg == "choose" or msg == "window" or msg == "select" then
         if AE.ShowCampaignSelector then AE.ShowCampaignSelector() end
     elseif msg == "help" then
-        DEFAULT_CHAT_FRAME:AddMessage(AE.TAG .. " Команды: /ae — панель; /ae rifts — карта разломов;")
-        DEFAULT_CHAT_FRAME:AddMessage(AE.TAG .. " /ae campaigns — кампании; /ae events — ивенты; /ae pvp — статистика.")
+        DEFAULT_CHAT_FRAME:AddMessage(AE.TAG .. " Команды: /ae — панель; /ae rifts — карта разломов; /ae map — карта локаций;")
+        DEFAULT_CHAT_FRAME:AddMessage(AE.TAG .. " /ae campaigns — кампании; /ae events — ивенты; /ae pvp — статистика; /aemap — карта локаций.")
         DEFAULT_CHAT_FRAME:AddMessage(AE.TAG .. " Серверные аналоги: .ae help | status | tokens | rifts | pvp | events.")
     else
         AE.TogglePanel()
     end
 end
+
+-- Отдельная slash-команда /aemap для карты локаций
+SLASH_AEMAP1 = "/aemap"
+SLASH_AEMAP2 = "/aem"
+SlashCmdList["AEMAP"] = function()
+    if AE.ShowLocationMap then AE.ShowLocationMap() end
+end
+
+-- Slash-команды для персональных меток
+SLASH_AEMARK1 = "/aemark"
+SlashCmdList["AEMARK"] = function(msg)
+    if AE.AddMapMark then AE.AddMapMark(msg) end
+end
+
+SLASH_AEMCLEAR1 = "/aemclear"
+SlashCmdList["AEMCLEAR"] = function()
+    if AE.ClearMapMarks then AE.ClearMapMarks() end
+end
+
+-- ============================================================
+-- Хоткей (Bindings.xml): невидимая кнопка, вызываемая по привязке
+-- ============================================================
+local hotkeyBtn = CreateFrame("Button", "AzerothEchoMapHotkey", UIParent, "SecureActionButtonTemplate")
+hotkeyBtn:SetAllPoints(UIParent)
+hotkeyBtn:SetScript("OnClick", function()
+    if AE.ShowLocationMap then AE.ShowLocationMap() end
+end)

@@ -176,8 +176,14 @@ loreText:SetText(
 local riftsBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 riftsBtn:SetWidth(140)
 riftsBtn:SetHeight(24)
-riftsBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 12)
+riftsBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -156, 12)
 riftsBtn:SetText("Карта разломов")
+
+local mapBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+mapBtn:SetWidth(140)
+mapBtn:SetHeight(24)
+mapBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -12, 12)
+mapBtn:SetText("Карта локаций")
 
 local closeBtn = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 closeBtn:SetWidth(90)
@@ -283,6 +289,10 @@ end
 
 function AE.SetRiftsHandler(fn)
     riftsBtn:SetScript("OnClick", fn)
+end
+
+function AE.SetMapToolsHandler(fn)
+    mapBtn:SetScript("OnClick", fn)
 end
 
 frame:Hide()

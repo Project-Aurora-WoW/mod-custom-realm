@@ -1,0 +1,8 @@
+<BindingHeader>
+  <Category name="AzerothEcho" />
+</BindingHeader>
+<Binding name="AEMAP" header="AzerothEcho" category="AzerothEcho">
+  <Actions>
+    <Binding name="CLICK AzerothEchoMapHotkey:LeftButton" />
+  </Actions>
+</Binding>
