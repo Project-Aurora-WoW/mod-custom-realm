@@ -60,6 +60,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             if AE.ParseGuild then
                 AE.ParseGuild(message)
             end
+        elseif prefix == "AECHOHOME" then
+            if AE.ParseHome then
+                AE.ParseHome(message)
+            end
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Запрос данных у сервера

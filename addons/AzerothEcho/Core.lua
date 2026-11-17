@@ -148,3 +148,30 @@ function AE.ParseGuild(payload)
     end
     AE.NotifyChanged()
 end
+
+-- ============================================================
+-- Дом (AECHOHOME от 46_Home.lua)
+-- Формат: "none" | "map;x;y;label;cdLeft"
+-- ============================================================
+
+AE.home = { map = nil, x = 0, y = 0, label = nil, cd = 0, none = true }
+
+function AE.ParseHome(payload)
+    if not payload or payload == "" then return end
+    if payload == "none" then
+        AE.home = { map = nil, x = 0, y = 0, label = nil, cd = 0, none = true }
+    else
+        local map, x, y, label, cd =
+            string.match(payload, "^(%d+);([%d%.]+);([%d%.]+);(.-);(%d+)$")
+        if map then
+            AE.home = {
+                map = tonumber(map), x = tonumber(x), y = tonumber(y),
+                label = (label ~= "" and label) or nil, cd = tonumber(cd), none = false,
+            }
+        end
+    end
+    if AE.RefreshHomePanel then
+        AE.RefreshHomePanel(AE.home)
+    end
+    AE.NotifyChanged()
+end

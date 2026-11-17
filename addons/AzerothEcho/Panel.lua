@@ -43,7 +43,7 @@ title:SetText(C.void .. "Эхо Пустоты|r")
 -- Вкладки
 -- ============================================================
 
-local TABS = { "Кампании", "Ивенты", "PvP", "Гильдия", "Справка" }
+local TABS = { "Кампании", "Ивенты", "PvP", "Гильдия", "Дом", "Справка" }
 local tabButtons = {}
 local pages = {}
 
@@ -189,10 +189,44 @@ end
 if not AE.guildListeners then AE.guildListeners = {} end
 
 -- ============================================================
--- Вкладка 5: Справка (лор)
+-- Вкладка 5: Дом (телепорт-убежище)
 -- ============================================================
 
-local lorePage = pages[5]
+local homePage = pages[5]
+local homeTitle = homePage:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+homeTitle:SetPoint("TOPLEFT", homePage, "TOPLEFT", 0, -4)
+
+local homeText = homePage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+homeText:SetPoint("TOPLEFT", homePage, "TOPLEFT", 0, -34)
+homeText:SetJustifyH("LEFT")
+homeText:SetWidth(PANEL_W - 40)
+homeText:SetText(C.gray .. "Дома нет. Установи точку: .ae homehere|r")
+
+function AE.RefreshHomePanel(data)
+    if not data or not homeText then return end
+    if data.none then
+        homeTitle:SetText(C.gold .. "Дом|r")
+        homeText:SetText(C.gray .. "У вас ещё нет дома.|r\n" ..
+            "Установи точку: " .. C.gold .. ".ae homehere|r\n" ..
+            "Вернуться: " .. C.gold .. ".ae home|r")
+        return
+    end
+    homeTitle:SetText(C.gold .. "Дом|r")
+    local label = data.label and (" «" .. data.label .. "»") or ""
+    local cd = data.cd or 0
+    local cdLine = (cd > 0) and ("\nКулдаун телепорта: " .. C.orange .. cd .. " сек.|r") or
+                                   ("\n" .. C.green .. ".ae home — вернуться домой (готово).|r")
+    homeText:SetText(
+        "Точка дома" .. label .. ".\n" ..
+        "Карта: " .. (data.map or "?") .. cdLine
+    )
+end
+
+-- ============================================================
+-- Вкладка 6: Справка (лор)
+-- ============================================================
+
+local lorePage = pages[6]
 local loreText = lorePage:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 loreText:SetPoint("TOPLEFT", lorePage, "TOPLEFT", 0, -4)
 loreText:SetJustifyH("LEFT")
