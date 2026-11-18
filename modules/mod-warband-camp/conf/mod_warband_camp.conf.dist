@@ -108,12 +108,12 @@ WarbandCamp.BlacklistedMaps = ""
 
 WarbandCamp.BlacklistedZones = ""
 
-# Aliases for WowLegends legacy namespace compatibility
+# Aliases for WowLegends legacy namespace compatibility (fallback, если основной
+# ключ WarbandCamp.* не задан). Управляются теми же настройками, что и выше.
 WowLegends.WarbandCamp.Enabled = 1
 WowLegends.WarbandCamp.AutoAlts = 1
 WowLegends.WarbandCamp.MaxProps = 200
 WowLegends.WarbandCamp.ViewDistance = 40
 WowLegends.WarbandCamp.AltsSameFactionOnly = 1
 WowLegends.WarbandCamp.EnableGOMove = 1
-WowLegends.WarbandCamp.EnableBuilding = 1
 

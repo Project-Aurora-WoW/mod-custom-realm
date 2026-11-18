@@ -180,3 +180,25 @@ Journal.Directory.SaveZoneData = 1
 #
 
 Journal.Lore.Enable = 1
+
+# ---------------------------------------------------------------------------
+#    IndividualProgression (опциональная интеграция с mod-individual-progression)
+#        Description: Эти ключи читаются модулем, только если включён внешний модуль
+#                     mod-individual-progression (не входит в эту сборку). Журнал использует
+#                     его состояния, чтобы помечать контент «закрытым в прогрессе» так же,
+#                     как проверки телепортов IndividualProgression. Если модуль не установлен,
+#                     ключи игнорируются и журнал работает без блокировок.
+#        Default:     см. ниже
+#
+
+# Включена ли интеграция с IndividualProgression (состояния N-поступенного прогресса).
+IndividualProgression.Enable = 0
+
+# Состояние Зул'Гуруба, при котором данжи/контент берутся «в прогрессе».
+IndividualProgression.RequiredZulGurubProgression = 3
+
+# Состояние Зул'Амана, при котором данжи/контент берутся «в прогрессе».
+IndividualProgression.RequiredZulAmanProgression = 12
+
+# Разрешить ранний сет данжей 2-го тира вне прогресса (0 — нет, 1 — да).
+IndividualProgression.AllowEarlyDungeonSet2 = 0

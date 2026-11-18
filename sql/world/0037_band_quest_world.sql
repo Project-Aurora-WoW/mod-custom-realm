@@ -1,3 +1,8 @@
+﻿-- =============================================
+-- 0037_band_quest.sql -> world (acore_world)
+-- mysql -u user -p acore_world < sql/world/0037_band_quest_world.sql
+-- =============================================
+
 -- ============================================================
 -- 0037_band_quest.sql — Скриптовая квест-цепочка «Песнь Пустоты»
 --
@@ -13,32 +18,23 @@
 -- ============================================================
 
 SET @MAESTRO = 70395;
-SET @HORDE_ZONE = 1;   -- Оргриммар (Орда)
-SET @ALLI_ZONE  = 0;   -- Штормград (Альянс)
+SET @HORDE_ZONE = 1;
+-- Оргриммар (Орда)
+SET @ALLI_ZONE  = 0;
+-- Штормград (Альянс)
 
 -- --- НПС «Капельмейстер Пустоты» ---
 DELETE FROM `creature_template` WHERE `entry` = @MAESTRO;
 INSERT INTO `creature_template` (`entry`, `difficulty_entry_1`, `difficulty_entry_2`, `difficulty_entry_3`, `KillCredit1`, `KillCredit2`, `name`, `subname`, `IconName`, `gossip_menu_id`, `minlevel`, `maxlevel`, `exp`, `faction`, `npcflag`, `speed_walk`, `speed_run`, `rank`, `dmgschool`, `DamageModifier`, `BaseAttackTime`, `RangeAttackTime`, `unit_class`, `unit_flags`, `unit_flags2`, `dynamicflags`, `family`, `type`, `type_flags`, `lootid`, `pickpocketloot`, `skinloot`, `PetSpellDataId`, `VehicleId`, `mingold`, `maxgold`, `AIName`, `MovementType`, `HoverHeight`, `HealthModifier`, `ManaModifier`, `ArmorModifier`, `ExperienceModifier`, `RacialLeader`, `movementId`, `RegenHealth`, `flags_extra`, `ScriptName`, `VerifiedBuild`) VALUES
 (@MAESTRO, 0,0,0, 0,0, 'Капельмейстер Пустоты', 'Труппа «Песнь Пустоты»', 'Speak', 0, 80,80, 2, 84, 1, 1, 1.14286, 0, 0, 1, 2000, 2000, 1, 33555264, 2048, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, '', 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, '', 12340);
-
 DELETE FROM `creature_template_model` WHERE `CreatureID` = @MAESTRO;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`) VALUES
 (@MAESTRO, 0, 1294, 1, 1);
-
 -- Спавны: Оргриммар (Орда) + Штормград (Альянс)
 DELETE FROM `creature` WHERE `id1` = @MAESTRO;
 INSERT INTO `creature` (`guid`, `id1`, `id2`, `id3`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `currentwaypoint`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `ScriptName`, `VerifiedBuild`) VALUES
 (94010, @MAESTRO, 0,0, 1, 1637, 1637, 1, 1, 0, 1575.9, -4412.4, 8.0, 5.5, 300, 0, 0, 0, 0, 0, 1, 0, 0, '', 12340),   -- Оргриммар
-(94011, @MAESTRO, 0,0, 0, 1519, 1519, 1, 1, 0, -8851.9, 605.4, 100.4, 5.5, 300, 0, 0, 0, 0, 0, 1, 0, 0, '', 12340);  -- Штормград
-
--- --- Таблица состояния цепочки (acore_characters) ---
-CREATE TABLE IF NOT EXISTS `realm_band_quest` (
-    `account_id` INT UNSIGNED NOT NULL,
-    `stage`      TINYINT UNSIGNED NOT NULL DEFAULT 0,  -- 0=нет,1=затишье,2=настройка,3=премьера
-    `updated_at` INT UNSIGNED NOT NULL DEFAULT 0,
-    PRIMARY KEY (`account_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
+(94011, @MAESTRO, 0,0, 0, 1519, 1519, 1, 1, 0, -8851.9, 605.4, 100.4, 5.5, 300, 0, 0, 0, 0, 0, 1, 0, 0, '', 12340);
 -- --- Предметы «Струны Пустоты» (yainer сбора) ---
 DELETE FROM `item_template` WHERE `entry` IN (70115, 70116, 70117, 70118);
 INSERT INTO `item_template` (`entry`, `class`, `subclass`, `name`, `displayid`, `Quality`, `Flags`, `BuyCount`, `BuyPrice`, `SellPrice`, `InventoryType`, `ItemLevel`, `RequiredLevel`, `maxcount`, `stackable`, `description`, `VerifiedBuild`) VALUES

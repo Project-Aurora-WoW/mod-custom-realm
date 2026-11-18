@@ -41,14 +41,14 @@ azeroth-custom-realm/
 │   └── actions/setup-tree/         # composite action: checkout ядра + модули + mod-ale
 ├── addons/AzerothEcho/            # Клиентский аддон (WoW 3.3.5a) — campaign panel + rift map
 ├── docs/                          # Документация (ландшафт, деплой, тесты, client-patch)
-├── lua_scripts/                   # Lua-скрипты ALE (00_CampaignRegistry.ext → 27_Classless.lua, магазин, кампании, GPT-НПС)
+├── lua_scripts/                   # Lua-скрипты ALE (00_CampaignRegistry.ext → 48_SeasonEvents.lua, кампании 1–11, модули 41–48, магазин, GPT-НПС)
 ├── modules/
 │   ├── echo-balance/ … echo-startup/   # Кастомные C++-модули реалма
 │   ├── mod-ale/                        # Lua-движок ALE (вендорен)
 │   ├── mod-ah-bot/ … mod-archaeology/  # Внешние модули (вендорены)
 │   └── README.md                       # Инструкция по модулям
 ├── service/                       # Внешние сервисы (GPT-НПС: Python+openai; ключ — вне репо)
-└── sql/world/                     # Миграции 0001–0042 (нумерованные, только вперёд)
+└── sql/world/                     # Миграции 0001–0053 (нумерованные, только вперёд)
 ```
 
 ---
@@ -113,7 +113,7 @@ Linux clang static build with dry-run and error check; Windows MSVC via `acore.s
 |-----------|----------|
 | Entry НПС (кастомные) / Custom NPC entries | 70001–79999 |
 | item entry (кастомные) / custom item entries | 70001–79999 |
-| ID кампаний / Campaign IDs | 1–4 |
+| ID кампаний / Campaign IDs | 1–11 |
 | Прогресс игроков / Player progress | таблица `realm_campaign_progress` |
 | Миграции / Migrations | `sql/world/NNNN_*.sql`, только вперёд / forward only |
 | Цвета чата / Chat colors | Пустота `|cff8e44ad`, Орден `|cff5dade2`, Культ `|cffc0392b` |

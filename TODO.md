@@ -8,7 +8,7 @@
 > completed work moves to "Done" with its commit hash, new tasks are added to
 > the current backlog.
 >
-> Дата последнего обновления / Last updated: 2026-11-14
+> Дата последнего обновления / Last updated: 2026-11-17
 
 ---
 
@@ -16,6 +16,19 @@
 
 | Коммит / Commit | Что сделано / What was done |
 |--------|-------------|
+| `02f2d48` | **Кампании 5–7** — арка «Хроники увядания» (`Campaign5/6/7.lua`, `0043_campaigns_5_7.sql`). / **Campaigns 5-7** (Withering Chronicles arc). |
+| `768e54f` | **Ивенты** «Туманная аномалия» (mist) и «Кровь королей» (royal) (`0044_events_mist_royal.sql`). / **Events** mist + royal. |
+| `bf52aff` | **Кампании 8–10 + сезонные модули**: «Наследие Иллидана» (К8, legacy 0045), «Мир Проклятых» (К9, cursed 0046), «Светлая Ложь Альянса» (К10, lightlie 0047); реестр + Campaign8/9/10.lua + 41/42/43_*.lua + docs. / **Campaigns 8-10 + seasonal modules** (legacy/cursed/lightlie). |
+| `ac652a9` | **Карта локаций** (клиент+сервер, п.6): `LocationMap.lua` (пины локаций/метка игрока/личные метки), `44_LocationMap.lua` (AECHOMAP + живой трекинг позиции), хоткей `Bindings.xml`, `/aemap`, `/ae map`. / **Location map** (client+server): live player tracking, hotkey, custom marks. |
+| `dd081f2` | **Фракционные механики + К11 «Узы фракций»** (п.2): ветки Альянс/Орда в К3, кампания 11 (`Campaign11.lua`, `0048_factions.sql`). / **Faction mechanics + campaign 11**. |
+| `07f4305` | **Гильдейская система** (п.3): `45_GuildProgress.lua` + `0049_guild_progress.sql` + вкладка Гильдии (уровни/опыт/разблокировки). / **Guild system** (levels/XP + unlocks). |
+| `e08c6d7` | **Система домов** (п.4): `46_Home.lua` + `0050_homes.sql` + вкладка Дома, `.ae home/homehere/homeset`. / **Homes system** (teleport shelter). |
+| `e232e1c` | **Полировка панели AzerothEcho** (п.1): статус-бар, ряд быстрого доступа, единый переключатель карты. / **Panel polish** (status bar, quick access, map toggle). |
+| `ead59c3` | **Социальная система** (п.5): `47_Social.lua` + `0051_social.sql` + вкладка Соц., спутники + наставник (`realm_social_links`, `realm_mentor`). / **Social system** (partners + mentor). |
+| `1702417` | **Сезонные эвенты** (п.5): `48_SeasonEvents.lua` + `0052_season_events.sql` — календарные сезоны, праздники, ежегодный сезон с этапами. / **Season events** (calendar seasons + holidays + annual). |
+| `5fd9c47` | **Фикс К8** (аудит): недостающие НПС 70241–70243 (`0053_fix_campaign8_npcs.sql`). / **Fix K8**: missing NPCs 70241-70243. |
+| `8bcda8a` | **Фикс сезонного бонуса**: множитель жетонов + сезонная/праздничная валюта в авто-ивентах (`10_EventSystem.lua`). / **Fix**: seasonal token multiplier in auto-events. |
+| `b727654` | **Фильтр боссов в 47_Social + ru/en локализация** модулей 45–48, кампаний 8–11 и клиентских вкладок. / **Social boss filter + ru/en localization**. |
 | (ранние / early) | Инфраструктура, кампании 1–4, аддон AzerothEcho, C++-модули echo-*, миграции 0001–0017, миграция на ALE (`00_CampaignRegistry.ext`). / Infrastructure, campaigns 1–4, AzerothEcho addon, echo-* C++ modules, migrations 0001–0017, ALE migration (`00_CampaignRegistry.ext`). |
 | `8ac9584` | **Tier A из eluna-scripts** (референс Cloticc): миграция `0018_eluna_scripts_tier_a.sql` (НПС 70172/70173, шаблоны 70190/70191, item 70008, спелл 70050, `realm_gold_storage`); секции реестра; скрипты 13–18. / **Tier A from eluna-scripts** (ref. Cloticc): migration `0018_eluna_scripts_tier_a.sql` (NPCs 70172/70173, templates 70190/70191, item 70008, spell 70050, `realm_gold_storage`); registry sections; scripts 13–18. |
 | `0220ff3` | **Интеграция кастомных карт** (RStijn/custom-maps): телепорты Портального Стража на карту 5000 + лор; `patch-Z.mpq`; docs. / **Custom maps** (RStijn/custom-maps): Portal Guardian teleports to map 5000 + lore; `patch-Z.mpq`; docs. |

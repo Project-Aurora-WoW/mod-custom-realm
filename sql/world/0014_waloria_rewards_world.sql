@@ -1,3 +1,8 @@
+﻿-- =============================================
+-- 0014_waloria_rewards.sql -> world (acore_world)
+-- mysql -u user -p acore_world < sql/world/0014_waloria_rewards_world.sql
+-- =============================================
+
 -- ============================================================
 -- 0014_waloria_rewards.sql
 -- Награды за уровни по подходу Waloria (референс:
@@ -37,14 +42,3 @@ VALUES
  0, 0, 0, -1, -1,
  5, 1, -1, 1,
  'Мешочек с наградой Ордена за верную службу. (Награда каждые 5 уровней)', 20, 0);
-
--- ------------------------------------------------------------
--- Таблица выданных наград (антидубль): персонаж × уровень-порог
--- (acore_characters — как остальные игровые таблицы реалма)
--- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `realm_level_rewards` (
-  `guid`        INT UNSIGNED NOT NULL,
-  `reward_level` TINYINT UNSIGNED NOT NULL,
-  `granted_at`  INT UNSIGNED NOT NULL DEFAULT 0,
-  PRIMARY KEY (`guid`, `reward_level`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Выданные level-up награды (06_WaloriaRewards.lua)';

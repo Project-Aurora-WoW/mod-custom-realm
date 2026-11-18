@@ -19,11 +19,13 @@
 #include "Player.h"
 #include "Item.h"
 #include "WorldSession.h"
+#include "ObjectAccessor.h"
 #include "Config.h"
 #include "Log.h"
 #include "DatabaseEnv.h"
 #include <unordered_map>
 #include <vector>
+#include <algorithm>
 
 namespace
 {
@@ -33,6 +35,7 @@ namespace
     uint32 progressPerSecond = 2;
     uint32 maxProgress = 1000;
     uint32 maxAttunedPerPlayer = 200;
+    uint32 flushIntervalMs = 30000;
 
     struct AttuneEntry
     {
@@ -135,6 +138,8 @@ namespace
         }
     };
 
+    // Периодический flush кэша аттюнмента в БД по таймеру flushIntervalMs
+    // (раз за world-tick), помимо flush на логауте (OnPlayerLogout).
     class EchoAttuneWorldscript : public WorldScript
     {
     public:
@@ -147,12 +152,29 @@ namespace
             progressPerSecond = sConfigMgr->GetOption<uint32>("EchoAttune.ProgressPerSecond", 2);
             maxProgress = sConfigMgr->GetOption<uint32>("EchoAttune.MaxProgress", 1000);
             maxAttunedPerPlayer = sConfigMgr->GetOption<uint32>("EchoAttune.MaxAttunedPerPlayer", 200);
+            flushIntervalMs = std::max<uint32>(1, sConfigMgr->GetOption<uint32>("EchoAttune.FlushIntervalMs", 30000));
+            flushAccum = 0;
 
             LOG_INFO("module.echo-attune",
-                "echo-attune загружен: enable=%s minLvl=%u prog/sec=%u max=%u cap=%u",
+                "echo-attune загружен: enable=%s minLvl=%u prog/sec=%u max=%u cap=%u flush=%u ms",
                 enable ? "on" : "off", minLevel, progressPerSecond, maxProgress,
-                maxAttunedPerPlayer);
+                maxAttunedPerPlayer, flushIntervalMs);
         }
+
+        void OnUpdate(uint32 diff) override
+        {
+            if (!enable) return;
+            flushAccum += diff;
+            if (flushAccum < flushIntervalMs) return;
+            flushAccum = 0;
+
+            for (auto const& [key, _] : sCache)
+                if (Player* p = ObjectAccessor::FindPlayerByLowGUID(key))
+                    FlushPlayer(p);
+        }
+
+    private:
+        uint32 flushAccum = 0;
     };
 }
 

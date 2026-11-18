@@ -1,3 +1,8 @@
+﻿-- =============================================
+-- 0045_legacy_illidan.sql -> world (acore_world)
+-- mysql -u user -p acore_world < sql/world/0045_legacy_illidan_world.sql
+-- =============================================
+
 -- ============================================================
 -- 0045_legacy_illidan.sql
 -- Модуль «Наследие Иллидана» (ежемесячный турнир PvP+PvE + кампания 8):
@@ -12,35 +17,6 @@
 -- ============================================================
 
 SET NAMES utf8mb4;
-
--- ------------------------------------------------------------
--- 1. Таблица рейтинга (acore_characters) — сезонный счёт
--- ------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `realm_legacy_score` (
-  `guid`            INT UNSIGNED NOT NULL,
-  `season`          INT UNSIGNED NOT NULL COMMENT 'номер сезона (мум. месяц)',
-  `pvp_score`       INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'зач. PvP-киллы',
-  `pve_score`       INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'зач. PvE-боссы',
-  `total_score`     INT UNSIGNED NOT NULL DEFAULT 0 COMMENT 'pvp+pve (Осколки)',
-  `updated_at`      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`guid`, `season`)
-)
-ENGINE = InnoDB
-DEFAULT CHARSET = utf8mb4
-COMMENT = 'Сезонный счёт модуля «Наследие Иллидана» (acore_characters)';
-
--- Индекс для выборки топа сезона.
-SET @has_idx := (SELECT COUNT(*) FROM information_schema.statistics
-                 WHERE table_schema = DATABASE()
-                   AND table_name = 'realm_legacy_score'
-                   AND index_name = 'idx_legacy_season');
-SET @sql_idx := IF(@has_idx = 0,
-  'CREATE INDEX `idx_legacy_season` ON `realm_legacy_score` (`season`, `total_score`)',
-  'SELECT 1');
-PREPARE stmt_idx FROM @sql_idx;
-EXECUTE stmt_idx;
-DEALLOCATE PREPARE stmt_idx;
-
 -- ------------------------------------------------------------
 -- 2. Предметы
 -- ------------------------------------------------------------
@@ -95,7 +71,6 @@ VALUES
  0, 0, 0, 0,
  0, 0, 0, 0, '', 0,
  0, 0, 0, 0, 0, 12340);
-
 -- ------------------------------------------------------------
 -- 3. НПС кампании 8 «Наследие Иллидана»
 -- ------------------------------------------------------------
@@ -106,7 +81,6 @@ INSERT INTO `creature_template`
 (70240, 'Изгнанник Кель''Тас', 'Голос преданного Наследия', 'Talk', 0, 80, 80, 0, 35, 1, 1.0, 1.14286, 1, 0, 1.0, 2, 33554432, 2048, 0, 7, 0, 0, 0, '', 0, 1.0, 250.0, 1.0, 1.0, 2, '', 12340),
 -- Страж Иллидана: финальный рейд-босс (rank 3)
 (70540, 'Страж Иллидана', 'Наследие предателя', '', 0, 84, 84, 0, 14, 0, 1.0, 1.14286, 3, 0, 22.0, 2, 32768, 0, 0, 4, 0, 0, 0, '', 1, 1.0, 480.0, 1.0, 1.0, 0, '', 0, 12340);
-
 -- ------------------------------------------------------------
 -- 4. Модели
 -- ------------------------------------------------------------
@@ -115,7 +89,8 @@ INSERT INTO `creature_template_model`
 (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`)
 VALUES
 (70240, 0, 20023, 1.00, 1.0),   -- Изгнанник Кель'Тас (эльф крови)
-(70540, 0, 19282, 2.20, 1.0);   -- Страж Иллидана (демоническая форма)
+(70540, 0, 19282, 2.20, 1.0);
+-- Страж Иллидана (демоническая форма)
 
 -- ------------------------------------------------------------
 -- 5. Спавны: quest-giver в Даларане (guid 7000700);

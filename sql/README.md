@@ -47,6 +47,20 @@
 | `world/0038_store_vip_expansion.sql` | Расширение магазина (Фаза 1.1): VIP-категория id 8 доступна с ранга 1 (не только GM), титул/бафф связаны с VIP, VIP-эксклюзив «Печать Бездны» (услуга 20, спелл 70051) за Жетоны; `Store_Server.lua` отдаёт `accountRank = max(GM, VIP)` для клиентского фильтра `requiredRank` | 0020, 0026, 0035 |
 | `world/0039_classless_hero.sql` | Classless «класс Hero» (Фаза 3.2): добавляет колонку `hero` (0/1) в `character_classless` (**acore_characters**) — флаг включённого Hero-режима; потребляет `27_Classless.lua` (`.aeclassless hero`, аур-бонусы) | 0025, 0030 |
 | `world/0025_classless.sql` | Classless-арка К5 (порт Shikifuyin/AzerothCore-ClassLess-Solo): таблица `character_classless` (**acore_characters**) — «чужие» спеллы/глифы персонажа CSV; таланты — в 0030; скрипт `27_Classless.lua` | — |
+| `world/0040_dungeon_quest_npc.sql` | НПС данж-квестов (dungeon quest NPC) за Жетоны Эха | — |
+| `world/0041_echo_worldsoul.sql` | Параллельная арка «Мировая Душа» (3.1b): таблицы `realm_echo_*` (**acore_characters**), НПС 70601–70603; потребляет `39_EchoWorldsoul.lua` + `modules/echo-attune/` | — |
+| `world/0042_campaign_profile.sql` | Профиль выбора кампании: `realm_campaign_profile` (**acore_characters**, force_show_window); потребляет `40_CampaignWindow.lua` (сервер) + CampaignWindow.lua (клиент) | — |
+| `world/0043_campaigns_5_7.sql` | Кампании 5–7 арки «Хроники увядания»: НПС 70211–70234, боссы 70521–70523, предметы 70009–70011; потребляет Campaign5/6/7.lua | — |
+| `world/0044_events_mist_royal.sql` | Ивенты «Туманная аномалия» (70260) и «Кровь королей» (70261); потребляет `10_EventSystem.lua` | — |
+| `world/0045_legacy_illidan.sql` | Модуль «Наследие Иллидана» (К8 + турнир): `realm_legacy_score` (**acore_characters**), item 70012/70013, НПС 70240, босс 70540; потребляет `41_LegacyIllidan.lua` + Campaign8.lua | — |
+| `world/0046_cursed_world.sql` | Модуль «Мир Проклятых» (К9 + сезон): `realm_cursed_score` (**acore_characters**), item 70014/70015, НПС 70270–70273, босс 70541; потребляет `42_CurseWorld.lua` + Campaign9.lua | — |
+| `world/0047_light_lie.sql` | Модуль «Светлая Ложь Альянса» (К10 + сезон): `realm_lightlie_score` (**acore_characters**), item 70016/70017, НПС 70280–70283, босс 70542; потребляет `43_LightLie.lua` + Campaign10.lua | — |
+| `world/0048_factions.sql` | Фракционные механики (К11 «Узы фракций»): item 70018, НПС 70284–70287, боссы 70543/70544; потребляет Campaign11.lua + ветки К3 | — |
+| `world/0049_guild_progress.sql` | Гильдейская система (п.3): `realm_guild_progress` (**acore_characters**) — уровень/опыт гильдии; потребляет `45_GuildProgress.lua` | — |
+| `world/0050_homes.sql` | Система домов (п.4): `realm_homes` (**acore_characters**) — точка телепорт-убежища; потребляет `46_Home.lua` | — |
+| `world/0051_social.sql` | Социальная система (п.5): `realm_social_links` + `realm_mentor` (**acore_characters**); потребляет `47_Social.lua` | — |
+| `world/0052_season_events.sql` | Сезонные эвенты (п.5): сезонная валюта 70019–70026, `realm_season_state` (**acore_characters**); потребляет `48_SeasonEvents.lua` | — |
+| `world/0053_fix_campaign8_npcs.sql` | Фикс К8 (аудит 2026-11-17): НПС 70241–70243 (Тень Виалии/Реликвия/Тюремщик) — делают кампанию 8 играбельной | — |
 
 ---
 
@@ -63,16 +77,16 @@ mysql -u <user> -p acore_world < sql/world/0006_campaign3_rewards.sql
 mysql -u <user> -p acore_world < sql/world/0007_campaign3_content.sql
 mysql -u <user> -p acore_world < sql/world/0008_npc_displayid.sql
 # 0009: item_template → acore_world, realm_pvp_stats → acore_characters:
-mysql -u <user> -p acore_world < sql/world/0009_event_pvp.sql
-mysql -u <user> -p acore_characters < sql/world/0009_event_pvp.sql
+mysql -u <user> -p acore_world < sql/world/0009_event_pvp_world.sql
+mysql -u <user> -p acore_characters < sql/world/0009_event_pvp_characters.sql
 mysql -u <user> -p acore_world < sql/world/0010_pvp_shop.sql
 mysql -u <user> -p acore_world < sql/world/0011_lore_archivist.sql
 mysql -u <user> -p acore_world < sql/world/0012_campaign4_content.sql
 # 0013: realm_campaign_log → acore_characters:
 mysql -u <user> -p acore_characters < sql/world/0013_campaign_manager.sql
 # 0014: items 70100/70101 → acore_world, realm_level_rewards → acore_characters:
-mysql -u <user> -p acore_world < sql/world/0014_waloria_rewards.sql
-mysql -u <user> -p acore_characters < sql/world/0014_waloria_rewards.sql
+mysql -u <user> -p acore_world < sql/world/0014_waloria_rewards_world.sql
+mysql -u <user> -p acore_characters < sql/world/0014_waloria_rewards_characters.sql
 # 0015: realm_token_outbox + realm_token_receipt → acore_characters:
 mysql -u <user> -p acore_characters < sql/world/0015_token_outbox.sql
 # 0016: закомментированный образец DBC-миграции — применить при
@@ -81,8 +95,8 @@ mysql -u <user> -p acore_characters < sql/world/0015_token_outbox.sql
 # 0017: realm_fixgear → acore_characters:
 mysql -u <user> -p acore_characters < sql/world/0017_waloria_tools.sql
 # 0018: NPC/items/spell_dbc → acore_world, realm_gold_storage → acore_characters:
-mysql -u <user> -p acore_world < sql/world/0018_eluna_scripts_tier_a.sql
-mysql -u <user> -p acore_characters < sql/world/0018_eluna_scripts_tier_a.sql
+mysql -u <user> -p acore_world < sql/world/0018_eluna_scripts_tier_a_world.sql
+mysql -u <user> -p acore_characters < sql/world/0018_eluna_scripts_tier_a_characters.sql
 # 0019: Алтарь Испытаний (705605) → acore_world:
 mysql -u <user> -p acore_world < sql/world/0019_challenge_modes.sql
 # 0020: таблицы магазина realm_store_* → acore_world:
@@ -118,12 +132,32 @@ mysql -u <user> -p acore_characters < sql/world/0035_vip.sql
 mysql -u <user> -p acore_world < sql/world/0036_band_npcs.sql
 # 0037: ЦК «Песнь Пустоты» (НПС 70395 + предметы 70115–70118 → acore_world;
 #       realm_band_quest → acore_characters):
-mysql -u <user> -p acore_world < sql/world/0037_band_quest.sql
-mysql -u <user> -p acore_characters < sql/world/0037_band_quest.sql
+mysql -u <user> -p acore_world < sql/world/0037_band_quest_world.sql
+mysql -u <user> -p acore_characters < sql/world/0037_band_quest_characters.sql
 # 0038: Расширение магазина VIP (realm_store_* → acore_world):
 mysql -u <user> -p acore_world < sql/world/0038_store_vip_expansion.sql
 # 0039: Classless «класс Hero» (alter character_classless → acore_characters):
 mysql -u <user> -p acore_characters < sql/world/0039_classless_hero.sql
+# ── далее, кампании 5–11 и новые системы (0040–0053) ──
+mysql -u <user> -p acore_world < sql/world/0040_dungeon_quest_npc.sql
+mysql -u <user> -p acore_characters < sql/world/0041_echo_worldsoul_characters.sql
+mysql -u <user> -p acore_world < sql/world/0041_echo_worldsoul_world.sql
+mysql -u <user> -p acore_characters < sql/world/0042_campaign_profile.sql
+mysql -u <user> -p acore_world < sql/world/0043_campaigns_5_7.sql
+mysql -u <user> -p acore_world < sql/world/0044_events_mist_royal.sql
+mysql -u <user> -p acore_characters < sql/world/0045_legacy_illidan_characters.sql
+mysql -u <user> -p acore_world < sql/world/0045_legacy_illidan_world.sql
+mysql -u <user> -p acore_characters < sql/world/0046_cursed_world_characters.sql
+mysql -u <user> -p acore_world < sql/world/0046_cursed_world.sql
+mysql -u <user> -p acore_characters < sql/world/0047_light_lie_characters.sql
+mysql -u <user> -p acore_world < sql/world/0047_light_lie_world.sql
+mysql -u <user> -p acore_world < sql/world/0048_factions.sql
+mysql -u <user> -p acore_characters < sql/world/0049_guild_progress.sql
+mysql -u <user> -p acore_characters < sql/world/0050_homes.sql
+mysql -u <user> -p acore_characters < sql/world/0051_social.sql
+mysql -u <user> -p acore_characters < sql/world/0052_season_events_characters.sql
+mysql -u <user> -p acore_world < sql/world/0052_season_events_world.sql
+mysql -u <user> -p acore_world < sql/world/0053_fix_campaign8_npcs.sql
 ```
 
 После применения выполните в консоли `worldserver`:

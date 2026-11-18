@@ -14,7 +14,7 @@
 │   ├── docs/               # документация (деплой, тесты, DBC-патч)
 │   ├── lua_scripts/        # Lua-скрипты ALE → копируются в ядро/bin
 │   ├── modules/            # ВСЕ модули сборки (echo-*, mod-ale, mod-*)
-│   └── sql/world/          # миграции 0001–0042
+│   └── sql/world/          # миграции 0001–0053
 └── azerothcore-wotlk/      # ВНЕШНИЙ клон ядра (git clone) — точка сборки
     └── modules/            # заполняется копиями из azeroth-custom-realm/modules/
 ```
