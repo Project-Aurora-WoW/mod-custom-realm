@@ -1,15 +1,15 @@
 {
   "realm": "Эхо Пустоты",
-  "version": 7,
+  "version": 8,
   "realmlist": "127.0.0.1",
   "files": [
     {
       "path": "patch-x.mpq",
       "destination": "Data/patch-x.mpq",
-      "sha256": "a6120b8f5291c549d04c51a8a2fa089b0fb6c5ed90eedeeb6cbf3cd8a09a7462",
-      "size": 5029836,
+      "sha256": "fd8aaf6c5f50961e2a3b455cc8ba6e1d1f40945a6a4c199ba720c1307fc60b54",
+      "size": 19048373,
       "required": true,
-      "description": "Клиентский патч реалма (MPQ v2, StormLib): CharTitles.dbc (титул 48 «Хранитель Эха»), Spell.dbc (кастомные спеллы), аддон AIO (Interface/AddOns/AIO — клиентская часть AIO-фреймворка для магазина и других AIO-систем), Store_UI (Frames/StoreFrame_Main.blp). Map.dbc НЕ включён — владелец patch-Z (карта 5000). Пересобран 2026-11-17 через mpqcli/StormLib вместо прежнего самодельного MPQ v1."
+      "description": "Клиентский патч реалма (MPQ v2, StormLib): CharTitles.dbc (титул 48 «Хранитель Эха»), Spell.dbc (кастомные спеллы + археология 90500-90522 + Town Guide 90050), SkillLine/SkillRaceClassInfo/SkillLineAbility/Item/ItemDisplayInfo/Achievement/Achievement_Criteria/SpellIcon/GameObjectDisplayInfo/SpellVisual*/SpellRadius-Range-Duration (археология), аддон AIO (Interface/AddOns/AIO), Store_UI (Frames/StoreFrame_Main.blp), модели телескопа и облики реликвии, текстуры Interface/Archeology. Map.dbc НЕ включён — владелец patch-Z (карта 5000). Пересобран 2026-11-18."
     },
     {
       "path": "patch-Z.mpq",
@@ -32,5 +32,5 @@
     "Cache",
     "Cache/WDB"
   ],
-  "notes": "sha256/size актуальны на 2026-11-17. patch-x пересобран через mpqcli/StormLib (MPQ v2): CharTitles.dbc (титул 48), Spell.dbc, Interface/AddOns/AIO (клиентская часть AIO), Interface/Store_UI/Frames/StoreFrame_Main.blp; Map.dbc НЕ включён (владелец patch-Z). AzerothEcho.zip собран из addons/AzerothEcho (Hub.lua, Lore.lua, CampaignWindow.lua). Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 -> ... -> patch-x -> patch-Z."
+  "notes": "sha256/size актуальны на 2026-11-18. patch-x пересобран tools/build_patch.py mod-archaeology + build_town_guide_patch.py (90050): CharTitles.dbc (титул 48), арифметика Spell.dbc (90500-90522 + Town Guide 90050), SkillLine 794 + SkillRaceClassInfo + SkillLineAbility, Item/ItemDisplayInfo (133+813+22 облика), Achievement 9240-9245 + Criteria 19240, GameObjectDisplayInfo 10101-10103 + модели телескопа, SpellIcon 90500, текстуры Interface/Archeology; Interface/AddOns/AIO, Interface/Store_UI/Frames/StoreFrame_Main.blp. Map.dbc НЕ включён (владелец patch-Z). Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 -> ... -> patch-x -> patch-Z."
 }

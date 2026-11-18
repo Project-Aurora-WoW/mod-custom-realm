@@ -788,6 +788,8 @@ def convert_model(retail, loaded, valid, stem, place):
     out. Returns (m2, skin, check info, {archive name: (file data id, blend uses)}) for the caller
     to ship with ship_textures."""
     raw, model, skin_raw, anims = loaded
+    if callable(skin_raw):
+        skin_raw = skin_raw(0)
     conv = retail.Converter(raw, skin_raw, anims, valid, stem)
     drawn = conv.batch_textures()
     textures, sources = [], {}
