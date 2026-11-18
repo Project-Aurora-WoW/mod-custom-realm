@@ -224,6 +224,8 @@ mysql -u root -p acore_world < sql/world/0054_game_tele.sql
 mysql -u root -p acore_world < sql/world/0055_world_env.sql
 # 0056: кладбища для стокового воскрешения в новых локациях → acore_world:
 mysql -u root -p acore_world < sql/world/0056_graveyards.sql
+# 0057: погода по зонам (game_weather: 4080/4395/4181 + кастомная 5000) → acore_world:
+mysql -u root -p acore_world < sql/world/0057_weather.sql
 ```
 
 > Все миграции применены строго по порядку. После применения выполните в консоли
