@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- 0046_cursed_world.sql -> characters (acore_characters)
 -- Применять: mysql -u <user> -p acore_characters < sql/world/0046_cursed_world_characters.sql
 -- Таблица realm_cursed_score — сезонный счёт модуля «Мир Проклятых».

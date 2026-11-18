@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0037_band_quest.sql -> characters (acore_characters)
 -- mysql -u user -p acore_characters < sql/world/0037_band_quest_characters.sql
 -- =============================================

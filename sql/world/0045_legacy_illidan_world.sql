@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0045_legacy_illidan.sql -> world (acore_world)
 -- mysql -u user -p acore_world < sql/world/0045_legacy_illidan_world.sql
 -- =============================================

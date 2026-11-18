@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0014_waloria_rewards.sql -> characters (acore_characters)
 -- mysql -u user -p acore_characters < sql/world/0014_waloria_rewards_characters.sql
 -- =============================================

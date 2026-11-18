@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0052_season_events.sql -> characters (acore_characters)
 -- mysql -u user -p acore_characters < sql/world/0052_season_events_characters.sql
 -- =============================================

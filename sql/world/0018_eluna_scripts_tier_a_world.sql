@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0018_eluna_scripts_tier_a.sql -> world (acore_world)
 -- mysql -u user -p acore_world < sql/world/0018_eluna_scripts_tier_a_world.sql
 -- =============================================

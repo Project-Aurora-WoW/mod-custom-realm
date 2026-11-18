@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- 0047_light_lie.sql -> characters (acore_characters)
 -- Применять: mysql -u <user> -p acore_characters < sql/world/0047_light_lie_characters.sql
 -- Таблица realm_lightlie_score — сезонный счёт модуля «Светлая Ложь Альянса».

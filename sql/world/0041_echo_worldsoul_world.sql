@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0041_echo_worldsoul.sql -> world (acore_world)
 -- mysql -u user -p acore_world < sql/world/0041_echo_worldsoul_world.sql
 -- =============================================

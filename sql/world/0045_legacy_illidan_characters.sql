@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- 0045_legacy_illidan.sql -> characters (acore_characters)
 -- Применять: mysql -u <user> -p acore_characters < sql/world/0045_legacy_illidan_characters.sql
 -- Таблица realm_legacy_score — сезонный счёт модуля «Наследие Иллидана».

@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0009_event_pvp.sql -> characters (acore_characters)
 -- mysql -u user -p acore_characters < sql/world/0009_event_pvp_characters.sql
 -- =============================================

@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0024_tier_b.sql -> characters (acore_characters)
 -- mysql -u user -p acore_characters < sql/world/0024_tier_b_characters.sql
 -- =============================================

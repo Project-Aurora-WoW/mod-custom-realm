@@ -1,4 +1,4 @@
-﻿-- =============================================
+-- =============================================
 -- 0018_eluna_scripts_tier_a.sql -> characters (acore_characters)
 -- mysql -u user -p acore_characters < sql/world/0018_eluna_scripts_tier_a_characters.sql
 -- =============================================
