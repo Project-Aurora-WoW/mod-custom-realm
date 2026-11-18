@@ -1,0 +1,36 @@
+{
+  "realm": "Эхо Пустоты",
+  "version": 8,
+  "realmlist": "127.0.0.1",
+  "files": [
+    {
+      "path": "patch-x.mpq",
+      "destination": "Data/patch-x.mpq",
+      "sha256": "fd8aaf6c5f50961e2a3b455cc8ba6e1d1f40945a6a4c199ba720c1307fc60b54",
+      "size": 19048373,
+      "required": true,
+      "description": "Клиентский патч реалма (MPQ v2, StormLib): CharTitles.dbc (титул 48 «Хранитель Эха»), Spell.dbc (кастомные спеллы + археология 90500-90522 + Town Guide 90050), SkillLine/SkillRaceClassInfo/SkillLineAbility/Item/ItemDisplayInfo/Achievement/Achievement_Criteria/SpellIcon/GameObjectDisplayInfo/SpellVisual*/SpellRadius-Range-Duration (археология), аддон AIO (Interface/AddOns/AIO), Store_UI (Frames/StoreFrame_Main.blp), модели телескопа и облики реликвии, текстуры Interface/Archeology. Map.dbc НЕ включён — владелец patch-Z (карта 5000). Пересобран 2026-11-18."
+    },
+    {
+      "path": "patch-Z.mpq",
+      "destination": "Data/patch-Z.mpq",
+      "sha256": "6b963870f28c304cc07c9675388d4ae08089f54de2b0b14373ed72aadf0c2840",
+      "size": 3209747,
+      "required": true,
+      "description": "Кастомные карты (карта 5000): Остров Морза, Долина Предательства (RStijn/custom-maps, 2015). Готовый файл из репозитория — client/custom maps/patch-Z.MPQ; пересборка не требуется."
+    },
+    {
+      "path": "addons/AzerothEcho.zip",
+      "destination": "Interface/AddOns/AzerothEcho.zip",
+      "sha256": "6762c53ac17609f669cc87d6fccc25b73f155a80a01e769251df391efa82c9d8",
+      "size": 24564,
+      "required": true,
+      "description": "Клиентский аддон реалма AzerothEcho v2.1.0 (addons/AzerothEcho, zip без вложенного каталога): панель реалма, окно выбора кампании, лор, карта разломов, хаб-кнопки к аддонам Journal и ArchaeologyUI."
+    }
+  ],
+  "cacheDirs": [
+    "Cache",
+    "Cache/WDB"
+  ],
+  "notes": "sha256/size актуальны на 2026-11-18. patch-x пересобран tools/build_patch.py mod-archaeology + build_town_guide_patch.py (90050): CharTitles.dbc (титул 48), арифметика Spell.dbc (90500-90522 + Town Guide 90050), SkillLine 794 + SkillRaceClassInfo + SkillLineAbility, Item/ItemDisplayInfo (133+813+22 облика), Achievement 9240-9245 + Criteria 19240, GameObjectDisplayInfo 10101-10103 + модели телескопа, SpellIcon 90500, текстуры Interface/Archeology; Interface/AddOns/AIO, Interface/Store_UI/Frames/StoreFrame_Main.blp. Map.dbc НЕ включён (владелец patch-Z). Версию поднимать при каждом изменении состава файлов. Порядок загрузки MPQ по имени: patch-3 -> ... -> patch-x -> patch-Z."
+}

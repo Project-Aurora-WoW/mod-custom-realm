@@ -17,10 +17,11 @@
 | `patch-Z.mpq` | ⛔ Добавить: кастомные карты (карта 5000). Берётся **готовым** из репозитория `custom-maps` (`patch-Z.MPQ`), пересборка не требуется. См. `../docs/client-patch.md` ч. 6 |
 | `addons/AzerothEcho.zip` | ✅ Есть (актуальный, из `../addons/AzerothEcho/`): панель реалма + окно выбора кампании + лор + карта разломов + панель-хаб (Hub.lua). Zip без вложенного каталога — файлы аддона в корне архива |
 
-> **Статус manifest на 2026-11-17:** `client/manifest.json` — **версия 7**.
-> В манифест входят `patch-x.mpq` (MPQ v2, StormLib), `patch-Z.mpq` (карта 5000)
-> и `addons/AzerothEcho.zip`. Аддоны `Journal` и `ArchaeologyUI` — клиентские
-> части модулей и в манифест не включаются (доставляются вместе с ядром/модулями).
+> **Статус manifest на 2026-11-18:** `client/manifest.json` — **версия 8**.
+> В манифест входят `patch-x.mpq` (MPQ v2, StormLib; археология 90500-90522 +
+> Town Guide 90050), `patch-Z.mpq` (карта 5000) и `addons/AzerothEcho.zip`.
+> Аддоны `Journal`, `ArchaeologyUI`, `WarbandCamp` — клиентские части модулей
+> и в манифест не включаются (инсталлер берёт их из `modules/*/addon/`).
 
 ## Процедура публикации обновления
 
@@ -52,6 +53,24 @@ powershell -ExecutionPolicy Bypass -File update-client.ps1 ^
 и запустит клиент. Альтернатива вручную: скачать `patch-x.mpq` →
 `WoW\Data\`, распаковать `AzerothEcho.zip` → `WoW\Interface\AddOns\`,
 в `realmlist.wtf` — `set realmlist <адрес>`.
+
+## GUI-инсталлер (Windows)
+
+См. [`installer/`](installer/). Автономная доставка без веб-хостинга — весь
+набор копируется из локального `dist/` в каталог клиента.
+
+- `installer/install-client.ps1` — GUI (WinForms): выбор папки игры, галочки
+  компонентов (patch-x, patch-Z, AzerothEcho, аддоны модулей), установка,
+  журнал. Запуск: двойной клик по `installer/install-client.bat`.
+- `installer/build-installer.ps1` — сборка `installer/dist/` из `client/`
+  и `modules/*/addon/` (перезапускать после изменения файлов).
+  Silently-режим: `-Silent -WowDir <путь>`.
+- `client/release/echo-void-client-installer.zip` — готовый архив для раздачи
+  игрокам (распаковать → `install-client.bat`).
+
+В `dist/` входят: `manifest.json`, `patch-x.mpq`, `patch-Z.mpq`,
+`addons/AzerothEcho.zip` и аддоны модулей (`ArchaeologyUI/`, `Journal/`,
+`WarbandCamp/`). Контрольные суммы сверяются по `manifest.json`.
 
 ## Откат у игрока
 

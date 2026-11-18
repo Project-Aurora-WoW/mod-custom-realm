@@ -1,0 +1,33 @@
+## Interface: 11200
+## Title: |cffffc94dWarband Camp|r
+## Notes: In-game camp management & 3D construction toolkit for AzerothCore (mod-warband-camp).
+## Author: AzerothCore
+## Version: 1.0.0
+## SavedVariables: WarbandCampDB, GOMoveSV
+## DefaultState: enabled
+
+# ─── Core ─────────────────────────────────────────────────────────────────
+Core\Init.lua
+Core\Util.lua
+Core\SavedVars.lua
+Core\CommandRunner.lua
+Core\Warband.lua
+Core\GOMove.lua
+
+# ─── Data ─────────────────────────────────────────────────────────────────
+Data\WarbandProps.lua
+
+# ─── UI primitives ────────────────────────────────────────────────────────
+UI\ConfirmDialog.lua
+UI\Widgets.lua
+UI\CampObjectBrowser.lua
+UI\MainFrame.lua
+
+# ─── Tabs (registration order = display order) ────────────────────────────
+UI\Tabs\Camp.lua
+UI\Tabs\Builder.lua
+UI\Tabs\Favorites.lua
+UI\Tabs\History.lua
+
+# ─── Launcher ─────────────────────────────────────────────────────────────
+UI\ToggleButton.lua
