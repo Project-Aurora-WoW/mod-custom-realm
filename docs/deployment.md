@@ -218,6 +218,12 @@ mysql -u root -p acore_world < sql/world/0052_season_events_world.sql
 mysql -u root -p acore_characters < sql/world/0052_season_events_characters.sql
 # 0053: фикс НПС К8 → acore_world:
 mysql -u root -p acore_world < sql/world/0053_fix_campaign8_npcs.sql
+# 0054: точки телепортов game_tele (карта 5000 + зоны кампаний) → acore_world:
+mysql -u root -p acore_world < sql/world/0054_game_tele.sql
+# 0055: окружение локаций (мобы/флора/постройки/ресурсы, карта 5000 + 571) → acore_world:
+mysql -u root -p acore_world < sql/world/0055_world_env.sql
+# 0056: кладбища для стокового воскрешения в новых локациях → acore_world:
+mysql -u root -p acore_world < sql/world/0056_graveyards.sql
 ```
 
 > Все миграции применены строго по порядку. После применения выполните в консоли
