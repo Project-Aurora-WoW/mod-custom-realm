@@ -246,7 +246,15 @@ mysql -u root -p acore_world < sql/world/0055_world_env.sql
 mysql -u root -p acore_world < sql/world/0056_graveyards.sql
 # 0057: погода по зонам (game_weather: 4080/4395/4181 + кастомная 5000) → acore_world:
 mysql -u root -p acore_world < sql/world/0057_weather.sql
+# 0058: система выбора кастомных спеллов (SpellAIO) — realm_custom_spell_* → acore_world:
+mysql -u root -p acore_world < sql/world/0058_custom_spell_system.sql
 ```
+
+> ⚠️ Таблицы `realm_custom_spell_choices` / `realm_custom_spell_category_choices` /
+> `realm_custom_spell_learned` живут в **acore_characters** (пер-персонаж), а не
+> acore_world. Миграция `0058` создаёт их в текущем контексте БД — применяйте
+> к acore_world для каталога спеллов (`realm_custom_spell_system`/`_categories`)
+> и к acore_characters для пер-персональных выборов (`_choices`/`_learned`).
 
 > Все миграции применены строго по порядку. После применения выполните в консоли
 > `worldserver`: `.reload creature_template` и `.reload items`.

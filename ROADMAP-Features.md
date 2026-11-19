@@ -169,6 +169,7 @@
 | Карта локаций (сервер+клиент+живой трекинг) | `44_LocationMap.lua`, клиент `LocationMap.lua` | — (реестр `map_locations`) |
 | Фикс К8 (НПС 70241–70243) | `Campaign8.lua` | `0053_fix_campaign8_npcs.sql` |
 | Сеasonный множитель в авто-ивентах + локализация 45–48/8–11 | `10_EventSystem.lua`, модули/кампании | — |
+| **Система выбора кастомных спеллов (SpellAIO)** | `lua_scripts/SpellAIO/{spellclass,server,client}.lua` (mod-ale + AIO) | `0058_custom_spell_system.sql` |
 
 ---
 
