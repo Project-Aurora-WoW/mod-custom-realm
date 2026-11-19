@@ -82,11 +82,12 @@ local function ApplyWeather(player)
     end
 
     -- Звуковая атмосфера: фоновая музыка зоны (WorldObject:PlayMusic).
-    -- Безопасный вызов: если метод недоступен в сборке — просто пропускаем.
-    local playMusicFn = player.PlayMusic
-    if type(playMusicFn) == "function" then
-        -- Морза — мрачная метель (MusicId 580); Предательство — буря (590).
-        pcall(player.PlayMusic, player, zone == "betrayal" and 590 or 580)
+    -- ALE-сигнатура: PlayMusic(musicid, player = nil) — при nil шлётся игроку.
+    -- Морза — мрачная метель (MusicId 580); Предательство — буря (590).
+    if zone == "betrayal" then
+        player:PlayMusic(590)   -- буря разлома
+    else
+        player:PlayMusic(580)   -- метель перевала
     end
 end
 
