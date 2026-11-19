@@ -90,6 +90,26 @@ mkdir -p maps vmaps mmaps dbc
 ./mmaps_generator
 ```
 
+> ⚠️ **Серверная CharTitles.dbc обязательна** (титул «Хранитель Эха»).
+> Сервер (worldserver) читает DBC из собственного `DataDir/dbc/` (`DataDir + "dbc/"`,
+> см. `DBCStores.cpp`), а НЕ из клиентского `patch-x.mpq`. Без этого
+> `player:SetTitle(178)` и награды mod-challenge-modes (`TitleRewards = "80 178"`)
+> не найдут запись — титул не выдаётся.
+>
+> Клиентская `patch-x.mpq` содержит «Хранителя Эха» на ID **178** (143-записная
+> версия; ID 48 — стоковый «Вершитель правосудия»). Необходимо поместить ту же
+> 143-записную `CharTitles.dbc` в серверный `dbc/`:
+>
+> ```bash
+> # после распаковки dbc из клиента — скопировать 143-записную версию с ID 178:
+> # источник — извлечение DBFilesClient\CharTitles.dbc из client/patch-x.mpq (mpqcli/MPQ Editor)
+> mkdir -p $HOME/acore/bin/dbc
+> cp /path/to/extracted/CharTitles.dbc $HOME/acore/bin/dbc/CharTitles.dbc
+> ```
+>
+> Этап применяется и при обновлении: если в `patch-x.mpq` сменится CharTitles,
+> синхронизировать и серверную копию.
+
 Пути к данным прописываются в конфигах (шаг 6).
 
 ---
