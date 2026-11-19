@@ -1,14 +1,14 @@
-# ============================================================
-# echo-challenge-modes — конфигурационный файл (dist)
-# Режимы испытаний реалма «Эхо Пустоты» (AzerothCore).
-# Референс: mod-challenge-modes (m-orlovrus59/mod-challenge-modes).
+﻿# ============================================================
+# echo-challenge-modes вЂ” РєРѕРЅС„РёРіСѓСЂР°С†РёРѕРЅРЅС‹Р№ С„Р°Р№Р» (dist)
+# Р РµР¶РёРјС‹ РёСЃРїС‹С‚Р°РЅРёР№ СЂРµР°Р»РјР° В«Р­С…Рѕ РџСѓСЃС‚РѕС‚С‹В» (AzerothCore).
+# Р РµС„РµСЂРµРЅСЃ: mod-challenge-modes (m-orlovrus59/mod-challenge-modes).
 #
-# Режимы активируются игроком добровольно у Алтаря Испытаний
-# (GO 705605, см. миграцию 0019_challenge_modes.sql) на 1 уровне
-# (55 для ДК). Награды за уровни — титулы/таланты/предметы/ачивки.
+# Р РµР¶РёРјС‹ Р°РєС‚РёРІРёСЂСѓСЋС‚СЃСЏ РёРіСЂРѕРєРѕРј РґРѕР±СЂРѕРІРѕР»СЊРЅРѕ Сѓ РђР»С‚Р°СЂСЏ РСЃРїС‹С‚Р°РЅРёР№
+# (GO 705605, СЃРј. РјРёРіСЂР°С†РёСЋ 0019_challenge_modes.sql) РЅР° 1 СѓСЂРѕРІРЅРµ
+# (55 РґР»СЏ Р”Рљ). РќР°РіСЂР°РґС‹ Р·Р° СѓСЂРѕРІРЅРё вЂ” С‚РёС‚СѓР»С‹/С‚Р°Р»Р°РЅС‚С‹/РїСЂРµРґРјРµС‚С‹/Р°С‡РёРІРєРё.
 #
-# ТРЕБОВАНИЕ: EnablePlayerSettings = 1 в worldserver.conf
-# (прогресс режимов хранится в player settings characters-БД).
+# РўР Р•Р‘РћР’РђРќРР•: EnablePlayerSettings = 1 РІ worldserver.conf
+# (РїСЂРѕРіСЂРµСЃСЃ СЂРµР¶РёРјРѕРІ С…СЂР°РЅРёС‚СЃСЏ РІ player settings characters-Р‘Р”).
 # ============================================================
 
 [worldserver]
@@ -18,50 +18,50 @@
 ########################################
 
 #    ChallengeModes.Enable
-#        Description: Включить систему режимов испытаний.
-#            0 — все режимы отключены, Алтарь невидим.
-#            1 — режимы доступны у Алтаря (каждый режим ещё и
-#                управляется своим <Challenge>.Enable).
+#        Description: Р’РєР»СЋС‡РёС‚СЊ СЃРёСЃС‚РµРјСѓ СЂРµР¶РёРјРѕРІ РёСЃРїС‹С‚Р°РЅРёР№.
+#            0 вЂ” РІСЃРµ СЂРµР¶РёРјС‹ РѕС‚РєР»СЋС‡РµРЅС‹, РђР»С‚Р°СЂСЊ РЅРµРІРёРґРёРј.
+#            1 вЂ” СЂРµР¶РёРјС‹ РґРѕСЃС‚СѓРїРЅС‹ Сѓ РђР»С‚Р°СЂСЏ (РєР°Р¶РґС‹Р№ СЂРµР¶РёРј РµС‰С‘ Рё
+#                СѓРїСЂР°РІР»СЏРµС‚СЃСЏ СЃРІРѕРёРј <Challenge>.Enable).
 #        Default:     1
 
 ChallengeModes.Enable = 1
 
-#    Доступные режимы (<Challenge>):
-#        Hardcore         — смерть = перманентный дух, воскреснуть нельзя
-#        SemiHardcore     — смерть = потеря надетой экипировки и всего золота
-#        SelfCrafted      — носить только скрафченное собой
-#        ItemQualityLevel — только Poor/Normal качество
-#        SlowXpGain       — x0.5 опыта
-#        VerySlowXpGain   — x0.25 опыта (включает награды SlowXpGain)
-#        QuestXpOnly      — опыт только с квестов
-#        IronMan          — правила wowchallenges: без зелий/эликсиров/фласок,
-#                           еды с баффом, энчантов, талантов, профессий, групп;
-#                           только белые вещи
+#    Р”РѕСЃС‚СѓРїРЅС‹Рµ СЂРµР¶РёРјС‹ (<Challenge>):
+#        Hardcore         вЂ” СЃРјРµСЂС‚СЊ = РїРµСЂРјР°РЅРµРЅС‚РЅС‹Р№ РґСѓС…, РІРѕСЃРєСЂРµСЃРЅСѓС‚СЊ РЅРµР»СЊР·СЏ
+#        SemiHardcore     вЂ” СЃРјРµСЂС‚СЊ = РїРѕС‚РµСЂСЏ РЅР°РґРµС‚РѕР№ СЌРєРёРїРёСЂРѕРІРєРё Рё РІСЃРµРіРѕ Р·РѕР»РѕС‚Р°
+#        SelfCrafted      вЂ” РЅРѕСЃРёС‚СЊ С‚РѕР»СЊРєРѕ СЃРєСЂР°С„С‡РµРЅРЅРѕРµ СЃРѕР±РѕР№
+#        ItemQualityLevel вЂ” С‚РѕР»СЊРєРѕ Poor/Normal РєР°С‡РµСЃС‚РІРѕ
+#        SlowXpGain       вЂ” x0.5 РѕРїС‹С‚Р°
+#        VerySlowXpGain   вЂ” x0.25 РѕРїС‹С‚Р° (РІРєР»СЋС‡Р°РµС‚ РЅР°РіСЂР°РґС‹ SlowXpGain)
+#        QuestXpOnly      вЂ” РѕРїС‹С‚ С‚РѕР»СЊРєРѕ СЃ РєРІРµСЃС‚РѕРІ
+#        IronMan          вЂ” РїСЂР°РІРёР»Р° wowchallenges: Р±РµР· Р·РµР»РёР№/СЌР»РёРєСЃРёСЂРѕРІ/С„Р»Р°СЃРѕРє,
+#                           РµРґС‹ СЃ Р±Р°С„С„РѕРј, СЌРЅС‡Р°РЅС‚РѕРІ, С‚Р°Р»Р°РЅС‚РѕРІ, РїСЂРѕС„РµСЃСЃРёР№, РіСЂСѓРїРї;
+#                           С‚РѕР»СЊРєРѕ Р±РµР»С‹Рµ РІРµС‰Рё
 #
-#    Формат опций каждого режима:
-#        <Challenge>.Enable              — пункт у Алтаря недоступен при 0
-#        <Challenge>.XPMultiplier        — множитель опыта режима
-#        <Challenge>.TitleRewards        — "уровень titleID, ..." (CharTitles.dbc)
-#        <Challenge>.TalentRewards       — "уровень кол-во, ..."
-#        <Challenge>.ItemRewards         — "уровень itemEntry, ..."
-#        <Challenge>.ItemRewardAmount    — количество предметов из ItemRewards
-#        <Challenge>.AchievementReward   — "уровень achievementID, ..."
-#        <Challenge>.DisableLevel        — авто-отключение режима на уровне
-#                                          (0 = никогда)
+#    Р¤РѕСЂРјР°С‚ РѕРїС†РёР№ РєР°Р¶РґРѕРіРѕ СЂРµР¶РёРјР°:
+#        <Challenge>.Enable              вЂ” РїСѓРЅРєС‚ Сѓ РђР»С‚Р°СЂСЏ РЅРµРґРѕСЃС‚СѓРїРµРЅ РїСЂРё 0
+#        <Challenge>.XPMultiplier        вЂ” РјРЅРѕР¶РёС‚РµР»СЊ РѕРїС‹С‚Р° СЂРµР¶РёРјР°
+#        <Challenge>.TitleRewards        вЂ” "СѓСЂРѕРІРµРЅСЊ titleID, ..." (CharTitles.dbc)
+#        <Challenge>.TalentRewards       вЂ” "СѓСЂРѕРІРµРЅСЊ РєРѕР»-РІРѕ, ..."
+#        <Challenge>.ItemRewards         вЂ” "СѓСЂРѕРІРµРЅСЊ itemEntry, ..."
+#        <Challenge>.ItemRewardAmount    вЂ” РєРѕР»РёС‡РµСЃС‚РІРѕ РїСЂРµРґРјРµС‚РѕРІ РёР· ItemRewards
+#        <Challenge>.AchievementReward   вЂ” "СѓСЂРѕРІРµРЅСЊ achievementID, ..."
+#        <Challenge>.DisableLevel        вЂ” Р°РІС‚Рѕ-РѕС‚РєР»СЋС‡РµРЅРёРµ СЂРµР¶РёРјР° РЅР° СѓСЂРѕРІРЅРµ
+#                                          (0 = РЅРёРєРѕРіРґР°)
 #
-#    Несовместимые пары (второй пункт скрыт, если включён первый):
+#    РќРµСЃРѕРІРјРµСЃС‚РёРјС‹Рµ РїР°СЂС‹ (РІС‚РѕСЂРѕР№ РїСѓРЅРєС‚ СЃРєСЂС‹С‚, РµСЃР»Рё РІРєР»СЋС‡С‘РЅ РїРµСЂРІС‹Р№):
 #        Hardcore + SemiHardcore, SelfCrafted + IronMan,
 #        SlowXpGain + VerySlowXpGain.
 #
-#    Рекомендуемые награды для реалма (можно задать позже, значения
-#    применяются перезагрузкой конфига):
-#        Hardcore.TitleRewards   = "80 48"        # «Хранитель Эха» (см. client-patch.md ч. 1)
-#        Hardcore.ItemRewards    = "80 70001"     # Слеза Рассвета
-#        IronMan.TitleRewards    = "80 48"
+#    Р РµРєРѕРјРµРЅРґСѓРµРјС‹Рµ РЅР°РіСЂР°РґС‹ РґР»СЏ СЂРµР°Р»РјР° (РјРѕР¶РЅРѕ Р·Р°РґР°С‚СЊ РїРѕР·Р¶Рµ, Р·РЅР°С‡РµРЅРёСЏ
+#    РїСЂРёРјРµРЅСЏСЋС‚СЃСЏ РїРµСЂРµР·Р°РіСЂСѓР·РєРѕР№ РєРѕРЅС„РёРіР°):
+#        Hardcore.TitleRewards   = "80 178"       # В«РҐСЂР°РЅРёС‚РµР»СЊ Р­С…Р°В» (СЃРј. client-patch.md С‡. 1)
+#        Hardcore.ItemRewards    = "80 70001"     # РЎР»РµР·Р° Р Р°СЃСЃРІРµС‚Р°
+#        IronMan.TitleRewards    = "80 178"
 #        VerySlowXpGain.TalentRewards = "20 1, 40 1, 60 1, 80 2"
 
 Hardcore.Enable = 1
-Hardcore.TitleRewards = "80 48"
+Hardcore.TitleRewards = "80 178"
 Hardcore.XPMultiplier = 1
 Hardcore.TalentRewards = "20 1, 40 1, 60 1, 80 2"
 Hardcore.ItemRewards = "80 70001"
@@ -70,7 +70,7 @@ Hardcore.DisableLevel = 0
 Hardcore.AchievementReward = ""
 
 SemiHardcore.Enable = 1
-SemiHardcore.TitleRewards = "80 48"
+SemiHardcore.TitleRewards = "80 178"
 SemiHardcore.XPMultiplier = 1
 SemiHardcore.TalentRewards = "20 1, 40 1, 60 1, 80 2"
 SemiHardcore.ItemRewards = "80 70001"
@@ -79,7 +79,7 @@ SemiHardcore.DisableLevel = 0
 SemiHardcore.AchievementReward = ""
 
 SelfCrafted.Enable = 1
-SelfCrafted.TitleRewards = "80 48"
+SelfCrafted.TitleRewards = "80 178"
 SelfCrafted.XPMultiplier = 1
 SelfCrafted.TalentRewards = "20 1, 40 1, 60 1, 80 2"
 SelfCrafted.ItemRewards = "80 70001"
@@ -88,7 +88,7 @@ SelfCrafted.DisableLevel = 0
 SelfCrafted.AchievementReward = ""
 
 ItemQualityLevel.Enable = 1
-ItemQualityLevel.TitleRewards = "80 48"
+ItemQualityLevel.TitleRewards = "80 178"
 ItemQualityLevel.XPMultiplier = 1
 ItemQualityLevel.TalentRewards = "20 1, 40 1, 60 1, 80 2"
 ItemQualityLevel.ItemRewards = "80 70001"
@@ -97,7 +97,7 @@ ItemQualityLevel.DisableLevel = 0
 ItemQualityLevel.AchievementReward = ""
 
 SlowXpGain.Enable = 1
-SlowXpGain.TitleRewards = "80 48"
+SlowXpGain.TitleRewards = "80 178"
 SlowXpGain.TalentRewards = "40 1, 80 2"
 SlowXpGain.ItemRewards = "80 70001"
 SlowXpGain.ItemRewardAmount = 1
@@ -106,7 +106,7 @@ SlowXpGain.XPMultiplier = 0.50
 SlowXpGain.AchievementReward = ""
 
 VerySlowXpGain.Enable = 1
-VerySlowXpGain.TitleRewards = "80 48"
+VerySlowXpGain.TitleRewards = "80 178"
 VerySlowXpGain.TalentRewards = "20 1, 40 1, 60 1, 80 2"
 VerySlowXpGain.ItemRewards = "80 70001"
 VerySlowXpGain.ItemRewardAmount = 1
@@ -115,7 +115,7 @@ VerySlowXpGain.XPMultiplier = 0.25
 VerySlowXpGain.AchievementReward = ""
 
 QuestXpOnly.Enable = 1
-QuestXpOnly.TitleRewards = "80 48"
+QuestXpOnly.TitleRewards = "80 178"
 QuestXpOnly.XPMultiplier = 1
 QuestXpOnly.TalentRewards = "40 1, 80 2"
 QuestXpOnly.ItemRewards = "80 70001"
@@ -124,7 +124,7 @@ QuestXpOnly.DisableLevel = 0
 QuestXpOnly.AchievementReward = ""
 
 IronMan.Enable = 1
-IronMan.TitleRewards = "80 48"
+IronMan.TitleRewards = "80 178"
 IronMan.TalentRewards = "20 1, 40 1, 60 1, 80 2"
 IronMan.ItemRewards = "80 70001"
 IronMan.ItemRewardAmount = 1

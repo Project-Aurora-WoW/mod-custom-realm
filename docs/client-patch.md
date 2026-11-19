@@ -91,10 +91,21 @@ WHERE `entry` = 70003;
 2. **Серверно из Lua** (проще): после DBC-патча CharTitles.dbc добавить
    в `Campaign3.lua` в `GrantFinalReward`:
    ```lua
-   player:SetTitle(48) -- ID титула из CharTitles.dbc
+   player:SetTitle(178) -- ID титула из CharTitles.dbc («Хранитель Эха»)
    ```
    (Проверить наличие метода `SetTitle` в вашей версии движка Lua;
    в некоторых сборках — `LearnTitle`.)
+
+> ⚠️ **ID титула — 178, не 48.** В действующем `patch-x.mpq` CharTitles.dbc
+> содержит «Хранителя Эха» на ID **178** (проверено 2026-11-19); ID 48 занят
+> стоковым «Вершителем правосудия». Ранние версии этого документа указывали 48 —
+> эмпирика не подтвердилась.
+>
+> ⚠️ **Серверный DBC обязателен.** `player:SetTitle(id)` (как и награда
+> mod-challenge-modes) читает **серверную** CharTitles.dbc из `DataDir/dbc/`,
+> а не клиентский patch-x. Пока сервер не получит 143-записную версию с ID 178,
+> титул выдаваться не будет. Развёрнутая серверная DBC:
+> `build/bin/RelWithDebInfo/dbc/CharTitles.dbc` (обновлена 2026-11-19).
 
 ---
 

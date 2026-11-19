@@ -92,8 +92,9 @@
 ## ⚠️ Техдолг / известные проблемы (Technical debt / known issues)
 
 - [ ] `deployment.md` шаг 8: расхождение CharDB/WorldDB в `0002` — применять в `acore_characters` (вариант A). / `deployment.md` step 8: CharDB/WorldDB mismatch in `0002` — apply to `acore_characters` (variant A).
+- [x] **Награды mod-challenge-modes** настроены в `echo-challenge-modes.conf.dist`: все 8 режимов с `TitleRewards = "80 178"`, `ItemRewards = "80 70001"`, `TalentRewards`, `XPMultiplier`. **2026-11-19**: найден и исправлен разрыв «клиент↔сервер» по CharTitles — «Хранитель Эха» на ID **178** (не 48, как в ранней доке); серверная `build/.../dbc/CharTitles.dbc` обновлена до 143-записной (с ID 178), резервная копия `.bak-20261119`. / **mod-challenge-modes rewards** configured (title 178 «Хранитель Эха» + item 70001); client/server CharTitles synced (ID 178), server DBc updated.
 - [ ] Координаты спавнов Драконьего Погоста/Зул'Драка приблизительные — выверка на тестовом реалме. / Dragonblight/Zul'Drak spawn coords approximate — verify on test realm.
-- [ ] Титул ID 48 (TitleMask) — эмпирика, обязательная проверка на клиенте. / Title ID 48 (TitleMask) — empirical, must verify in client.
+- [x] ~~Титул ID 48 (TitleMask) — эмпирика, обязательная проверка на клиенте.~~ Разрешено 2026-11-19: «Хранитель Эха» фактически на **ID 178** (не 48); конфиги и серверная DBC приведены к 178. / Title ID: resolved — «Хранитель Эха» is ID 178, not 48.
 - [ ] Entry-занятость при новых миграциях: НПС 70170–70178/70180, items 70001–70008/70100/70101, guid 7000170–7000178, GO 705605+guid 7005601–7005609 — см. `sql/README.md`. / Entry usage for new migrations: NPCs 70170–70178/70180, items 70001–70008/70100/70101, guid 7000170–7000178, GO 705605+guid 7005601–7005609 — see `sql/README.md`.
 
 ---
