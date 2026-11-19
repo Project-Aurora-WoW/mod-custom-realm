@@ -252,6 +252,8 @@ mysql -u root -p acore_world < sql/world/0058_custom_spell_system.sql
 mysql -u root -p acore_world < sql/world/0059_spellaio_pool.sql
 # 0060: НПС-тренер 70179 «Хранитель Спеллов» (creature_template + спавн Даларан) → acore_world:
 mysql -u root -p acore_world < sql/world/0060_spellaio_trainer.sql
+# 0061: расширение пула выбора спеллами Waloria (1892 стандартных классовых спелла, id с 1001) → acore_world:
+mysql -u root -p acore_world < sql/world/0061_spellaio_pool_waloria.sql
 ```
 
 > ⚠️ Таблицы `realm_custom_spell_choices` / `realm_custom_spell_category_choices` /
