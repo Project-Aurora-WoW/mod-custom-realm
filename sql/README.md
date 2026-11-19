@@ -61,6 +61,14 @@
 | `world/0051_social.sql` | Социальная система (п.5): `realm_social_links` + `realm_mentor` (**acore_characters**); потребляет `47_Social.lua` | — |
 | `world/0052_season_events.sql` | Сезонные эвенты (п.5): сезонная валюта 70019–70026, `realm_season_state` (**acore_characters**); потребляет `48_SeasonEvents.lua` | — |
 | `world/0053_fix_campaign8_npcs.sql` | Фикс К8 (аудит 2026-11-17): НПС 70241–70243 (Тень Виалии/Реликвия/Тюремщик) — делают кампанию 8 играбельной | — |
+| `world/0054_game_tele.sql` | Точки телепортов реалма (`game_tele`): карта 5000 (Остров Мороза, Долина Предательства — якоря PortalGuardian.lua) + Northrend (Даларан/Драконий Погост и др.) для `.tele` / `Player:Teleport` | — |
+| `world/0055_world_env.sql` | Окружение новых локаций: мобы/флора/ресурсы/постройки на карте 5000 и в зонах Northrend (571); entry окружения 70620–70699; привязка к якорям PortalGuardian.lua | 0054 |
+| `world/0056_graveyards.sql` | Точки приземления кладбищ (`game_graveyard` + graveyard_zone) для кастомных зон (5000) и зон кампаний — чтобы игрок не «застревал» и не падал на стоковое кладбище | 0054, 0055 |
+| `world/0057_weather.sql` | Атмосферные данные (погода) `game_weather` по зонам реалма: Northrend (4080 Драконий Погост, 4395/4181 и др.) + кастомная 5000 по сезонам | — |
+| `world/0058_custom_spell_system.sql` | Система выбора кастомных спеллов (SpellAIO, порт WaloriaOld на mod-ale + AIO): таблицы `realm_custom_spell_system`/`_categories` (**acore_world**) + `realm_custom_spell_choices`/`_category_choices`/`_learned` (**acore_characters**); потребляет `lua_scripts/SpellAIO/{spellclass,server,client}.lua` | — |
+| `world/0059_spellaio_pool.sql` | Наполнение пула выбора (SpellAIO): наши спеллы 70050 «Пустотная порча» + 90515–90521 (археология) по категориям 1–4 | 0058 |
+| `world/0060_spellaio_trainer.sql` | НПС-тренер 70179 «Хранитель Спеллов» (creature_template + спавн Даларан) — повторное открытие окна выбора спеллов; госсип в `server.lua` (`RegisterCreatureEvent(70179, 1, ...)`) | 0058 |
+| `world/0061_spellaio_pool_waloria.sql` | Расширение пула (SpellAIO) стандартными классовыми спеллами WotLK из WaloriaOld (`spellsystem.sql`): 1892 спелла, категории 1–4, забаненные исключены, `id` с 1001 (не конфликтует с 0059) | 0058, 0059 |
 
 ---
 
@@ -158,6 +166,21 @@ mysql -u <user> -p acore_characters < sql/world/0051_social.sql
 mysql -u <user> -p acore_characters < sql/world/0052_season_events_characters.sql
 mysql -u <user> -p acore_world < sql/world/0052_season_events_world.sql
 mysql -u <user> -p acore_world < sql/world/0053_fix_campaign8_npcs.sql
+# 0054-0057: окружение/география (game_tele, окружение 5000, кладбища, погода) → acore_world:
+mysql -u <user> -p acore_world < sql/world/0054_game_tele.sql
+mysql -u <user> -p acore_world < sql/world/0055_world_env.sql
+mysql -u <user> -p acore_world < sql/world/0056_graveyards.sql
+mysql -u <user> -p acore_world < sql/world/0057_weather.sql
+# 0058: SpellAIO (realm_custom_spell_* ) — категории/система → acore_world;
+#       choices/category_choices/learned → acore_characters:
+mysql -u <user> -p acore_world < sql/world/0058_custom_spell_system.sql
+mysql -u <user> -p acore_characters < sql/world/0058_custom_spell_system.sql
+# 0059: наполнение пула (наши спеллы 70050/90515-90521) → acore_world:
+mysql -u <user> -p acore_world < sql/world/0059_spellaio_pool.sql
+# 0060: НПС-тренер 70179 (creature_template + спавн) → acore_world:
+mysql -u <user> -p acore_world < sql/world/0060_spellaio_trainer.sql
+# 0061: пул Waloria (1892 стандартных классовых спелла) → acore_world:
+mysql -u <user> -p acore_world < sql/world/0061_spellaio_pool_waloria.sql
 ```
 
 После применения выполните в консоли `worldserver`:
@@ -195,10 +218,13 @@ mysql -u <user> -p acore_world < sql/world/0053_fix_campaign8_npcs.sql
 | ├─ 70172 | «Рунный Обжиг» (зачарователь, 0018) |
 | ├─ 70173 | «Хранитель Золота» (казначей, 0018) |
 | ├─ 70174 | «Страж Перемен» (смена фракции, 0022) |
+| ├─ 70179 | «Хранитель Спеллов» (SpellAIO-тренер, 0060, Даларан) |
 | ├─ 70190 | «Разлом Пустоты» (портал ивента, 0018; только шаблон) |
 | └─ 70191 | «Иссушенный из Разлома» (моб ивента, 0018; только шаблон) |
 | Кастомные спеллы (spell_dbc) | |
-| └─ 70050 | «Пустотная порча» (стакающийся маркер Corruption, 0018; требует DBC-патча) |
+| ├─ 70050 | «Пустотная порча» (стакающийся маркер Corruption, 0018; требует DBC-патча; в пуле SpellAIO 0059) |
+| ├─ 90515–90521 | археологические кастуемые спеллы (mod-archaeology; в пуле SpellAIO 0059) |
+| └─ 0058–0061 | `realm_custom_spell_*` — каталог/категории/выборы/изученные для SpellAIO |
 | Кастомные guid спавнов | 7000000+ (0011: 7000120; 0012: 7000121, 7000130–7000160; 0018: 7000172/7000173; 0019: 7005601–7005609; 0022: 7000174) |
 | Gossip menu id | 70000+ (при добавлении в БД) |
 | Обратная совместимость | все миграции идемпотентны (`DELETE`+`INSERT` или `IF NOT EXISTS`) |
