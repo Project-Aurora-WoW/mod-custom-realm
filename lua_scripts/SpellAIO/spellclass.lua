@@ -36,9 +36,12 @@ function SpellClass.new()
     end
 
     -- Случайная выборка `amount` спеллов из пула (без повторов).
+    -- Если уникальных спеллов в пуле меньше `amount`, отдаём столько, сколько есть
+    -- (иначе цикл по подбору уникальных никогда бы не завершился).
     function SpellClass:SelectSpellsFromPool(spellPool, amount)
         local spells = {}
-        for i = 1, amount do
+        local want = math.min(amount, #spellPool)
+        for i = 1, want do
             local idx = math.random(1, #spellPool)
             local selected = spellPool[idx]
             while SpellClass:IsInArray(selected, spells) do
@@ -58,11 +61,12 @@ function SpellClass.new()
     end
 
     -- Кандидаты-спеллы определённой категории, начиная с уровня `level`
-    -- и вниз, которых игрок ещё не изучил.
+    -- и вниз, которых игрок ещё не изучил. (Не жёстко 6: достаточно набрать
+    -- по толщине пула, чтобы выбор открылся даже при каталоге из 1 спелла).
     function SpellClass:SpellCandidates(player, level, category)
         local spells = {}
         local curr = level
-        while #spells < 6 and curr >= 1 do
+        while curr >= 1 do
             local q = WorldDBQuery(string.format(
                 "SELECT s.spellID FROM realm_custom_spell_system s " ..
                 "INNER JOIN realm_custom_spell_categories c ON c.spellID = s.spellID " ..
@@ -81,6 +85,16 @@ function SpellClass.new()
         return spells
     end
 
+    -- Есть ли у пула категории хотя бы один кандидат для текущего уровня.
+    function SpellClass:HasAnyCandidate(player, level, category)
+        local q = WorldDBQuery(string.format(
+            "SELECT COUNT(*) AS n FROM realm_custom_spell_system s " ..
+            "INNER JOIN realm_custom_spell_categories c ON c.spellID = s.spellID " ..
+            "WHERE s.spellLevel <= %i AND c.category = %i;", level, category))
+        if not q then return false end
+        return tonumber(q:GetRow()["n"]) > 0
+    end
+
     -- Есть ли кандидаты (>= 4) для категории у текущего уровня.
     function SpellClass:ExistsCandidates(player, level, category)
         local q = WorldDBQuery(string.format(
@@ -92,23 +106,24 @@ function SpellClass.new()
         return n >= 4
     end
 
-    -- Категории, доступные для выбора (в которых есть кандидаты).
+    -- Категории, доступные для выбора (в которых есть хотя бы один кандидат).
     function SpellClass:GetAvailableCategories(player)
         local level = player:GetLevel()
         local out = {}
         for cat = 1, 4 do
-            if SpellClass:ExistsCandidates(player, level, cat) then
+            if SpellClass:HasAnyCandidate(player, level, cat) then
                 out[cat] = cat
             end
         end
         return out
     end
 
-    -- Случайный выбор 4 спеллов категории для окна выбора.
+    -- Случайный выбор спеллов категории для окна выбора (не больше, чем есть в пуле).
     function SpellClass:RandomSpellSelection(player, category)
         local level = player:GetLevel()
         local pool = SpellClass:SpellCandidates(player, level, category)
-        return SpellClass:SelectSpellsFromPool(pool, 4)
+        if #pool == 0 then return nil end
+        return SpellClass:SelectSpellsFromPool(pool, math.min(4, #pool))
     end
 
     -- ---- Сохранение выбора в БД ----

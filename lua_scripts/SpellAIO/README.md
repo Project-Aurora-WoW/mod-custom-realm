@@ -4,26 +4,30 @@
 
 ## Что делает
 Игрок получает окно выбора (AIO) с 4 кнопками — категории
-(Damage/Healing/Buff/Utility). При выборе категории сервер даёт 4 случайных
-кастомных спелла из нашей БД, игрок изучает один (или получает свиток).
-Unlearn-переключатель возвращает изученный спелл свитком.
+(Damage/Healing/Buff/Utility). При выборе категории сервер даёт случайные
+кастомные спеллы из нашей БД, игрок изучает один (или получает свиток).
+Unlearn-переключатель возвращает изученный спелл свитком. Вход — при первом
+входе в мир, по команде GM `.ae spell` или через НПС-тренера 70179.
 
 ## Отличия от оригинала Waloria
 | Аспект | Waloria | Адаптация |
 |--------|---------|-----------|
 | Таблицы | `custom_spell_system*` | `realm_custom_spell_*` |
-| Источник спеллов | 2036 чужих Валерианских | только наши `spell_dbc` (70xxx) |
+| Источник спеллов | 2036 чужих Валерианских | только наши `spell_dbc` (70xxx/905xx) |
 | Счётчик изученных | C++-метод `GetCustomSpellAmount` | Lua через `realm_custom_spell_learned` |
 | Локализация | en | ru/en |
 | Движок | Eluna | mod-ale (номера событий совместимы) |
+| Тонкий пул | жёстко 6/4 кандидатов | устойчиво к каталогу из 1 спелла |
 
 ## Файлы
 - `spellclass.lua` — ядро логики (БД, выбор, лимиты).
-- `server.lua` — серверный контур (события, AIO-обработчики, команда `.ae spell`).
+- `server.lua` — серверный контур (события, AIO-обработчики, команда `.ae spell`,
+  госсип НПС-тренера 70179).
 - `client.lua` — клиентский AIO-интерфейс (окно выбора).
 
 ## События игрока (номера ALE, = Eluna)
 - FIRST_LOGIN=30, LOGIN=3, DELETE=2, LEVEL_CHANGE=13, COMMAND=42.
+- НПС-тренер 70179 «Хранитель Спеллов»: GOSSIP_EVENT_ON_HELLO=1, ON_SELECT=2.
 
 ## Миграции
 `sql/world/0058_custom_spell_system.sql`:
@@ -31,6 +35,25 @@ Unlearn-переключатель возвращает изученный сп�
 - `realm_custom_spell_choices` / `_category_choices` / `_learned` — пер-персонаж
   (применять к acore_characters).
 
+`sql/world/0059_spellaio_pool.sql` (acore_world): наполнение пула — спеллы
+70050, 90515–90521 по категориям (см. ниже).
+
+`sql/world/0060_spellaio_trainer.sql` (acore_world): НПС-тренер 70179
+(creature_template + спавн в Даларане).
+
 ## Пополнение пула
 Добавить строки в `realm_custom_spell_system` + `realm_custom_spell_categories`
-(спелл должен существовать в `spell_dbc`/клиентском Spell.dbc).
+(спелл должен существовать в `spell_dbc`/клиентском Spell.dbc). Категории:
+1=Damage, 2=Healing, 3=Buff, 4=Utility.
+
+Текущий пул (миграция 0059):
+| spellID | Название | Категории |
+|---------|----------|-----------|
+| 70050 | Пустотная порча | 1 (Damage) |
+| 90515 | Thaurissan's Ember (огонь) | 1 (Damage) |
+| 90520 | Ahn'kahar Venom (природный урон) | 1 (Damage) |
+| 90519 | Light of the Naaru (исцеление) | 2 (Healing) |
+| 90517 | Zandalari Vigor (хаст) | 3 (Buff) |
+| 90518 | Amber Ward (абсорб-щит) | 3 (Buff) |
+| 90516 | Highborne Focus (восст. силы) | 4 (Utility) |
+| 90521 | Val'kyr's Mercy (защита от смерти) | 4 (Utility) |

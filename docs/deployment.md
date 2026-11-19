@@ -248,6 +248,10 @@ mysql -u root -p acore_world < sql/world/0056_graveyards.sql
 mysql -u root -p acore_world < sql/world/0057_weather.sql
 # 0058: система выбора кастомных спеллов (SpellAIO) — realm_custom_spell_* → acore_world:
 mysql -u root -p acore_world < sql/world/0058_custom_spell_system.sql
+# 0059: наполнение пула выбора (спеллы 70050/90515-90521 по категориям) → acore_world:
+mysql -u root -p acore_world < sql/world/0059_spellaio_pool.sql
+# 0060: НПС-тренер 70179 «Хранитель Спеллов» (creature_template + спавн Даларан) → acore_world:
+mysql -u root -p acore_world < sql/world/0060_spellaio_trainer.sql
 ```
 
 > ⚠️ Таблицы `realm_custom_spell_choices` / `realm_custom_spell_category_choices` /

@@ -32,12 +32,16 @@ local function L(player, key)
         receivedMail = "Вы получили письмо со свитком спелла.",
         alreadyHigh = "У вас уже максимальное число кастомных спеллов.",
         diffCat = "Выберите категорию.",  -- справочно
+        openChoice = "Открыть выбор кастомного спелла.",
+        closeGossip = "Закрыть.",
     }
     local en = {
         receivedManual = "You have received a spell scroll.",
         receivedMail = "You have received a mail with your spell scroll.",
         alreadyHigh = "You already know the max amount of custom spells.",
         diffCat = "Choose a category.",
+        openChoice = "Open the custom spell picker.",
+        closeGossip = "Close.",
     }
     local t = (loc == 8) and ru or en
     return t[key] or ""
@@ -79,6 +83,28 @@ local function OnFirstLogin(event, player)
     SaveThenOpen(player)
 end
 RegisterPlayerEvent(30, OnFirstLogin)
+
+-- НПС-тренер 70179 «Хранитель Спеллов»: повторно открыть окно выбора.
+local TRAINER_ENTRY = 70179
+local function OnTrainerGossip(event, player, creature)
+    if creature:GetEntry() ~= TRAINER_ENTRY then return true end
+    player:GossipMenuAddItem(0, L(player, "openChoice"), 0, 1)
+    player:GossipMenuAddItem(4, L(player, "closeGossip"), 0, 2)
+    player:GossipSendMenu(1, creature)
+    return false
+end
+RegisterCreatureEvent(TRAINER_ENTRY, 1, OnTrainerGossip)  -- GOSSIP_EVENT_ON_HELLO
+
+local function OnTrainerGossipSelect(event, player, creature, sender, action)
+    if creature:GetEntry() ~= TRAINER_ENTRY then return true end
+    if action == 1 then
+        CheckCategorySelectionChoice(player)
+        CheckPlayerSpellChoice(player)
+    end
+    player:GossipComplete()
+    return false
+end
+RegisterCreatureEvent(TRAINER_ENTRY, 2, OnTrainerGossipSelect)  -- GOSSIP_EVENT_ON_SELECT
 
 -- Каждый вход / смена уровня.
 local function OnLogin(event, player)
