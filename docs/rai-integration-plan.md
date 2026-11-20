@@ -1,6 +1,6 @@
 # RAI (Roaming Adventurer Incursions) — интеграционный план
 
-> Статус: **план, реализация НЕ начата** (2026-11-20).
+> Статус: этапы 1–3 **проведены** (2026-11-20/2026-11-21), этапы 4–6 не начаты.
 > Модуль из `WaloriaOld/scripts/RAI`, порт на контур реалма «Эхо Пустоты»
 > (mod-ale + SQL-миграции + клиентский patch-x). Крупный отдельный этап.
 
@@ -84,14 +84,17 @@
      `.rai …` / `raidbhelper`).
    `custom_*`-таблицы в rai.sql пропущены (уже адаптированы как
    `realm_custom_spell_*`, 0058–0062). Зарегистрировано в `sql/README.md`.
-3. **Порт Lua-модулей** `raiserver/combat/encounter/logic/creature/group/
-   spawner/creaturepicker/commands/dbhelper/tablehelper/spellpicker/targets/
-   generator/phase` на mod-ale:
+3. **Порт Lua-модулей (ПРОВЕДЁН 2026-11-21)** → 15 файлов в `lua_scripts/RAI/`
+   (raispawner, raiserver, raicombat, raiencounter, railogic, raicreature,
+   raigroup, raicreaturepicker, raicommands, raidbhelper, raitablehelper,
+   raispellpicker, raitargets, raigenerator, raiphase). Файлы на mod-ale:
    - `require`-имена в один каталог `lua_scripts/RAI/`;
-   - заменить `CastSpellRAI`/`PatrolArea`/`ReInitialize` на Lua-эквиваленты;
+   - `CastSpellRAI`/`PatrolArea`/`ReInitialize` заменены Lua-эквивалентами:
+     `CastSpell`, `SetDefaultMovementType(1)+MoveRandom`, — без C++-патча;
    - US-номера событий уже совпадают (5/1/2/9/4/24);
-   - пер-зоны: `creature:GetData/SetData` через `ObjectVariables.ext`;
-   - локализация ru/en (модуль сейчас en-только).
+   - пер-зоны: `creature:GetData/SetData` уже в mod-ale (`ObjectVariables.ext`);
+   - реестр таблиц → `realm_rai_*` / `realm_custom_spell_*` (миграции 0058/0063);
+   - локализация ru/en (модуль сейчас en-только; команды `.rai` на en — в сводке ниже).
 4. **C++-патч ядра** (опционально): `randommovementgenerator` для корректного
    движения RAI-существ. Пересборка `worldserver`. (Можно отложить: стандартный
    RANDOM_MOTION_TYPE работает, но без патченного pathing'а.)
