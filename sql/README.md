@@ -69,6 +69,8 @@
 | `world/0059_spellaio_pool.sql` | Наполнение пула выбора (SpellAIO): наши спеллы 70050 «Пустотная порча» + 90515–90521 (археология) по категориям 1–4 | 0058 |
 | `world/0060_spellaio_trainer.sql` | НПС-тренер 70179 «Хранитель Спеллов» (creature_template + спавн Даларан) — повторное открытие окна выбора спеллов; госсип в `server.lua` (`RegisterCreatureEvent(70179, 1, ...)`) | 0058 |
 | `world/0061_spellaio_pool_waloria.sql` | Расширение пула (SpellAIO) стандартными классовыми спеллами WotLK из WaloriaOld (`spellsystem.sql`): 1892 спелла, категории 1–4, забаненные исключены, `id` с 1001 (не конфликтует с 0059) | 0058, 0059 |
+| `world/0062_spellaio_tomes_world.sql` | Свитки спеллов (SpellAIO): item 70060 «Свиток Пустоты» единого контейнера — при исчерпании лимита изученных / unlearn спелл откладывается в `realm_custom_spell_pending` (**acore_characters**), использование свитка (ON_USE, `server.lua`) изучает его | 0058 |
+| `world/0062_spellaio_tomes_characters.sql` | Пер-персональная часть свитков: таблица `realm_custom_spell_pending` (отложенный спелл к изучению через Свиток Пустоты) (**acore_characters**) | 0058 |
 
 ---
 

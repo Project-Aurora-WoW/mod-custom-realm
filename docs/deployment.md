@@ -255,6 +255,9 @@ mysql -u root -p acore_world < sql/world/0059_spellaio_pool.sql
 mysql -u root -p acore_world < sql/world/0060_spellaio_trainer.sql
 # 0061: расширение пула выбора спеллами Waloria (1892 стандартных классовых спелла, id с 1001) → acore_world:
 mysql -u root -p acore_world < sql/world/0061_spellaio_pool_waloria.sql
+# 0062: свитки спеллов SpellAIO — item 70060 → acore_world; realm_custom_spell_pending → acore_characters:
+mysql -u root -p acore_world < sql/world/0062_spellaio_tomes_world.sql
+mysql -u root -p acore_characters < sql/world/0062_spellaio_tomes_characters.sql
 ```
 
 > ⚠️ Таблицы `realm_custom_spell_choices` / `realm_custom_spell_category_choices` /

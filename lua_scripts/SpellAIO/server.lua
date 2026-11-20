@@ -34,6 +34,8 @@ local function L(player, key)
         diffCat = "Выберите категорию.",  -- справочно
         openChoice = "Открыть выбор кастомного спелла.",
         closeGossip = "Закрыть.",
+        tomeEmpty = "Свиток Пустоты пуст.",
+        tomeLearned = "Вы изучили спелл из Свитка Пустоты.",
     }
     local en = {
         receivedManual = "You have received a spell scroll.",
@@ -42,6 +44,8 @@ local function L(player, key)
         diffCat = "Choose a category.",
         openChoice = "Open the custom spell picker.",
         closeGossip = "Close.",
+        tomeEmpty = "The Void Scroll is empty.",
+        tomeLearned = "You learned a spell from the Void Scroll.",
     }
     local t = (loc == 8) and ru or en
     return t[key] or ""
@@ -133,13 +137,26 @@ RegisterPlayerEvent(2, OnDelete)
 -- ---- AIO-обработчики ----
 
 -- Выбор спелла клиентом.
+local TOME_ITEM = nil  -- инициализируется ниже (SpellClass.TOME_ITEM_ID)
+
+-- Выдать свиток со спеллом, когда лимит исчерпан (записать pending).
+local function GrantTome(player, spellID)
+    SpellClass:SetPendingSpell(player, spellID)
+    local entry = SpellClass:ComputeTomeItemIDFromSpellID(spellID)
+    if player:AddItem(entry, 1) then
+        player:SendBroadcastMessage(L(player, "receivedManual"))
+    else
+        player:SendBroadcastMessage(L(player, "receivedMail"))
+    end
+end
+
 function MyHandlers.SpellSelection(player, spellID)
     if SpellClass:CanLearnSpellFromChoice(player, spellID) then
         if SpellClass:CanLearnCustomSpell(player) then
             player:LearnSpell(spellID)
             SpellClass:MarkLearned(player, spellID)
         else
-            player:SendBroadcastMessage("|cffff0000" .. L(player, "alreadyHigh"))
+            GrantTome(player, spellID)
         end
         SpellClass:DeleteNextSpellChoice(player)
         CheckPlayerSpellChoice(player)
@@ -186,10 +203,35 @@ function MyHandlers.UnlearnSpell(player, spellID)
     if MyHandlers.GetToggleState(player)
         and SpellClass:ValidSpellToRemove(spellID)
         and player:HasSpell(spellID) then
-        player:RemoveSpell(spellID, false, false)
-        player:RemoveAura(spellID)
-        SpellClass:MarkUnlearned(player, spellID)
+        if player:AddItem(SpellClass:ComputeTomeItemIDFromSpellID(spellID), 1) then
+            player:RemoveSpell(spellID, false, false)
+            player:RemoveAura(spellID)
+            SpellClass:MarkUnlearned(player, spellID)
+            GrantTome(player, spellID)
+        end
     end
 end
+
+-- Использование «Свитка Пустоты» (70060): изучить отложенный спелл.
+TOME_ITEM = SpellClass.TOME_ITEM_ID
+local function OnTomeUse(event, player, item)
+    if item:GetEntry() ~= TOME_ITEM then return true end
+    local spellID = SpellClass:GetPendingSpell(player)
+    if not spellID then
+        player:SendAreaTriggerMessage(L(player, "tomeEmpty"))
+        return false
+    end
+    if not SpellClass:CanLearnCustomSpell(player) then
+        player:SendAreaTriggerMessage("|cffff0000" .. L(player, "alreadyHigh"))
+        return false
+    end
+    player:LearnSpell(spellID)
+    SpellClass:MarkLearned(player, spellID)
+    SpellClass:ClearPendingSpell(player)
+    player:RemoveItem(TOME_ITEM, 1)
+    player:SendAreaTriggerMessage(L(player, "tomeLearned"))
+    return false
+end
+RegisterItemEvent(TOME_ITEM, 2, OnTomeUse)
 
 print("[EchoOfTheVoid] SpellAIO/server загружен: выбор кастомных спеллов (контур ).")

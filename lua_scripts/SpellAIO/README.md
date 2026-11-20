@@ -47,6 +47,13 @@ Unlearn-переключатель возвращает изученный сп�
 с 1001, чтобы не конфликтовать с записями 0059 (id 1–8). Категории спеллов,
 уже добавленных в 0059, остаются без дублей.
 
+`sql/world/0062_spellaio_tomes_world.sql` (acore_world) +
+`0062_spellaio_tomes_characters.sql` (acore_characters): свитки спеллов.
+Единый свиток-контейнер item 70060 «Свиток Пустоты» — когда лимит изученных
+(MAX_CUSTOM_SPELLS) исчерпан или спелл снимается (unlearn), спелл
+откладывается в `realm_custom_spell_pending`, а игрок получает свиток.
+Использование свитка (RegisterItemEvent ON_USE) изучает отложенный спелл.
+
 ## Пополнение пула
 Добавить строки в `realm_custom_spell_system` + `realm_custom_spell_categories`
 (спелл должен существовать в `spell_dbc`/клиентском Spell.dbc). Категории:

@@ -206,10 +206,14 @@ function SpellClass.new()
             "SELECT id FROM realm_custom_spell_system WHERE spellID=%i LIMIT 1", spellID)) ~= nil
     end
 
-    -- Свиток (item) для спелла: в Waloria 90000+id. У нас — свой диапазон
-    -- реалма 7xxxx; item создаётся отдельной миграцией. Возврат entry или 0.
+    -- Свиток (item) для спелла: единый контейнер entry 70060 «Свиток Пустоты»
+    -- (миграция 0062_spellaio_tomes_world.sql). Когда лимит изученных исчерпан
+    -- или спелл снимается (unlearn), спелл откладывается в
+    -- realm_custom_spell_pending, а игрок получает этот свиток.
+    SpellClass.TOME_ITEM_ID = 70060
+
     function SpellClass:ComputeTomeItemIDFromSpellID(spellID)
-        return 0  -- TODO: связать с 7xxxx item-маном, когда создадим ману
+        return SpellClass.TOME_ITEM_ID
     end
 
     -- ---- Лимиты изучения (Lua-замена GetCustomSpellAmount) ----
@@ -237,6 +241,29 @@ function SpellClass.new()
         local g = SpellClass:GetPlayerCharacterGUID(player)
         CharDBExecute(string.format(
             "DELETE FROM realm_custom_spell_learned WHERE characterGUID=%i AND spellID=%i", g, spellID))
+    end
+
+    -- ---- Отложенный спелл через свиток (realm_custom_spell_pending) ----
+
+    function SpellClass:SetPendingSpell(player, spellID)
+        local g = SpellClass:GetPlayerCharacterGUID(player)
+        CharDBExecute(string.format(
+            "INSERT INTO realm_custom_spell_pending (characterGUID, spellID) VALUES (%i, %i) " ..
+            "ON DUPLICATE KEY UPDATE spellID = %i", g, spellID, spellID))
+    end
+
+    function SpellClass:GetPendingSpell(player)
+        local g = SpellClass:GetPlayerCharacterGUID(player)
+        local q = CharDBQuery(string.format(
+            "SELECT spellID FROM realm_custom_spell_pending WHERE characterGUID=%i LIMIT 1", g))
+        if q then return tonumber(q:GetRow()["spellID"]) end
+        return nil
+    end
+
+    function SpellClass:ClearPendingSpell(player)
+        local g = SpellClass:GetPlayerCharacterGUID(player)
+        CharDBExecute(string.format(
+            "DELETE FROM realm_custom_spell_pending WHERE characterGUID=%i", g))
     end
 
     return SpellClass
