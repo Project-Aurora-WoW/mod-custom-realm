@@ -100,6 +100,18 @@
      `100000+level`) и спавнера `100100`; `realm_rai_creature` наполнена реестром entry
      (по ним raiserver вешает боевые события 5/1/2/9/4/24). Диапазон 1000xx отделён от
      статических 70xxx реалма.
+   - **Аудит загрузки (ПРОВЕДЁН 2026-11-21)**: require-граф полный и без циклов;
+     все require указывают на файлы в `RAI/`; дублей имён файлов по всему дереву
+     `lua_scripts/` нет (иначе загрузчик `GetScripts`/`RunScripts` ругнётся на
+     совпадение имени); верхнеуровневые вызовы — только `require(...).new()` без
+     side-эффектов, порядок загрузки подпапки не важен; единственная точка входа с
+     регистрацией — `raiserver.lua`. Проверены вызываемые методы/функции mod-ale:
+     `WorldDBQuery/Execute`, `RegisterCreatureEvent/PlayerEvent`, `PerformIngameSpawn`,
+     `GetCreaturesInRange`, `GetAITargets`, `CastSpell`, `HasUnitState`, `MoveRandom/
+     MoveFollow/MoveTo`, `SetEquipmentSlots`, `SetHomePosition`, `AddThreat`,
+     `AttackStart`, `RemoveAura`, `SetDisplayId`, `SendUnitYell`, `SetFaction`,
+     `SetDefaultMovementType`, `ClearUnitState`, `IsGM`, `GetRow/NextRow`, а также
+     `GetData/SetData` (расширение `ObjectVariables.ext`, загружается до `.lua`).
 4. **C++-патч ядра** (опционально): `randommovementgenerator` для корректного
    движения RAI-существ. Пересборка `worldserver`. (Можно отложить: стандартный
    RANDOM_MOTION_TYPE работает, но без патченного pathing'а.)
