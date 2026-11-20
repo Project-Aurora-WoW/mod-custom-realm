@@ -71,6 +71,7 @@
 | `world/0061_spellaio_pool_waloria.sql` | Расширение пула (SpellAIO) стандартными классовыми спеллами WotLK из WaloriaOld (`spellsystem.sql`): 1892 спелла, категории 1–4, забаненные исключены, `id` с 1001 (не конфликтует с 0059) | 0058, 0059 |
 | `world/0062_spellaio_tomes_world.sql` | Свитки спеллов (SpellAIO): item 70060 «Свиток Пустоты» единого контейнера — при исчерпании лимита изученных / unlearn спелл откладывается в `realm_custom_spell_pending` (**acore_characters**), использование свитка (ON_USE, `server.lua`) изучает его | 0058 |
 | `world/0062_spellaio_tomes_characters.sql` | Пер-персональная часть свитков: таблица `realm_custom_spell_pending` (отложенный спелл к изучению через Свиток Пустоты) (**acore_characters**) | 0058 |
+| `world/0063_rai_tables.sql` | Таблицы RAI (Roaming Adventurer Incursions, из `WaloriaOld/scripts/RAI/rai.sql`): `realm_rai_zone_level` (минимакс-уровни искателей по зонам, 46 зап.), `realm_rai_creature`/`realm_rai_spawns` (пустые, заполняются runtime), `realm_rai_line_spawns` (13 точек спавна линий, entry 100060, зона 40), `realm_rai_line_moveto` (12 точек движения). Основа этапа 2 порта RAI | — |
 
 ---
 
@@ -183,6 +184,11 @@ mysql -u <user> -p acore_world < sql/world/0059_spellaio_pool.sql
 mysql -u <user> -p acore_world < sql/world/0060_spellaio_trainer.sql
 # 0061: пул Waloria (1892 стандартных классовых спелла) → acore_world:
 mysql -u <user> -p acore_world < sql/world/0061_spellaio_pool_waloria.sql
+# 0062: свитки спеллов (item 70060 world + realm_custom_spell_pending characters):
+mysql -u <user> -p acore_world < sql/world/0062_spellaio_tomes_world.sql
+mysql -u <user> -p acore_characters < sql/world/0062_spellaio_tomes_characters.sql
+# 0063: таблицы RAI (realm_rai_* из rai.sql) → acore_world:
+mysql -u <user> -p acore_world < sql/world/0063_rai_tables.sql
 ```
 
 После применения выполните в консоли `worldserver`:

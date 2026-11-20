@@ -65,13 +65,25 @@
 
 ## 4. Этапы интеграции
 
-1. **Разбор Patch-T.MPQ** → список кастомных спеллов → запись в `spell_dbc`
-   через миграцию (`sql/world/00NN_rai_spells.sql`, entry 70xxx) + затронутые
-   DBC в клиентский patch-x. Основа — уже адаптированный SpellAIO-пул.
-2. **Разбор `rai.sql`** → только `rai_*`-таблицы → миграция
-   `sql/world/00NN_rai_tables.sql` на `realm_rai_*` (переименование под префикс
-   реалма): `rai_spawns`, `rai_line_spawns`, `rai_line_moveto`, `rai_zone_level`,
-   `rai_creature`. Пер-персональных данных нет → acore_world.
+1. **Разбор спеллов (ПРОВЕДЁН 2026-11-20)** → вывод: **новых кастомных
+   спеллов для RAI добавлять НЕ нужно.** Свои боевые спеллы RAI берёт из БД
+   `custom_spell_system`+`custom_spell_system_categories` (= наши
+   `realm_custom_spell_*`, 0058), а не из своего Patch-T.MPQ. Аудит пула:
+   2022 спелла в категориях (1=Damage,2=Healing,3=Buff,4=Utility, выбор по
+   `spellLevel`, запрос в `raispellpicker.lua:76`) — 2021 стандартный игровой
+   WotLK (уже в клиенте и серверном spell_dbc), 70909 — единственный с
+   ID≥70000, в Patch-T битый (Name пуст, Effects 0, Description «Redoubt») →
+   в пул не включается. Кастомные 70010/70050/90515–90521 уже в patch-x.mpq
+   и серверном `spell_dbc`. Клиентский Patch-T в дистрибутив реалма НЕ нужен.
+2. **Разбор `rai.sql` и таблицы (ПРОВЕДЁН 2026-11-20)** → миграция
+   `sql/world/0063_rai_tables.sql` на `realm_rai_*` (acore_world):
+   - `realm_rai_zone_level` — минимакс-уровни искателей по зонам (46 записей);
+   - `realm_rai_line_spawns` — точки спавна линий (13, entry 100060, зона 40, ветки 11/119);
+   - `realm_rai_line_moveto` — точки движения линий (12);
+   - `realm_rai_creature` / `realm_rai_spawns` — пустые (заполняются runtime через
+     `.rai …` / `raidbhelper`).
+   `custom_*`-таблицы в rai.sql пропущены (уже адаптированы как
+   `realm_custom_spell_*`, 0058–0062). Зарегистрировано в `sql/README.md`.
 3. **Порт Lua-модулей** `raiserver/combat/encounter/logic/creature/group/
    spawner/creaturepicker/commands/dbhelper/tablehelper/spellpicker/targets/
    generator/phase` на mod-ale:
@@ -94,6 +106,7 @@
 |------|--------|-----------|
 | C++-методы Eluna (eluna.cpp) | средний | Lua-эквиваленты (CastSpell уже есть) |
 | randommovementgenerator (патч ядра) | средний | опционально, без него RANDOM_MOTION_TYPE |
+| кастомный Spell.dbc Patch-T.MPQ | ~~высокий~~ снят | разбор проведён: кастомных спеллов RAI нет, Patch-T не нужен |
 | кастомный спраfit-спелл.dbc Patch-T.MPQ | высокий | отдельный разбор → `spell_dbc` 70xxx + patch-x |
 | большие `require`-модули (18 Lua) | средний | последовательный порт, синтаксис luaparser |
 | ru/en + табличные префиксы | низкий | наша локаль L(), `realm_rai_*` |
