@@ -1,5 +1,8 @@
 local RaiCreaturePicker = {}
 
+-- Единый логгер с кириллицей (extensions/00_EchoLog.ext); fallback на print.
+local LOG = EchoLog or print
+
 function RaiCreaturePicker:new()
 
   function RaiCreaturePicker:PickEntry(spawnpoint)
@@ -23,7 +26,7 @@ function RaiCreaturePicker:new()
       data["max"] = row["maxlevel"]
       return data
     else
-      print("RaiCreaturePicker: Could not find min and max level for zone "..tostring(zone))
+      LOG("WARN", "RaiCreaturePicker: Could not find min and max level for zone "..tostring(zone))
       return nil
     end
   end

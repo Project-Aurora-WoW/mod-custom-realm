@@ -1,0 +1,106 @@
+---------------------------------------------------------------
+-- Azeroth: Эхо Пустоты (Azeroth Custom Realm)
+-- extensions/00_EchoLog.ext
+--
+-- Единый логгер модуля с поддержкой кириллицы.
+-- Загружается до всех *.lua (правило ALE) -> доступен глобально.
+--
+-- Контекст:
+--   * print() в mod-ale уходит в ALE_LOG_INFO (категория "ALE",
+--     GlobalMethods.h), а тот пишет в server log как UTF-8
+--     (AC Logger). Поэтому кириллица корректно пишется в server.log,
+--     НО в Windows-консоли worldserver кодировка может быть idp.
+--   * Для вывода в игровую консоль используем SendBroadcastMessage
+--     (чат клиента), который всегда UTF-8 (клиент 3.3.5 — ru/en).
+--
+-- Назначение:
+--   * EchoLog(level, ...) — логирование в server console/cat.
+--   * EchoLogGM(player, level, ...) — дублирование одному GM-игроку
+--     через игровой чат (полезно для отладки на живом реалме).
+--   * Включение/уровень — глобальные, задаются один раз на сервере.
+-- Не переопределяет print() глобально (риск сломать Dep_* и загрузчик);
+-- модули используют EchoLog вместо print.
+---------------------------------------------------------------
+
+-- Уровни (консистентно с AC-логами)
+local LEVELS = { DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3 }
+
+local CONFIG = {
+    -- Минимальный уровень, попадающий в server log (можно менять из модулей)
+    min_level = 1,            -- INFO и выше
+    -- Префикс всех записей (tag реалма)
+    tag = "[Эхо Пустоты]",
+    -- Печатать ли в игровой чат GM при EchoLogGM (по умолчанию да)
+    gm_chat_enabled = true,
+}
+
+local _LEVEL_NAMES = { "DEBUG", "INFO", "WARN", "ERROR" }
+
+-- Нормализация числа уровня по строке/числу
+local function _levelNum(level)
+    if type(level) == "string" then
+        local up = level:upper()
+        return LEVELS[up] or LEVELS.INFO
+    end
+    return level
+end
+
+-- Ядро: пишет в server log через print (-> ALE_LOG). level <= min_level.
+function EchoLog(level, ...)
+    local lv = _levelNum(level) or LEVELS.INFO
+    if lv < CONFIG.min_level then return end
+    -- Склейка аргументов
+    local parts = {}
+    for i = 1, select("#", ...) do
+        parts[#parts + 1] = tostring(select(i, ...))
+    end
+    local msg = table.concat(parts, " ")
+    local lname = _LEVEL_NAMES[lv + 1] or level
+    local ts = os.date("%H:%M:%S")
+    print(string.format("%s [%s][%s] %s", CONFIG.tag, ts, lname, msg))
+end
+
+-- Шорткаты уровней
+function EchoDebug(...)  EchoLog("DEBUG", ...)  end
+function EchoInfo(...)   EchoLog("INFO", ...)   end
+function EchoWarn(...)   EchoLog("WARN", ...)   end
+function EchoError(...)  EchoLog("ERROR", ...)  end
+
+-- Дублирует запись в игровой чат конкретному GM-игроку.
+-- @player: Player или guid(number); если nil — пропускает клиентский вывод.
+function EchoLogGM(player, level, ...)
+    EchoLog(level, ...)  -- всегда в server log (если уровень выше min)
+
+    if not player or not CONFIG.gm_chat_enabled then return end
+    if type(player) == "number" then
+        -- по guid найти онлайн-игрока (если есть API)
+        local p = ALE and ALE.GetPlayerByGUID and ALE.GetPlayerByGUID(player)
+        player = p or nil
+    end
+    if not player or not player.IsGM then return end
+
+    local lv = _levelNum(level) or LEVELS.INFO
+    if (lv < LEVELS.WARN) and not player:IsGM() then return end
+
+    local parts = {}
+    for i = 1, select("#", ...) do
+        parts[#parts + 1] = tostring(select(i, ...))
+    end
+    player:SendBroadcastMessage(CONFIG.tag .. " " .. table.concat(parts, " "))
+end
+
+-- Выставить минимальный уровень лога (Gmatch строкой: "DEBUG"/"INFO"/... ).
+-- Возвращает старый уровень.
+function EchoSetMinLevel(level)
+    local old = CONFIG.min_level
+    CONFIG.min_level = _levelNum(level) or LEVELS.INFO
+    return old
+end
+
+_G.EchoLog = EchoLog
+_G.EchoDebug = EchoDebug
+_G.EchoInfo = EchoInfo
+_G.EchoWarn = EchoWarn
+_G.EchoError = EchoError
+_G.EchoLogGM = EchoLogGM
+_G.EchoSetMinLevel = EchoSetMinLevel

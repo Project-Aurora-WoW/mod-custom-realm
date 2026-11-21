@@ -101,6 +101,7 @@
 | `Dep_LuaSrcDiet/{LuaSrcDiet,llex,lparser,optlex,optparser}.lua` | Минификация клиентского кода (dep AIO; `AIO_CODE_OBFUSCATE = true`) |
 | `lualzw-zeros/lualzw.lua` | LZW-сжатие (dep AIO) |
 | `extensions/_Misc.ext` | `.ext` — загружается до всех `.lua`: randomseed + включение StackTracePlus |
+| `extensions/00_EchoLog.ext` | `.ext` — единый логгер с кириллицей (п.3): `EchoLog/EchoDebug/EchoInfo/EchoWarn/EchoError/EchoLogGM/EchoSetMinLevel`. `print` → `ALE_LOG_INFO` (UTF-8 категория "ALE"); `EchoLogGM` дублирует запись GM-игроку в игровой чат. Загружается до `.lua`, доступен всем модулям |
 | `extensions/StackTracePlus/StackTracePlus.ext` | Подробный traceback (локали, функции) для диагностики ошибок всех скриптов |
 
 Порядок загрузки ALE обеспечивает корректную работу: `.ext` первыми
@@ -131,6 +132,7 @@ local DB_TABLE = REG.meta.db_table          -- таблица прогресса
 ```
 00_CampaignRegistry.ext  → реестр кампаний и баланс (первым, .ext)
 extensions/_Misc.ext + StackTracePlus.ext        → .ext: randomseed + traceback (до всех .lua)
+extensions/00_EchoLog.ext                        → .ext: единый логгер с кириллицей (п.3)
 05_VoidAuras.lua         → ауры Пустоты (зависит от реестра)
 06_WaloriaRewards.lua    → награды за уровни (Waloria-подход)
 07_StartingZone.lua      → выбор стартовой зоны (НПС 70001)
