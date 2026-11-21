@@ -74,6 +74,8 @@
 | `world/0063_rai_tables.sql` | Таблицы RAI (Roaming Adventurer Incursions, из `WaloriaOld/scripts/RAI/rai.sql`): `realm_rai_zone_level` (минимакс-уровни искателей по зонам, 46 зап.), `realm_rai_creature`/`realm_rai_spawns` (заполняются runtime / 0064), `realm_rai_line_spawns` (13 точек спавна линий, entry 100060, зона 40), `realm_rai_line_moveto` (12 точек движения). Основа этапа 2 порта RAI | — |
 | `world/0064_rai_creature_template.sql` | Шаблоны существ RAI (этап 3): `creature_template` + `creature_template_model` для искателей entry 100005..100060 (уровни 5–60) и спавнера 100100; наполнение `realm_rai_creature` реестром entry (боевые события ALE регистрируются по ним). Диапазон 1000xx — динамический пул RAI (формула 100000+level), отделён от статических 70xxx | 0063 |
 | `world/0065_rai_levels_endgame.sql` | Балансировка уровней RAI под эндгейм-контур реалма: переписать `realm_rai_zone_level` на реальные зоны (4080 Драконий Погост, 4181 Зул'Драк, 5000 Морза/Предательство) с уровнем искателей 80 (валорийские 5–60 удалены; 4395 Даларан пропущен — хаб); добавить шаблон+модель+реестр искателя 80 (entry 100080) | 0063, 0064 |
+| `world/0066_rai_start_spawns.sql` | Стартовые спавны RAI (`realm_rai_spawns`): 8 точек с entry `-1` (подбор по зоне → 100080) в эпицентре Драконьего Погоста (4080/4365) и на кастомной карте 5000 (Морза/Предательство). Материализуются GM-командой `.rai spawn` (`raicommands:Spawn`) | 0063, 0065 |
+| `world/0067_class_weapons.sql` | Классовое оружие реалма (п.2): 9 эпиков ilvl~245 (entry 70061–70069) по классам — статы/dmg/description/displayid + `item_template_locale` enUS; совместимо с трансмогом | — |
 
 ---
 
@@ -195,6 +197,10 @@ mysql -u <user> -p acore_world < sql/world/0063_rai_tables.sql
 mysql -u <user> -p acore_world < sql/world/0064_rai_creature_template.sql
 # 0065: балансировка уровней RAI (эндгейм-зоны 80 + шаблон/реестр 100080) → acore_world:
 mysql -u <user> -p acore_world < sql/world/0065_rai_levels_endgame.sql
+# 0066: стартовые спавны RAI (realm_rai_spawns, entry -1 → 100080) → acore_world:
+mysql -u <user> -p acore_world < sql/world/0066_rai_start_spawns.sql
+# 0067: классовое оружие реалма (70061–70069) → acore_world:
+mysql -u <user> -p acore_world < sql/world/0067_class_weapons.sql
 ```
 
 После применения выполните в консоли `worldserver`:
