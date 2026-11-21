@@ -102,7 +102,7 @@ INSERT INTO `gameobject` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`,
 (5000012, 9503012, 5000, 0, 0, 1, 1, 10430.0, -9550.0, 22.0, 3.0, 0, 0, 0.141, 0.990, 120, 100, 1, '', 0, 'Betrayal supply crate');
 
 -- Мобы на карте 5000:
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`,
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`,
  `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`,
  `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES

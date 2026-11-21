@@ -107,8 +107,8 @@ VALUES
 -- 5. Спавны: quest-giver и интерактивы — Даларан (guid 7000900+);
 --    босс — юг Драконьего Погоста (7000910).
 -- ------------------------------------------------------------
-DELETE FROM `creature` WHERE `id` IN (70280, 70281, 70282, 70283, 70542);
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` IN (70280, 70281, 70282, 70283, 70542);
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

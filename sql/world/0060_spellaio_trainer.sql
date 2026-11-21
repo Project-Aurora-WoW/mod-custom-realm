@@ -23,8 +23,8 @@ INSERT INTO `creature_template`
  0, 0, 0, 12340);
 
 -- --- 2. Спавн (Даларан) -------------------------------------
-DELETE FROM `creature` WHERE `id` = 70179;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` = 70179;
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

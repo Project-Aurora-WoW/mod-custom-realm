@@ -25,8 +25,8 @@ VALUES
 
 -- --- 3. Спавн в Даларане (у штаба Ордена) -------------------
 -- guid 7000180: диапазоны 7000100–7000164 заняты кампаниями 1–3 (0003/0005/0007).
-DELETE FROM `creature` WHERE `id` = 70180;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` = 70180;
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

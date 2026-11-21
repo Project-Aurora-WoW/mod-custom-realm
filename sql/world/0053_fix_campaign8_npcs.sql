@@ -39,8 +39,8 @@ VALUES
 -- ------------------------------------------------------------
 -- 3. Спавны (руины Наследия — юг Драконьего Погоста, guid 7000711+)
 -- ------------------------------------------------------------
-DELETE FROM `creature` WHERE `id` IN (70241, 70242, 70243);
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` IN (70241, 70242, 70243);
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

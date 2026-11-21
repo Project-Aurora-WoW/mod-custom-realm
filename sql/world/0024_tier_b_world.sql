@@ -37,7 +37,7 @@ INSERT INTO `creature_template`
 DELETE FROM `creature_template_model` WHERE `CreatureID` = 70175;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`) VALUES (70175, 0, 15279, 1.00, 1.0);
 DELETE FROM `creature` WHERE `guid` = 7000175;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
 (7000175, 70175, 571, 4395, 4395, 1, 1, 0, 5799.0, 690.0, 647.35, 2.85, 300, 0, 1000000, 0, 0, 0, 0, 0, 12340);
 -- --- 70176 «Хранитель Тиражей» (Lottery) ---
 DELETE FROM `creature_template` WHERE `entry` = 70176;
@@ -47,7 +47,7 @@ INSERT INTO `creature_template`
 DELETE FROM `creature_template_model` WHERE `CreatureID` = 70176;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`) VALUES (70176, 0, 15279, 1.00, 1.0);
 DELETE FROM `creature` WHERE `guid` = 7000176;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
 (7000176, 70176, 571, 4395, 4395, 1, 1, 0, 5796.5, 693.0, 647.35, 3.20, 300, 0, 1000000, 0, 0, 0, 0, 0, 12340);
 -- --- 70177 «Скип DK Стартера» — НПС-инициатор у стартовой зоны ---
 DELETE FROM `creature_template` WHERE `entry` = 70177;
@@ -57,7 +57,7 @@ INSERT INTO `creature_template`
 DELETE FROM `creature_template_model` WHERE `CreatureID` = 70177;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`) VALUES (70177, 0, 15279, 1.00, 1.0);
 DELETE FROM `creature` WHERE `guid` = 7000177;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
 (7000177, 70177, 0, 1519, 1519, 1, 1, 0, -9013.75, 863.08, 104.0, 5.20, 300, 0, 1000000, 0, 0, 0, 0, 0, 12340);
 -- --- 70178 «Алтарь Ордена» — алтарь молитвы (Prayer)
 -- displayid: алтарь-камень (флейвор); тип 10 (не-атакующее ГО-НПС)
@@ -68,5 +68,5 @@ INSERT INTO `creature_template`
 DELETE FROM `creature_template_model` WHERE `CreatureID` = 70178;
 INSERT INTO `creature_template_model` (`CreatureID`, `Idx`, `CreatureDisplayID`, `DisplayScale`, `Probability`) VALUES (70178, 0, 15279, 1.00, 1.0);
 DELETE FROM `creature` WHERE `guid` = 7000178;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`, `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`, `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`, `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`) VALUES
 (7000178, 70178, 571, 4395, 4395, 1, 1, 0, 5805.0, 688.5, 647.35, 1.20, 300, 0, 1000000, 0, 0, 0, 0, 0, 12340);

@@ -19,7 +19,7 @@ INSERT INTO `creature_template`
 -- --- 2. Спавны в столицах -----------------------------------
 -- Координаты Standard 3.3.5a: Штормград (Альянс) и Оргриммар (Орда).
 DELETE FROM `creature` WHERE `guid` IN (7000101, 7000102);
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

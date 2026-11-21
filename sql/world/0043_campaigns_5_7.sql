@@ -175,8 +175,8 @@ VALUES
 --    Guid-диапазоны: К5 7000400–7000404, К6 7000500–7000504,
 --    К7 7000600–7000604.
 -- ------------------------------------------------------------
-DELETE FROM `creature` WHERE `id` IN (70211, 70220, 70230);
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` IN (70211, 70220, 70230);
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)
@@ -194,7 +194,7 @@ VALUES
 DELETE FROM `creature` WHERE `guid` BETWEEN 7000400 AND 7000439;
 DELETE FROM `creature` WHERE `guid` BETWEEN 7000500 AND 7000539;
 DELETE FROM `creature` WHERE `guid` BETWEEN 7000600 AND 7000639;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

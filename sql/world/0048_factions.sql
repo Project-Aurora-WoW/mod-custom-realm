@@ -89,8 +89,8 @@ VALUES
 -- ------------------------------------------------------------
 -- 4. Спавны (Даларан + юг Драконьего Погоста, guid 7001000+)
 -- ------------------------------------------------------------
-DELETE FROM `creature` WHERE `id` IN (70284, 70285, 70286, 70287, 70543, 70544);
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` IN (70284, 70285, 70286, 70287, 70543, 70544);
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

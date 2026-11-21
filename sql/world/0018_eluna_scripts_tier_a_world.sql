@@ -21,8 +21,8 @@ VALUES
 (70172, 0, 24991, 1.00, 1.0);
 -- Спавн: Даларан, у штаба Ордена (рядом с Хронистом 70180 и Интендантом 70170)
 -- guid 7000172 — свободен (0010: 7000170; 0011: 7000180)
-DELETE FROM `creature` WHERE `id` = 70172;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` = 70172;
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)
@@ -48,8 +48,8 @@ VALUES
 (70173, 0, 24991, 1.00, 1.0);
 -- Спавн: Даларан, у штаба Ордена
 -- guid 7000173 — свободен
-DELETE FROM `creature` WHERE `id` = 70173;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` = 70173;
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

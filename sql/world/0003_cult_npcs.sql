@@ -27,8 +27,8 @@ INSERT INTO `creature_template`
 (70120, 'Архимаг Элианна', '<Орден Рассвета>', 'Talk', 0, 80, 80, 0, 35, 1, 1.0, 1.14286, 1, 0, 1.0, 2, 33554432, 2048, 0, 7, 0, 0, 0, '', 0, 1.0, 71.0, 1.0, 1.0, 0, '', 12340);
 
 -- --- 2. Спавны ----------------------------------------------
-DELETE FROM `creature` WHERE `id` IN (70100, 70101, 70110, 70120) OR `guid` BETWEEN 7000100 AND 7000139;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` IN (70100, 70101, 70110, 70120) OR `guid` BETWEEN 7000100 AND 7000139;
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)

@@ -101,8 +101,8 @@ VALUES
 -- ------------------------------------------------------------
 -- 4. Спавны: Аэрис в Даларане (guid 7000181 — вне диапазонов К1–К3)
 -- ------------------------------------------------------------
-DELETE FROM `creature` WHERE `id` = 70210;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+DELETE FROM `creature` WHERE `id1` = 70210;
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)
@@ -118,7 +118,7 @@ VALUES
 -- Осколки x3 (7000320–7000322), босс (7000330)
 -- ------------------------------------------------------------
 DELETE FROM `creature` WHERE `guid` BETWEEN 7000300 AND 7000339;
-INSERT INTO `creature` (`guid`, `id`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
+INSERT INTO `creature` (`guid`, `id1`, `map`, `zoneId`, `areaId`, `spawnMask`, `phaseMask`,
  `equipment_id`, `position_x`, `position_y`, `position_z`, `orientation`,
  `spawntimesecs`, `wander_distance`, `curhealth`, `curmana`,
  `MovementType`, `npcflag`, `unit_flags`, `dynamicflags`, `VerifiedBuild`)
